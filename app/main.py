@@ -1,15 +1,18 @@
-from typing import Union
+from fastapi import Depends, FastAPI
 
-from fastapi import FastAPI
+from app.models import LemmaResult
+from app.services.aggregator import Aggregator
+
+
+def get_aggregator():
+    return Aggregator()
+
 
 app = FastAPI()
 
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
-
-
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
+@app.get("/lemma/{key}")
+def get_lemma(
+    key: str, aggregator: Aggregator = Depends(get_aggregator)
+) -> LemmaResult:
+    return aggregator.query_lemma(key)
