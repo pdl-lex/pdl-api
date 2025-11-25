@@ -1,0 +1,7 @@
+[project]
+name = "adl-api"
+version = "0.1.0"
+description = "Dictionary API for the ADL platform"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []

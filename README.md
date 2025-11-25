@@ -1,0 +1,1 @@
+# ADL Dictionary API
