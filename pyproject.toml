@@ -7,3 +7,47 @@ requires-python = ">=3.10"
 dependencies = [
     "fastapi[standard]>=0.122.0",
 ]
+
+[dependency-groups]
+dev = [
+    "poethepoet>=0.38.0",
+    "ruff>=0.14.6",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "I",   # isort
+    "N",   # pep8-naming
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+]
+fixable = ["ALL"]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.params.Depends",
+    "fastapi.Query",
+    "fastapi.params.Query"
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.poe.tasks]
+lint = "ruff check ."
+format = "ruff format ."
+test = "pytest"
+
+[tool.poe.tasks.check]
+sequence = [
+    { cmd = "ruff check ." },
+    { cmd = "ruff format --check ." },
+]
+help = "Run all checks"
