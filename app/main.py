@@ -3,7 +3,6 @@ from fastapi import Depends, FastAPI
 from app.models import LemmaResult
 from app.services.aggregator import Aggregator
 
-
 app = FastAPI()
 
 
