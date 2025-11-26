@@ -5,12 +5,13 @@ API for the ADL platform based on [FastAPI](https://fastapi.tiangolo.com/).
 ## Setup
 
 If you don't have it, you need to [install uv][uv].
+
 Clone the project, navigate to adl-api/ and run `uv sync`. To start the development server, run
 `uv run fastapi dev`.
 
-It is strongly recommended to configure your code editor handle formatting and linting (cf. the
-Code Quality section below). To configure VS Code, add the following contents to
-.vscode/settings.json:
+It is **strongly recommended** to configure your code editor handle formatting and linting (cf. the
+Code Quality section below). For example, to configure VS Code, install the [Ruff][ruffext]
+extension and add the following contents to your .vscode/settings.json:
 
 ```json
 {
@@ -47,3 +48,4 @@ uv run poe check
 ```
 
 [uv]: https://docs.astral.sh/uv/getting-started/installation/
+[ruffext]: https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff
