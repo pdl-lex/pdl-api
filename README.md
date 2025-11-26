@@ -9,8 +9,8 @@ If you don't have it, you need to [install uv][uv].
 Clone the project, navigate to adl-api/ and run `uv sync`. To start the development server, run
 `uv run fastapi dev`.
 
-It is **strongly recommended** to configure your code editor handle formatting and linting (cf. the
-Code Quality section below). For example, to configure VS Code, install the [Ruff][ruffext]
+It is **strongly recommended** to configure your code editor to handle formatting and linting (cf.
+the Code Quality section below). For example, to set up VS Code, install the [Ruff][ruffext]
 extension and add the following contents to your .vscode/settings.json:
 
 ```json
