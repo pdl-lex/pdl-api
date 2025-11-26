@@ -34,7 +34,7 @@ Code should adhere to the project's formatting and linting standards. We use:
 - [Ruff](https://docs.astral.sh/ruff/) as linter and code formatter
 - [Poe the Poet](https://poethepoet.natn.io/) for task handling
 
-To run the formatter and linter manually.
+To run the formatter and linter manually:
 
 ```bash
 # Format code with ruff
