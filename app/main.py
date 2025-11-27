@@ -1,11 +1,10 @@
 from fastapi import Depends, FastAPI
 
-from app.models import LemmaResult
-from app.services.aggregator import Aggregator
+from app.services.lemma_service import LemmaService
 
 app = FastAPI()
 
 
-@app.get("/lemma/{key}")
-def get_lemma(key: str, aggregator: Aggregator = Depends(Aggregator)) -> LemmaResult:
-    return aggregator.query_lemma(key)
+@app.get("/api/lemma/{lemma}")
+def get_lemma(lemma: str, lemma_service: LemmaService = Depends(LemmaService)):
+    return lemma_service.query_lemma(lemma)
