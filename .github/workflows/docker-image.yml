@@ -13,9 +13,11 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       packages: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,3 +35,19 @@ jobs:
           context: .
           push: true
           tags: ghcr.io/${{ github.repository }}:latest
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to VM
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: adldeploy
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            docker pull ghcr.io/${{ github.repository }}:latest
+            cd /home/adldeploy/adl-deploy
+            docker-compose up -d --no-deps adl-api
+            docker image prune -af
