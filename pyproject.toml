@@ -45,6 +45,7 @@ indent-style = "space"
 lint = "ruff check ."
 format = "ruff format ."
 test = "pytest"
+dev = { shell = "set -a && source .env && set +a && uv run fastapi dev" }
 
 [tool.poe.tasks.check]
 sequence = [

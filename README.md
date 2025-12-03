@@ -2,12 +2,18 @@
 
 API for the ADL platform based on [FastAPI](https://fastapi.tiangolo.com/).
 
-## Setup
+## Development Setup
 
-If you don't have it, you need to [install uv][uv].
+Requires [uv][uv] to be installed.
 
-Clone the project, navigate to adl-api/ and run `uv sync`. To start the development server, run
-`uv run fastapi dev`.
+- Clone the project
+- Navigate to adl-api/
+- Run `uv sync`
+- Create a `.env` file in the project root and set `MONGODB_URI` with a local or remote connection
+  string.
+
+To start the development server, run `uv run poe dev`. The command loads the .env variables and
+spins up the fastapi app.
 
 It is **strongly recommended** to configure your code editor to handle formatting and linting (cf.
 the Code Quality section below). For example, to set up VS Code, install the [Ruff][ruffext]
