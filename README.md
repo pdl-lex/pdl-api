@@ -1,10 +1,11 @@
 # ADL Dictionary API
 
-API for the ADL platform based on [FastAPI](https://fastapi.tiangolo.com/).
+API for the [LexoTerm](https://github.com/adl-lex/adl-platform) research platform based on
+[FastAPI](https://fastapi.tiangolo.com/).
 
 ## Development Setup
 
-Requires [uv][uv] to be installed.
+Requires [uv][uv].
 
 - Clone the project
 - Navigate to adl-api/
