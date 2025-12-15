@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel as DefaultModel
@@ -7,22 +6,6 @@ from pydantic import ConfigDict, Field
 
 class BaseModel(DefaultModel):
     model_config = ConfigDict(extra="forbid")
-
-
-class Dictionary(Enum):
-    BWB = "bwb"
-    WBF = "wbf"
-    DIBS = "dibs"
-
-
-class LemmaItem(BaseModel):
-    source: Dictionary
-    lemma: str
-    pos: str
-
-
-class LemmaResult(BaseModel):
-    results: list[LemmaItem]
 
 
 class Form(BaseModel):
