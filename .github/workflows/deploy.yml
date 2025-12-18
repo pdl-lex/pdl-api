@@ -1,4 +1,4 @@
-name: Build and Push to GHCR
+name: Deploy
 
 on:
   push:
@@ -11,8 +11,31 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: uv sync --dev
+
+      - name: Run format check
+        run: uv run poe check
+
   build:
     runs-on: ubuntu-latest
+    needs: [check]
 
     permissions:
       contents: read
