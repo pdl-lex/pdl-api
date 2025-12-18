@@ -18,7 +18,7 @@ app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/lemma/{lemma_id}")
-def fetch_lemma_entry(lemma_id: str) -> Entry:
+def fetch_lemma_entry(lemma_id: str = "bwb__Datschi") -> Entry:
     return app.state.lemma_service.fetch_lemma(lemma_id)
 
 
