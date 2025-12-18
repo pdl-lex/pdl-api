@@ -1,7 +1,14 @@
+from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel as DefaultModel
 from pydantic import ConfigDict, Field
+
+
+class Resource(Enum):
+    BWB = "bwb"
+    DIBS = "dibs"
+    WBF = "wbf"
 
 
 class BaseModel(DefaultModel):

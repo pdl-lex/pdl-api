@@ -1,9 +1,10 @@
 import os
+from typing import Optional
 
 from fastapi import HTTPException
 from pymongo import MongoClient
 
-from app.models import Entry
+from app.models import Entry, Resource
 
 
 class LemmaService:
@@ -12,8 +13,15 @@ class LemmaService:
         self.db = self.client["lex"]
         self.entries = self.db["entries"]
 
-    def free_text_search(self, query: str) -> list[Entry]:
-        results = self.entries.find({"$text": {"$search": query}})
+    def free_text_search(
+        self, term: str, resource: Optional[list[Resource]] = None
+    ) -> list[Entry]:
+        query = {"$text": {"$search": term}}
+        if resource:
+            query["src"] = {"$in": [s.value for s in resource]}
+
+        print(self.entries.count_documents(query))
+        results = self.entries.find(query)
 
         return [result.get("entry") for result in results]
 
