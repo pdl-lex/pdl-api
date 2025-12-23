@@ -4,7 +4,7 @@ from typing import Optional
 from fastapi import HTTPException
 from pymongo import MongoClient
 
-from app.models import Entry, Resource
+from app.models import DisplayEntry, Entry, Resource
 
 
 class LemmaService:
@@ -12,6 +12,7 @@ class LemmaService:
         self.client = MongoClient(os.environ["MONGODB_URI"])
         self.db = self.client["lex"]
         self.entries = self.db.get_collection("entries")
+        self.display = self.db.get_collection("display")
 
     def free_text_search(
         self, term: str, resource: Optional[list[Resource]] = None
@@ -32,3 +33,11 @@ class LemmaService:
             raise HTTPException(status_code=404, detail=f"Unknown id: {lemma_id!r}")
 
         return result["entry"]
+
+    def fetch_lemma_display(self, lemma_id: str) -> DisplayEntry:
+        result = self.display.find_one({"xml:id": lemma_id}, projection={"_id": False})
+
+        if result is None:
+            raise HTTPException(status_code=404, detail=f"Unknown id: {lemma_id!r}")
+
+        return result

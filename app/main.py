@@ -36,6 +36,11 @@ def fetch_lemma_entry(lemma_id: str = "bwb__Datschi") -> Entry:
     return app.state.lemma_service.fetch_lemma(lemma_id)
 
 
+@app.get("/lemma-display/{lemma_id}")
+def fetch_lemma_display_entry(lemma_id: str = "bwb__Datschi") -> DisplayEntry:
+    return app.state.lemma_service.fetch_lemma_display(lemma_id)
+
+
 @app.get("/search")
 def free_text_search(
     q: str = "Suchwort", resource: Optional[list[Resource]] = Query(default=None)
