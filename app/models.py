@@ -81,12 +81,25 @@ class CrossReference(BaseModel):
     subtype: Optional[str]
 
 
-class Entry(BaseModel):
+class AbstractBaseEntry(BaseModel):
     etym: Optional[list[Etymology] | list[str]] = []
-    form: list[Form]
     sense: Optional[list[Sense]] = []
     xml_id: str = Field(alias="xml:id")
     xml_lang: str = Field(alias="xml:lang")
-    gram_grp: Optional[list[GrammarGroup]] = Field(alias="gramGrp", default=None)
     list_bibl: Optional[ListBibl] = Field(alias="listBibl", default=None)
     xr: Optional[list[CrossReference]] = []
+
+
+class Entry(AbstractBaseEntry):
+    form: list[Form]
+    gram_grp: Optional[list[GrammarGroup]] = Field(alias="gramGrp", default=None)
+
+
+class DisplayEntry(AbstractBaseEntry):
+    headword: str
+    source: Resource
+    variants: list[str]
+    flat_senses: Optional[list[Sense]] = Field(alias="flatSenses", default=[])
+    gender: Optional[str] = None
+    pos: Optional[str] = None
+    number: Optional[str] = None
