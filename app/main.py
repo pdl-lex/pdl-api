@@ -43,7 +43,7 @@ def free_text_search(
     return app.state.lemma_service.free_text_search(q, resource)
 
 
-@app.post("/insert_display_data")
+@app.post("/insert-display-data")
 def insert_display_data(
     data: list[DisplayEntry], _api_key: str = Depends(verify_api_key)
 ):
