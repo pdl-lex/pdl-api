@@ -1,16 +1,29 @@
+import os
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from fastapi import FastAPI, Query
+from fastapi import Depends, FastAPI, Header, HTTPException, Query
 
-from app.models import Entry, Resource
+from app.models import DisplayEntry, Entry, Resource
+from app.services.import_service import ImportService
 from app.services.lemma_service import LemmaService
+
+API_KEY = os.environ["MONGO_API_KEY"]
+
+
+def verify_api_key(x_api_key: str = Header(...)):
+    if x_api_key != API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid API key")
+    return x_api_key
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     lemma_service = LemmaService()
     app.state.lemma_service = lemma_service
+
+    import_service = ImportService()
+    app.state.import_service = import_service
 
     yield
 
@@ -28,3 +41,12 @@ def free_text_search(
     q: str = "Suchwort", resource: Optional[list[Resource]] = Query(default=None)
 ) -> list[Entry]:
     return app.state.lemma_service.free_text_search(q, resource)
+
+
+@app.post("/insert_display_data")
+def insert_display_data(
+    data: list[DisplayEntry], _api_key: str = Depends(verify_api_key)
+):
+    import_service: ImportService = app.state.import_service
+
+    import_service.insert_display_data(data)
