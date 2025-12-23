@@ -11,7 +11,7 @@ class LemmaService:
     def __init__(self):
         self.client = MongoClient(os.environ["MONGODB_URI"])
         self.db = self.client["lex"]
-        self.entries = self.db["entries"]
+        self.entries = self.db.get_collection("entries")
 
     def free_text_search(
         self, term: str, resource: Optional[list[Resource]] = None
