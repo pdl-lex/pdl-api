@@ -20,11 +20,9 @@ class LemmaService:
         query = {"$text": {"$search": term}}
 
         if resource:
-            query["src"] = {"$in": [s.value for s in resource]}
+            query["source"] = {"$in": [s.value for s in resource]}
 
-        results = self.entries.find(query)
-
-        return [result.get("entry") for result in results]
+        return self.display.find(query, projection={"_id": False})
 
     def fetch_lemma(self, lemma_id: str) -> Entry:
         result = self.entries.find_one({"entry.xml:id": lemma_id})

@@ -44,8 +44,9 @@ def fetch_lemma_display_entry(lemma_id: str = "bwb__Datschi") -> DisplayEntry:
 @app.get("/search")
 def free_text_search(
     q: str = "Suchwort", resource: Optional[list[Resource]] = Query(default=None)
-) -> list[Entry]:
-    return app.state.lemma_service.free_text_search(q, resource)
+) -> list[DisplayEntry]:
+    lemma_service: LemmaService = app.state.lemma_service
+    return lemma_service.free_text_search(q, resource)
 
 
 @app.post("/insert-display-data")
