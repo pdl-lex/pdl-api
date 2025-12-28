@@ -5,7 +5,10 @@ from pymongo import ASCENDING, IndexModel, MongoClient
 
 from app.models import DisplayEntry
 
-fulltext_search_fields = ["headword", "flatSenses.def"]
+fulltext_search_fields = [
+    {"key": "headword", "weight": 10},
+    {"key": "flatSenses.def", "weight": 1},
+]
 index_fields = [
     "source",
     "xml:id",
@@ -28,7 +31,9 @@ class ImportService:
 
     def _create_indexes(self):
         self.display.create_index(
-            [(field, "text") for field in fulltext_search_fields], name="fulltextIndex"
+            [(field["key"], "text") for field in fulltext_search_fields],
+            name="fulltextIndex",
+            weights={field["key"]: field["weight"] for field in fulltext_search_fields},
         )
 
         self.display.create_indexes(
