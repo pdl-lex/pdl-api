@@ -4,7 +4,7 @@ from typing import Optional
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
 
-from app.models import DisplayEntry, Entry, Resource
+from app.models import DisplayEntry, DisplayEntryList, Entry, Resource
 from app.services.import_service import ImportService
 from app.services.lemma_service import LemmaService
 
@@ -43,18 +43,15 @@ def fetch_lemma_display_entry(lemma_id: str = "bwb__Datschi") -> DisplayEntry:
 
 @app.get("/search")
 def free_text_search(
-    q: str = "Suchwort", resource: Optional[list[Resource]] = Query(default=None)
-) -> list[DisplayEntry]:
+    q: str = "Suchwort",
+    resources: Optional[list[Resource]] = Query(default=None),
+    page: int = 1,
+    results_per_page: int = 10,
+) -> DisplayEntryList:
     lemma_service: LemmaService = app.state.lemma_service
-    return lemma_service.free_text_search(q, resource)
-
-
-@app.get("/search-count")
-def free_text_search_count(
-    q: str = "Suchwort", resource: Optional[list[Resource]] = Query(default=None)
-) -> int:
-    lemma_service: LemmaService = app.state.lemma_service
-    return lemma_service.free_text_search_count(q, resource)
+    return lemma_service.free_text_search(
+        q, page=page, results_per_page=results_per_page, resources=resources
+    )
 
 
 @app.post("/insert-display-data")
