@@ -103,3 +103,4 @@ class DisplayEntry(AbstractBaseEntry):
     gender: Optional[str] = None
     pos: Optional[str] = None
     number: Optional[str] = None
+    normalized_pos: Optional[str] = Field(alias="nPos", default=None)
