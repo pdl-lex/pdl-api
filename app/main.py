@@ -49,6 +49,14 @@ def free_text_search(
     return lemma_service.free_text_search(q, resource)
 
 
+@app.get("/search-count")
+def free_text_search_count(
+    q: str = "Suchwort", resource: Optional[list[Resource]] = Query(default=None)
+) -> int:
+    lemma_service: LemmaService = app.state.lemma_service
+    return lemma_service.free_text_search_count(q, resource)
+
+
 @app.post("/insert-display-data")
 def insert_display_data(
     data: list[DisplayEntry], _api_key: str = Depends(verify_api_key)
