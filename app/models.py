@@ -104,3 +104,10 @@ class DisplayEntry(AbstractBaseEntry):
     pos: Optional[str] = None
     number: Optional[str] = None
     normalized_pos: Optional[str] = Field(alias="nPos", default=None)
+
+
+class DisplayEntryList(BaseModel):
+    items: list[DisplayEntry]
+    total: int
+    page: int
+    items_per_page: int = Field(alias="itemsPerPage")
