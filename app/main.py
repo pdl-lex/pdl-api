@@ -38,6 +38,14 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 @app.get("/lemma/{lemma_id}")
 def fetch_lemma_entry(lemma_id: str = "bwb__Datschi") -> Entry:
