@@ -3,10 +3,18 @@ from contextlib import asynccontextmanager
 from typing import Optional
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 
-from app.models import DisplayEntry, Entry, Resource
+from app.models import DisplayEntry, DisplayEntryList, Entry, Resource
 from app.services.import_service import ImportService
 from app.services.lemma_service import LemmaService
+
+ORIGINS = [
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+    "https://lexoterm.de",
+]
+
 
 API_KEY = os.environ["MONGO_API_KEY"]
 
