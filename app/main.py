@@ -59,14 +59,21 @@ def fetch_lemma_display_entry(lemma_id: str = "bwb__Datschi") -> DisplayEntry:
 
 @app.get("/search")
 def free_text_search(
-    q: str = "Suchwort",
+    q: Optional[str] = None,
     resources: Optional[list[Resource]] = Query(default=None),
+    pos: Optional[str] = Query(default=None),
+    npos: Optional[str] = Query(default=None),
     page: int = 1,
     results_per_page: int = 10,
 ) -> DisplayEntryList:
     lemma_service: LemmaService = app.state.lemma_service
     return lemma_service.free_text_search(
-        q, page=page, results_per_page=results_per_page, resources=resources
+        q,
+        page=page,
+        results_per_page=results_per_page,
+        resources=resources,
+        pos=pos,
+        npos=npos,
     )
 
 

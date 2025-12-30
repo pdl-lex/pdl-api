@@ -7,9 +7,22 @@ from pymongo import MongoClient
 from app.models import DisplayEntry, DisplayEntryList, Entry, Resource
 
 
-def _filter_by_resources(query: dict, resources: Optional[list[Resource]]) -> dict:
+def _build_query(
+    term: Optional[str] = None,
+    resources: Optional[list[Resource]] = None,
+    pos: Optional[str] = None,
+    npos: Optional[str] = None,
+) -> dict:
+    query = {}
+
+    if term:
+        query = {**query, "$text": {"$search": term}}
     if resources:
-        return {**query, "source": {"$in": [s.value for s in resources]}}
+        query = {**query, "source": {"$in": [s.value for s in resources]}}
+    if pos:
+        query = {**query, "pos": pos}
+    if npos:
+        query = {**query, "nPos": npos.upper()}
     return query
 
 
@@ -25,9 +38,9 @@ class LemmaService:
         term: str,
         page: int,
         results_per_page: int,
-        resources: Optional[list[Resource]] = None,
+        **filters,
     ) -> DisplayEntryList:
-        query = _filter_by_resources({"$text": {"$search": term}}, resources)
+        query = _build_query(term=term, **filters)
 
         pipeline = [
             {"$match": query},
@@ -43,7 +56,7 @@ class LemmaService:
             },
             {
                 "$addFields": {
-                    "total": {"$first": "$total.count"},
+                    "total": {"$ifNull": [{"$first": "$total.count"}, 0]},
                     "page": {"$literal": page},
                     "itemsPerPage": {"$literal": results_per_page},
                 }
