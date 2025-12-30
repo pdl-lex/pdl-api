@@ -59,7 +59,7 @@ def fetch_lemma_display_entry(lemma_id: str = "bwb__Datschi") -> DisplayEntry:
 
 @app.get("/search")
 def free_text_search(
-    q: str = "Suchwort",
+    q: Optional[str] = None,
     resources: Optional[list[Resource]] = Query(default=None),
     pos: Optional[str] = Query(default=None),
     npos: Optional[str] = Query(default=None),
