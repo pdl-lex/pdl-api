@@ -22,7 +22,7 @@ def _build_query(
     if pos:
         query = {**query, "pos": pos}
     if npos:
-        query = {**query, "nPos": npos.upper()}
+        query = {**query, "nPos": npos}
     return query
 
 
