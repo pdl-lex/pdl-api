@@ -43,7 +43,7 @@ class LemmaService:
             },
             {
                 "$addFields": {
-                    "total": {"$first": "$total.count"},
+                    "total": {"$ifNull": [{"$first": "$total.count"}, 0]},
                     "page": {"$literal": page},
                     "itemsPerPage": {"$literal": results_per_page},
                 }
