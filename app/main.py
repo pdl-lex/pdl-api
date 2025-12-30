@@ -61,6 +61,7 @@ def fetch_lemma_display_entry(lemma_id: str = "bwb__Datschi") -> DisplayEntry:
 def free_text_search(
     q: str = "Suchwort",
     resources: Optional[list[Resource]] = Query(default=None),
+    pos: Optional[str] = Query(default=None),
     npos: Optional[str] = Query(default=None),
     page: int = 1,
     results_per_page: int = 10,
@@ -71,6 +72,7 @@ def free_text_search(
         page=page,
         results_per_page=results_per_page,
         resources=resources,
+        pos=pos,
         npos=npos,
     )
 

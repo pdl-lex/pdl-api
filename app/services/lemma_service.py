@@ -7,11 +7,22 @@ from pymongo import MongoClient
 from app.models import DisplayEntry, DisplayEntryList, Entry, Resource
 
 
-def _add_filters(query: dict, **filters) -> dict:
-    if filters.get("resources"):
-        query = {**query, "source": {"$in": [s.value for s in filters["resources"]]}}
-    if filters.get("npos"):
-        query = {**query, "nPos": filters["npos"].upper()}
+def _build_query(
+    term: Optional[str] = None,
+    resources: Optional[list[Resource]] = None,
+    pos: Optional[str] = None,
+    npos: Optional[str] = None,
+) -> dict:
+    query = {}
+
+    if term:
+        query = {**query, "$text": {"$search": term}}
+    if resources:
+        query = {**query, "source": {"$in": [s.value for s in resources]}}
+    if pos:
+        query = {**query, "pos": pos}
+    if npos:
+        query = {**query, "nPos": npos.upper()}
     return query
 
 
@@ -27,12 +38,9 @@ class LemmaService:
         term: str,
         page: int,
         results_per_page: int,
-        resources: Optional[list[Resource]] = None,
-        npos: Optional[str] = None,
+        **filters,
     ) -> DisplayEntryList:
-        query = _add_filters(
-            {"$text": {"$search": term}}, resources=resources, npos=npos
-        )
+        query = _build_query(term=term, **filters)
 
         pipeline = [
             {"$match": query},
