@@ -8,6 +8,7 @@ from app.models import DisplayEntry
 fulltext_search_fields = [
     {"key": "headword.lemma", "weight": 10},
     {"key": "flatSenses.def", "weight": 1},
+    {"key": "flatSenses.cit.quote", "weight": 1},
 ]
 index_fields = [
     "source",
