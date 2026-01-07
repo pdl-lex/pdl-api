@@ -1,4 +1,5 @@
 import os
+import re
 from typing import Optional
 
 from fastapi import HTTPException
@@ -6,9 +7,19 @@ from pymongo import MongoClient
 
 from app.models import DisplayEntry, DisplayEntryList, Entry, Resource
 
+
+def _build_lemma_query(lemma: str) -> dict:
+    if pattern_match := re.match(r"^/([^/]+)/([imxs]*)?$", lemma):
+        pattern = pattern_match.group(1)
+        flags = pattern_match.group(2) or ""
+        return {"headword.lemma": {"$regex": pattern, "$options": flags}}
+    else:
+        return {"headword.lemma": lemma}
+
+
 dispatcher = {
     "term": lambda args: {"$text": {"$search": args["term"]}},
-    "lemma": lambda args: {"headword.lemma": args["lemma"]},
+    "lemma": lambda args: _build_lemma_query(args["lemma"]),
     "resources": lambda args: {"source": {"$in": [s.value for s in args["resources"]]}},
     "pos": lambda args: {"pos": args["pos"]},
     "npos": lambda args: {"nPos": args["npos"]},
