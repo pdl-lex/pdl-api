@@ -17,6 +17,7 @@ class BaseModel(DefaultModel):
 
 class Form(BaseModel):
     orth: Optional[str] = ""
+    n: Optional[str] = None
     type_: str = Field(alias="type")
     form: Optional[list["Form"]] = []
 
@@ -25,7 +26,7 @@ class Citation(BaseModel):
     bibl: Optional[list[dict]] = []
     type_: str = Field(alias="type")
     quote: Optional[str] = None
-    xml_id: str = Field(alias="xml:id")
+    xml_id: Optional[str] = Field(alias="xml:id", default=None)
     note: Optional[list[dict]] = []
 
 
