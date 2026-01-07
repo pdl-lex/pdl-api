@@ -95,8 +95,13 @@ class Entry(AbstractBaseEntry):
     gram_grp: Optional[list[GrammarGroup]] = Field(alias="gramGrp", default=None)
 
 
+class Headword(BaseModel):
+    lemma: str
+    index: Optional[int] = None
+
+
 class DisplayEntry(AbstractBaseEntry):
-    headword: str
+    headword: Headword
     source: Resource
     variants: list[str]
     flat_senses: Optional[list[Sense]] = Field(alias="flatSenses", default=[])
