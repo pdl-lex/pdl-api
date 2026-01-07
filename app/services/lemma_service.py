@@ -6,23 +6,22 @@ from pymongo import MongoClient
 
 from app.models import DisplayEntry, DisplayEntryList, Entry, Resource
 
+dispatcher = {
+    "term": lambda args: {"$text": {"$search": args["term"]}},
+    "lemma": lambda args: {"headword.lemma": args["lemma"]},
+    "resources": lambda args: {"source": {"$in": [s.value for s in args["resources"]]}},
+    "pos": lambda args: {"pos": args["pos"]},
+    "npos": lambda args: {"nPos": args["npos"]},
+}
 
-def _build_query(
-    term: Optional[str] = None,
-    resources: Optional[list[Resource]] = None,
-    pos: Optional[str] = None,
-    npos: Optional[str] = None,
-) -> dict:
+
+def _build_query(**kwargs) -> dict:
     query = {}
 
-    if term:
-        query = {**query, "$text": {"$search": term}}
-    if resources:
-        query = {**query, "source": {"$in": [s.value for s in resources]}}
-    if pos:
-        query = {**query, "pos": pos}
-    if npos:
-        query = {**query, "nPos": npos}
+    for key, func in dispatcher.items():
+        if key in kwargs and kwargs[key] is not None:
+            query = {**query, **func(kwargs)}
+
     return query
 
 
