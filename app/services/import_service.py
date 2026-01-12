@@ -3,7 +3,7 @@ import os
 from pydantic import TypeAdapter
 from pymongo import ASCENDING, IndexModel, MongoClient
 
-from app.models import DisplayEntry
+from app.models.entry import DisplayEntry
 
 fulltext_search_fields = [
     {"key": "headword.lemma", "weight": 10},

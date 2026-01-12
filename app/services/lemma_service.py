@@ -1,11 +1,10 @@
 import os
 import re
-from typing import Optional
 
 from fastapi import HTTPException
 from pymongo import MongoClient
 
-from app.models import DisplayEntry, DisplayEntryList, Entry, Resource
+from app.models.entry import DisplayEntry, DisplayEntryList, Entry
 
 
 def _build_lemma_query(lemma: str) -> dict:
