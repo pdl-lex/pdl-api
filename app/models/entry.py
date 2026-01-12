@@ -1,18 +1,16 @@
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel as DefaultModel
-from pydantic import ConfigDict, Field
+from pydantic import Field
+
+from app.models.base import BaseModel
+from app.models.rich_text import RichTextField
 
 
 class Resource(Enum):
     BWB = "bwb"
     DIBS = "dibs"
     WBF = "wbf"
-
-
-class BaseModel(DefaultModel):
-    model_config = ConfigDict(extra="forbid")
 
 
 class Form(BaseModel):
@@ -42,11 +40,7 @@ class Sense(BaseModel):
 
 class EtymologySegment(BaseModel):
     type_: str = Field(alias="type")
-    value: str
-    target: Optional[str] = None
-    unit: Optional[str] = None
-    content: Optional[list["EtymologySegment"]] = []
-    rend: Optional[str] = None
+    content: RichTextField
 
 
 class Etymology(BaseModel):
@@ -110,6 +104,7 @@ class DisplayEntry(AbstractBaseEntry):
     pos: Optional[str] = None
     number: Optional[str] = None
     normalized_pos: Optional[str] = Field(alias="nPos", default=None)
+    etym: Optional[RichTextField] = None
 
 
 class DisplayEntryList(BaseModel):

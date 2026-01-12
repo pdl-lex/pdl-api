@@ -5,7 +5,7 @@ from typing import Optional
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.models import DisplayEntry, DisplayEntryList, Entry, Resource
+from app.models.entry import DisplayEntry, DisplayEntryList, Entry, Resource
 from app.services.import_service import ImportService
 from app.services.lemma_service import LemmaService
 
