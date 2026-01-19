@@ -3,6 +3,7 @@ from pathlib import Path
 
 from pydash import omit, unique_id
 
+from app.data_processing.resources.bdo.bdo_standoff import process_etymology
 from app.data_processing.transformation.xml_transformer import BaseXmlTransformer, xpath
 from app.models.entry import DisplayEntry
 
@@ -57,8 +58,10 @@ def transform_sense(node):
 class BdoXmlTransformer(BaseXmlTransformer):
     @xpath(".//lemma", default="")
     def headword(self, lemma_node):
-        hoch = lemma_node.find("hoch")
-        return {"lemma": lemma_node.text, "index": None if hoch is None else hoch.text}
+        return {
+            "lemma": lemma_node.text,
+            "index": getattr(lemma_node.find("hoch"), "text", None),
+        }
 
     @xpath(".//lemma-position/lemma-variante/@vollform", multiple=True, default="")
     def variants(self, items):
@@ -88,6 +91,12 @@ class BdoXmlTransformer(BaseXmlTransformer):
     def number(self, value):
         return value
 
+    @xpath(".//etymologie-position")
+    def etym(self, value):
+        standoff = process_etymology(value)
+
+        return standoff
+
     def postprocess(self, data, _element):
         data["xml:lang"] = "DE"
         data["flatSenses"] = flatten_senses(data.get("sense", []))
@@ -97,7 +106,7 @@ class BdoXmlTransformer(BaseXmlTransformer):
 
 
 if __name__ == "__main__":
-    testfile = "/Users/di97put/projects/pdl-xml-transformer/datschi_reformatted.xml"
+    testfile = "Änkel.xml"
     bdo_transformer = BdoXmlTransformer(testfile)
     result = bdo_transformer.transform()
 
