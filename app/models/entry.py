@@ -5,6 +5,7 @@ from pydantic import Field
 
 from app.models.base import BaseModel
 from app.models.rich_text import RichTextField
+from app.models.standoff import AnnotatedText
 
 
 class Resource(Enum):
@@ -104,7 +105,7 @@ class DisplayEntry(AbstractBaseEntry):
     pos: Optional[str] = None
     number: Optional[str] = None
     normalized_pos: Optional[str] = Field(alias="nPos", default=None)
-    etym: Optional[RichTextField] = None
+    etym: Optional[AnnotatedText] = None
 
 
 class DisplayEntryList(BaseModel):
