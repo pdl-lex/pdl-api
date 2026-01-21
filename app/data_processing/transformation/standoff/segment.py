@@ -1,4 +1,12 @@
+from abc import ABC, abstractmethod
+
 from app.data_processing.transformation.standoff.span import ComparableSpan
+from app.models.span_annotation import (
+    AnnotatedTextDisplay,
+    BibRefSpanDisplay,
+    CrossRefSpanDisplay,
+    TextSpanDisplay,
+)
 
 
 class TextSegment(ComparableSpan):
@@ -11,7 +19,7 @@ class TextSegment(ComparableSpan):
     def update_labels(self, additional_labels):
         self.labels.update(additional_labels)
 
-    def to_display(self):
+    def to_display(self) -> TextSpanDisplay:
         dump = {"type": "text", "text": self.text}
 
         if len(self.labels) > 0:
@@ -19,46 +27,40 @@ class TextSegment(ComparableSpan):
 
         return dump
 
-    def __repr__(self):
-        return repr(str(self))
 
-
-class ContainerSegment(TextSegment):
+class ContainerSegment(ABC, TextSegment):
     _type = "container"
 
-    def __init__(self, text_segment, root_span):
-        super().__init__(text_segment.start, text_segment.text)
-        self.segments = [text_segment]
-        self.root_span = root_span
+    def __init__(self, span):
+        super().__init__(span.start, span.text)
+        self.segments = []
 
     @classmethod
-    def of(cls, segment, span):
+    def of(cls, span):
         for subclass in cls.__subclasses__():
             if subclass._type == span.type:
-                return subclass(segment, span)
-        return cls(segment, span)
+                return subclass(span)
+        return cls(span)
 
-    def merge(self, next_segment):
-        self.end = next_segment.end
-        self.text += next_segment.text
-        self.segments.append(next_segment)
+    def push_segment(self, segment):
+        self.segments.append(segment)
 
-    def to_display(self):
-        dump = {"type": "_container"}
+        return self
 
-        return dump
+    @abstractmethod
+    def to_display(self): ...
 
 
 class CrossRefSegment(ContainerSegment):
     _type = "crossref"
 
-    def __init__(self, text_segment, root_span):
-        super().__init__(text_segment, root_span)
+    def __init__(self, span):
+        super().__init__(span)
 
-        self.target = root_span.target
-        self.variant = root_span.variant
+        self.target = span.target
+        self.variant = span.variant
 
-    def to_display(self):
+    def to_display(self) -> CrossRefSpanDisplay:
         return {
             "type": "crossref",
             "text": self.text,
@@ -71,22 +73,23 @@ class CrossRefSegment(ContainerSegment):
 class BibRefSegment(ContainerSegment):
     _type = "bibref"
 
-    def __init__(self, text_segment, root_span):
-        super().__init__(text_segment, root_span)
+    def __init__(self, span):
+        super().__init__(span)
 
-        self.full_reference_data = self.root_span.full_reference
-        self.bib_id = self.root_span.bib_id
+        self.full_reference_data = span.full_reference
+        self.bib_id = span.bib_id
 
-    def set_full_reference(self, full_reference):
+    def set_full_reference(self, full_reference: AnnotatedTextDisplay):
         self.full_reference = full_reference
+        return self
 
-    def to_display(self):
+    def to_display(self) -> BibRefSpanDisplay:
         dump = {
             "type": "bibref",
             "text": self.text,
-            "bib_id": self.bib_id,
+            "bibId": self.bib_id,
             "content": [segment.to_display() for segment in self.segments],
-            "detailContent": self.full_reference,
+            "fullReference": self.full_reference,
         }
 
         return dump
