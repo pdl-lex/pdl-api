@@ -106,15 +106,3 @@ class BdoXmlTransformer(BaseXmlTransformer):
         data["nPos"] = POS_MAP[data["pos"]] if "pos" in data else None
 
         return data
-
-
-if __name__ == "__main__":
-    testfile = "Änkel.xml"
-    bdo_transformer = BdoXmlTransformer(testfile)
-    result = bdo_transformer.transform()
-
-    DisplayEntry.model_validate(result)
-
-    from pprint import pprint
-
-    pprint(result)
