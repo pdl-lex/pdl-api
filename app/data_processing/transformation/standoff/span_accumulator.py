@@ -6,6 +6,7 @@ from app.data_processing.transformation.standoff.segment import (
     TextSegment,
 )
 from app.data_processing.transformation.standoff.span import Span
+from app.models.span_annotation import AnnotatedTextDisplay
 
 
 class SpanAccumulator:
@@ -49,29 +50,29 @@ class SpanAccumulator:
         for segment in self.segments:
             yield (segment, list(self.spans_in_range(segment, only=only)))
 
+    def _set_full_reference(self, container: BibRefSegment):
+        full_reference = SpanAccumulator(container.full_reference_data).to_display()
+        return container.set_full_reference(full_reference)
+
     def accumulate_segments(self):
-        for segment, c_spans in self.iter_segments(only=["bibref", "crossref"]):
-            if len(c_spans) == 0:
+        container = None
+
+        for segment, containers in self.iter_segments(only=["bibref", "crossref"]):
+            if len(containers) > 0 and container is None:
+                container = ContainerSegment.of(containers[0])
+                if isinstance(container, BibRefSegment):
+                    container = self._set_full_reference(container)
+
+            if container is None:
                 yield segment
-                continue
-
-            c_span = c_spans[0]
-
-            if segment.start == c_span.start:
-                current_container = ContainerSegment.of(segment, c_span)
-
-                if isinstance(current_container, BibRefSegment):
-                    full_reference = SpanAccumulator(
-                        current_container.full_reference_data
-                    ).to_display()
-                    current_container.set_full_reference(full_reference)
             else:
-                current_container.merge(segment)
+                container.push_segment(segment)
 
-            if segment.end == c_span.end:
-                yield current_container
+                if container.end == segment.end:
+                    yield container
+                    container = None
 
-    def to_display(self):
+    def to_display(self) -> AnnotatedTextDisplay:
         return {
             "text": self.text,
             "spans": [segment.to_display() for segment in self.accumulate_segments()],
