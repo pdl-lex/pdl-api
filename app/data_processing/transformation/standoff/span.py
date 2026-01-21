@@ -26,6 +26,9 @@ class ComparableSpan:
             wrap_text(self.text),
         )
 
+    def __repr__(self):
+        return str(self)
+
 
 class Span(ComparableSpan):
     _type = "span"
