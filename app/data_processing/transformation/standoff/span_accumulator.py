@@ -1,7 +1,7 @@
 from typing import Optional, Sequence
 
 from app.data_processing.transformation.standoff.segment import (
-    BibrefSegment,
+    BibRefSegment,
     ContainerSegment,
     TextSegment,
 )
@@ -60,7 +60,7 @@ class SpanAccumulator:
             if segment.start == c_span.start:
                 current_container = ContainerSegment.of(segment, c_span)
 
-                if isinstance(current_container, BibrefSegment):
+                if isinstance(current_container, BibRefSegment):
                     full_reference = SpanAccumulator(
                         current_container.full_reference_data
                     ).to_display()

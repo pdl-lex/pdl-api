@@ -49,7 +49,7 @@ class ContainerSegment(TextSegment):
         return dump
 
 
-class CrossrefSegment(ContainerSegment):
+class CrossRefSegment(ContainerSegment):
     _type = "crossref"
 
     def __init__(self, text_segment, root_span):
@@ -68,7 +68,7 @@ class CrossrefSegment(ContainerSegment):
         }
 
 
-class BibrefSegment(ContainerSegment):
+class BibRefSegment(ContainerSegment):
     _type = "bibref"
 
     def __init__(self, text_segment, root_span):
