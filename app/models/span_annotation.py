@@ -9,11 +9,11 @@ class BaseAnnotationSpan(BaseModel):
     start: int
     end: int
     text: str
-    labels: Optional[list[str]] = None
 
 
 class TextSpan(BaseAnnotationSpan):
     type: Literal["text"] = "text"
+    labels: Optional[list[str]] = None
 
 
 class LinkSpan(BaseAnnotationSpan):
@@ -24,7 +24,7 @@ class LinkSpan(BaseAnnotationSpan):
 class CrossRefSpan(BaseAnnotationSpan):
     type: Literal["crossref"] = "crossref"
     target: str
-    prefix: Optional[str] = None
+    variant: Optional[str] = None
 
 
 class BibRefSpan(BaseAnnotationSpan):
