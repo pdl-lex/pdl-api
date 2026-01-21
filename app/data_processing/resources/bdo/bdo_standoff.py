@@ -1,6 +1,8 @@
 from copy import deepcopy
 
-from app.data_processing.transformation.standoff_converter import xml_to_standoff
+from app.data_processing.transformation.standoff.standoff_converter import (
+    xml_to_standoff,
+)
 
 
 def inject_prefix(bib_node):

@@ -5,7 +5,7 @@ from pydantic import Field
 
 from app.models.base import BaseModel
 from app.models.rich_text import RichTextField
-from app.models.standoff import AnnotatedText
+from app.models.span_annotation import AnnotatedText
 
 
 class Resource(Enum):
