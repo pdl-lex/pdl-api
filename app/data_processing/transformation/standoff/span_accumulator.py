@@ -72,4 +72,7 @@ class SpanAccumulator:
                 yield current_container
 
     def to_display(self):
-        return [segment.to_display() for segment in self.accumulate_segments()]
+        return {
+            "text": self.text,
+            "spans": [segment.to_display() for segment in self.accumulate_segments()],
+        }
