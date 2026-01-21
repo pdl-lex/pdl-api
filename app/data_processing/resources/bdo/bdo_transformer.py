@@ -4,7 +4,10 @@ from pathlib import Path
 from pydash import omit, unique_id
 
 from app.data_processing.resources.bdo.bdo_standoff import process_etymology
-from app.data_processing.transformation.xml_transformer import BaseXmlTransformer, xpath
+from app.data_processing.transformation.base_xml_transformer import (
+    BaseXmlTransformer,
+    xpath,
+)
 from app.models.entry import DisplayEntry
 
 pos_map_path = Path(__file__).parent / "pos_mapping.json"
