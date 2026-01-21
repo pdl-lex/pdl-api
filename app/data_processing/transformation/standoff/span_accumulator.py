@@ -29,7 +29,7 @@ class SpanAccumulator:
 
         return segment
 
-    def _init_segments(self):
+    def _init_segments(self) -> list[TextSegment]:
         segments = []
         text = self.text
 
@@ -45,23 +45,26 @@ class SpanAccumulator:
 
         return list(reversed(segments))
 
-    def iter_segments(self, only=None):
-        """Iterate over segments with their corresponding spans"""
-        for segment in self.segments:
-            yield (segment, list(self.spans_in_range(segment, only=only)))
+    def get_containers(self, segment):
+        return list(self.spans_in_range(segment, only=["bibref", "crossref"]))
 
-    def _set_full_reference(self, container: BibRefSegment):
-        full_reference = SpanAccumulator(container.full_reference_data).to_display()
-        return container.set_full_reference(full_reference)
+    def _init_container(self, span):
+        container = ContainerSegment.of(span)
+
+        if isinstance(container, BibRefSegment):
+            full_reference = SpanAccumulator(container.full_reference_data).to_display()
+            return container.set_full_reference(full_reference)
+        else:
+            return container
 
     def accumulate_segments(self):
         container = None
 
-        for segment, containers in self.iter_segments(only=["bibref", "crossref"]):
+        for segment in self.segments:
+            containers = self.get_containers(segment)
+
             if len(containers) > 0 and container is None:
-                container = ContainerSegment.of(containers[0])
-                if isinstance(container, BibRefSegment):
-                    container = self._set_full_reference(container)
+                container = self._init_container(containers[0])
 
             if container is None:
                 yield segment
