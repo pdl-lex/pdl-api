@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from app.data_processing.transformation.standoff.standoff_converter import (
+from app.data_processing.transformation.standoff.xml_standoff_converter import (
     xml_to_standoff,
 )
 
