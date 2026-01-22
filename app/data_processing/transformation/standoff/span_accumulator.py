@@ -49,7 +49,7 @@ class SpanAccumulator:
         return list(self.spans_in_range(segment, only=["bibref", "crossref"]))
 
     def _init_container(self, span):
-        container = ContainerSegment.of(span)
+        container = ContainerSegment(span)
 
         if isinstance(container, BibRefSegment):
             full_reference = SpanAccumulator(container.full_reference_data).to_display()

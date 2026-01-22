@@ -36,12 +36,12 @@ class ContainerSegment(ABC, TextSegment):
         super().__init__(span.start, span.text)
         self.segments = []
 
-    @classmethod
-    def of(cls, span):
-        for subclass in cls.__subclasses__():
-            if subclass._type == span.type:
-                return subclass(span)
-        return cls(span)
+    def __new__(cls, span):
+        if cls is ContainerSegment:
+            for subclass in cls.__subclasses__():
+                if subclass._type == span.type:
+                    return super(ContainerSegment, subclass).__new__(subclass)
+        return super().__new__(cls)
 
     def push_segment(self, segment):
         self.segments.append(segment)
