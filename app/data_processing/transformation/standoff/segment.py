@@ -5,6 +5,7 @@ from app.models.span_annotation import (
     AnnotatedTextDisplay,
     BibRefSpanDisplay,
     CrossRefSpanDisplay,
+    LinkSpanDisplay,
     TextSpanDisplay,
 )
 
@@ -59,7 +60,7 @@ class LinkSegment(ContainerSegment):
 
         self.target = span.target
 
-    def to_display(self) -> CrossRefSpanDisplay:
+    def to_display(self) -> LinkSpanDisplay:
         return {
             "type": "link",
             "text": self.text,
