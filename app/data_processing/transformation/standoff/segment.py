@@ -51,6 +51,23 @@ class ContainerSegment(ABC, TextSegment):
     def to_display(self): ...
 
 
+class LinkSegment(ContainerSegment):
+    _type = "link"
+
+    def __init__(self, span):
+        super().__init__(span)
+
+        self.target = span.target
+
+    def to_display(self) -> CrossRefSpanDisplay:
+        return {
+            "type": "link",
+            "text": self.text,
+            "target": self.target,
+            "content": [segment.to_display() for segment in self.segments],
+        }
+
+
 class CrossRefSegment(ContainerSegment):
     _type = "crossref"
 
