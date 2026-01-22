@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 
 from app.data_processing.transformation.standoff.span import ComparableSpan
-from app.models.span_annotation import (
+from app.models.annotated_text import (
     AnnotatedTextDisplay,
-    BibRefSpanDisplay,
-    CrossRefSpanDisplay,
-    LinkSpanDisplay,
-    TextSpanDisplay,
+    BibRefDisplay,
+    CrossRefDisplay,
+    LinkDisplay,
+    TextDisplay,
 )
 
 
@@ -20,7 +20,7 @@ class TextSegment(ComparableSpan):
     def update_labels(self, additional_labels):
         self.labels.update(additional_labels)
 
-    def to_display(self) -> TextSpanDisplay:
+    def to_display(self) -> TextDisplay:
         dump = {"type": "text", "text": self.text}
 
         if len(self.labels) > 0:
@@ -60,7 +60,7 @@ class LinkSegment(ContainerSegment):
 
         self.target = span.target
 
-    def to_display(self) -> LinkSpanDisplay:
+    def to_display(self) -> LinkDisplay:
         return {
             "type": "link",
             "text": self.text,
@@ -78,7 +78,7 @@ class CrossRefSegment(ContainerSegment):
         self.target = span.target
         self.variant = span.variant
 
-    def to_display(self) -> CrossRefSpanDisplay:
+    def to_display(self) -> CrossRefDisplay:
         return {
             "type": "crossref",
             "text": self.text,
@@ -101,7 +101,7 @@ class BibRefSegment(ContainerSegment):
         self.full_reference = full_reference
         return self
 
-    def to_display(self) -> BibRefSpanDisplay:
+    def to_display(self) -> BibRefDisplay:
         dump = {
             "type": "bibref",
             "text": self.text,

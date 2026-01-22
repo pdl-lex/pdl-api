@@ -6,7 +6,7 @@ from app.data_processing.transformation.standoff.segment import (
     TextSegment,
 )
 from app.data_processing.transformation.standoff.span import Span
-from app.models.span_annotation import AnnotatedTextDisplay
+from app.models.annotated_text import AnnotatedTextDisplay
 
 
 class SpanAccumulator:
@@ -78,5 +78,5 @@ class SpanAccumulator:
     def to_display(self) -> AnnotatedTextDisplay:
         return {
             "text": self.text,
-            "spans": [segment.to_display() for segment in self.accumulate_segments()],
+            "content": [segment.to_display() for segment in self.accumulate_segments()],
         }

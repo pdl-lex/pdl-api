@@ -3,6 +3,7 @@ from copy import deepcopy
 from app.data_processing.transformation.standoff.xml_standoff_converter import (
     xml_to_standoff,
 )
+from app.models.annotated_text import AnnotatedText
 
 
 def inject_prefix(bib_node):
@@ -14,7 +15,7 @@ def inject_prefix(bib_node):
             parent.text = (parent.text or "") + f" {prefix} "
 
 
-def process_etymology(node):
+def process_etymology(node) -> AnnotatedText:
     node = deepcopy(node)
     details_list = []
 
@@ -55,5 +56,5 @@ def process_etymology(node):
             )
     return {
         "text": basetext,
-        "spans": annotations,
+        "annotations": annotations,
     }

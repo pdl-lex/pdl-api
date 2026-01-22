@@ -3,9 +3,9 @@ from typing import Optional
 
 from pydantic import Field
 
+from app.models.annotated_text import AnnotatedTextDisplay
 from app.models.base import BaseModel
 from app.models.rich_text import RichTextField
-from app.models.span_annotation import AnnotatedTextDisplay
 
 
 class Resource(Enum):

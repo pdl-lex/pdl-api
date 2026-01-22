@@ -2,33 +2,34 @@ from typing import Annotated, Literal, Optional, Union
 
 from pydantic import Field
 
+from app.models.annotation_span import AnnotationSpan
 from app.models.base import BaseModel
 
 
-class BaseSpanDisplay(BaseModel):
+class BaseDisplay(BaseModel):
     text: str
 
 
-class BaseSpanContainerDisplay(BaseSpanDisplay):
+class BaseContainerDisplay(BaseDisplay):
     content: list["SpanDisplay"]
 
 
-class TextSpanDisplay(BaseSpanDisplay):
+class TextDisplay(BaseDisplay):
     type: Literal["text"] = "text"
     labels: Optional[list[str]] = None
 
 
-class LinkSpanDisplay(BaseSpanContainerDisplay):
+class LinkDisplay(BaseContainerDisplay):
     type: Literal["link"] = "link"
     target: str
 
 
-class CrossRefSpanDisplay(LinkSpanDisplay):
+class CrossRefDisplay(LinkDisplay):
     type: Literal["crossref"] = "crossref"
     variant: Optional[str] = None
 
 
-class BibRefSpanDisplay(BaseSpanContainerDisplay):
+class BibRefDisplay(BaseContainerDisplay):
     type: Literal["bibref"] = "bibref"
     bib_id: str = Field(alias="bibId", default="")
     full_reference: "AnnotatedTextDisplay" = Field(alias="fullReference")
@@ -36,15 +37,20 @@ class BibRefSpanDisplay(BaseSpanContainerDisplay):
 
 SpanDisplay = Annotated[
     Union[
-        TextSpanDisplay,
-        LinkSpanDisplay,
-        CrossRefSpanDisplay,
-        BibRefSpanDisplay,
+        TextDisplay,
+        LinkDisplay,
+        CrossRefDisplay,
+        BibRefDisplay,
     ],
     Field(discriminator="type"),
 ]
 
 
+class AnnotatedText(BaseModel):
+    text: str
+    annotations: list[AnnotationSpan]
+
+
 class AnnotatedTextDisplay(BaseModel):
     text: str
-    spans: list[SpanDisplay]
+    content: list[SpanDisplay]
