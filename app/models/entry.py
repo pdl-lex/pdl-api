@@ -1,9 +1,9 @@
 from enum import Enum
-from typing import Optional
+from typing import Optional, Union
 
 from pydantic import Field
 
-from app.models.annotated_text import AnnotatedTextDisplay
+from app.models.annotated_text import AnnotatedText, AnnotatedTextDisplay
 from app.models.base import BaseModel
 from app.models.rich_text import RichTextField
 
@@ -105,7 +105,7 @@ class DisplayEntry(AbstractBaseEntry):
     pos: Optional[str] = None
     number: Optional[str] = None
     normalized_pos: Optional[str] = Field(alias="nPos", default=None)
-    etym: Optional[AnnotatedTextDisplay] = None
+    etym: Optional[Union[AnnotatedTextDisplay, AnnotatedText]] = None
 
 
 class DisplayEntryList(BaseModel):
