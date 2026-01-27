@@ -103,6 +103,6 @@ class BdoXmlTransformer(BaseXmlTransformer):
     def postprocess(self, data, _element):
         data["xml:lang"] = "DE"
         data["flatSenses"] = flatten_senses(data.get("sense", []))
-        data["nPos"] = POS_MAP[data["pos"]] if "pos" in data else None
+        data["nPos"] = POS_MAP.get(data.get("pos"))
 
         return data
