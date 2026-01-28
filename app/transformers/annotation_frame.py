@@ -1,6 +1,6 @@
 from copy import deepcopy
 from dataclasses import dataclass, field, replace
-from typing import Union
+from typing import Optional, Union
 
 import pandas as pd
 
@@ -53,6 +53,9 @@ class AnnotationFrame:
 
     def get_spans(self, tag: str) -> pd.DataFrame:
         return self.frame.loc[self.frame.tag == tag]
+
+    def get_first(self, tag: str) -> pd.Series:
+        return self.get_spans(tag).iloc[0]
 
     def get_subspans(self, tag_id: str, with_root=True) -> "AnnotationFrame":
         start, end = self.frame.loc[tag_id, ["start", "end"]]
@@ -189,3 +192,26 @@ class AnnotationFrame:
 
     def copy(self) -> "AnnotationFrame":
         return deepcopy(self)
+
+    def index(self) -> pd.Index:
+        return self.frame.index
+
+    def drop(self, *args, **kwargs):
+        new_frame = self.frame.drop(*args, **kwargs)
+        return replace(self, frame=new_frame)
+
+    def add_attribute(self, name: str, values: pd.Series):
+        frame = self.frame.assign(**{name: values})
+        return replace(self, frame=frame)
+
+    def iter_spans(self, tag: Optional[str] = None):
+        frame = self.frame if tag is None else self.get_spans(tag)
+        for _, span in frame.iterrows():
+            yield span
+
+    def normalize_offsets(self):
+        offset = self.frame.start.min()
+        frame = self.frame.copy()
+        frame.loc[:, ["start", "end"]] -= offset
+
+        return replace(self, frame=frame)
