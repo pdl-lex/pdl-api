@@ -1,5 +1,3 @@
-from copy import deepcopy
-from dataclasses import dataclass, field, replace
 from typing import Optional, Union
 
 import pandas as pd
@@ -24,62 +22,67 @@ def _insert_text(row, position, text):
     return row.text[:position] + text + row.text[position:]
 
 
-@dataclass(frozen=True)
-class AnnotationFrame:
-    """
-    Immutable container for managing text spans and their hierarchical relationships
-    """
+class AnnotationFrame(pd.DataFrame):
+    _metadata = ["_deleted_spans"]
 
-    frame: pd.DataFrame
-    _deleted_spans: pd.DataFrame = field(default_factory=pd.DataFrame, init=False)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._deleted_spans = pd.DataFrame()
 
-    def __post_init__(self):
-        frame = self.frame.copy()
-        object.__setattr__(self, "frame", frame)
+    def __finalize__(self, other, method=None, **kwargs):
+        """Propagate metadata from other to self"""
+        self = super().__finalize__(other, method, **kwargs)
+        if hasattr(other, "_deleted_spans"):
+            self._deleted_spans = other._deleted_spans
+        return self
 
     @property
-    def text(self) -> str:
+    def _constructor(self):
+        return AnnotationFrame
+
+    @property
+    def _constructor_sliced(self):
+        return pd.Series
+
+    @property
+    def _roottext(self) -> str:
         return self.get_root().text
 
     def get_root_id(self) -> str:
-        span_sizes = self.frame.end - self.frame.start
-        return self.frame.loc[span_sizes.idxmax()].name
+        span_sizes = self.end - self.start
+        return self.loc[span_sizes.idxmax()].name
 
     def get_root(self) -> pd.Series:
         return self.get_span(self.get_root_id())
 
     def get_span(self, tag_id: str) -> pd.Series:
-        return self.frame.loc[tag_id]
+        return self.loc[tag_id]
 
     def get_spans(self, tag: str) -> pd.DataFrame:
-        return self.frame.loc[self.frame.tag == tag]
+        return self.loc[self.tag == tag]
 
     def get_first(self, tag: str) -> pd.Series:
         return self.get_spans(tag).iloc[0]
 
     def get_subspans(self, tag_id: str, with_root=True) -> "AnnotationFrame":
-        start, end = self.frame.loc[tag_id, ["start", "end"]]
-        mask = self.frame.start.ge(start) & self.frame.end.le(end)
+        start, end = self.loc[tag_id, ["start", "end"]]
+        mask = self.start.ge(start) & self.end.le(end)
 
-        return replace(
-            self, frame=self.frame[mask] if with_root else self.frame[mask].drop(tag_id)
-        )
+        return self[mask] if with_root else self[mask].drop(tag_id)
 
     def get_superspans(self, tag_id: str, with_root=False) -> "AnnotationFrame":
-        start, end = self.frame.loc[tag_id, ["start", "end"]]
-        mask = self.frame.start.le(start) & self.frame.end.ge(end)
+        start, end = self.loc[tag_id, ["start", "end"]]
+        mask = self.start.le(start) & self.end.ge(end)
 
-        return replace(
-            self, frame=self.frame[mask] if with_root else self.frame[mask].drop(tag_id)
-        )
+        return self[mask] if with_root else self[mask].drop(tag_id)
 
     def remove_span(self, tag_id: str, remove_text=False) -> "AnnotationFrame":
         to_delete = self.get_subspans(tag_id, with_root=True)
-        new_frame = self.frame.drop(to_delete.frame.index)
+        new_frame = self.copy().drop(to_delete.index)
 
         if remove_text:
             start, end = self.get_span(tag_id)[["start", "end"]]
-            superspans = self.get_superspans(tag_id).frame
+            superspans = self.get_superspans(tag_id)
 
             new_frame.loc[superspans.index, "text"] = superspans.apply(
                 extract_text,
@@ -91,19 +94,13 @@ class AnnotationFrame:
             new_frame.loc[superspans.index, "end"] -= span_size
             new_frame.loc[new_frame.start.ge(start), ["start", "end"]] -= span_size
 
-        new_instance = replace(self, frame=new_frame)
+        new_frame._deleted_spans = pd.concat([self._deleted_spans, to_delete.frame])
 
-        object.__setattr__(
-            new_instance,
-            "_deleted_spans",
-            pd.concat([self._deleted_spans, to_delete.frame]),
-        )
-
-        return new_instance
+        return new_frame
 
     def remove_all_spans(self, tag: str, remove_text=False) -> "AnnotationFrame":
         new_frame = self.copy()
-        tags = self.frame[self.frame.tag == tag].index
+        tags = self[self.tag == tag].index
 
         for tag_id in tags:
             new_frame = new_frame.remove_span(tag_id, remove_text=remove_text)
@@ -133,7 +130,7 @@ class AnnotationFrame:
             IndexError: If position is outside the parent span boundaries
         """
         parent = self.get_root_id() if parent is ROOT else parent
-        is_parent = self.frame.index == parent
+        is_parent = self.index == parent
         parent_span = self.get_span(parent)
 
         if relative:
@@ -147,9 +144,13 @@ class AnnotationFrame:
                 f"[{parent_span.start}..{parent_span.end}]"
             )
 
-        new_frame = self.frame.copy()
+        new_frame = self.copy()
 
-        spans_to_update = self.get_superspans(parent, with_root=True).frame.index
+        spans_to_update = [
+            *self.loc[self.start.lt(position) & self.end.gt(position)].index,
+            parent,
+        ]
+
         new_texts = new_frame.loc[spans_to_update].apply(
             _insert_text, axis=1, position=position, text=text
         )
@@ -159,19 +160,19 @@ class AnnotationFrame:
         trailing_spans = new_frame.start.ge(position) & ~is_parent, ["start", "end"]
         new_frame.loc[trailing_spans] += len(text)
 
-        return replace(self, frame=new_frame)
+        return new_frame
 
     def validate(self, debug: bool = False) -> "AnnotationFrame":
-        text_by_index = self.frame.apply(
-            lambda row: self.text[row.start : row.end], axis=1
+        text_by_index = self.apply(
+            lambda row: self._roottext[row.start : row.end], axis=1
         )
-        mismatches = text_by_index.ne(self.frame.text)
+        mismatches = text_by_index.ne(self.text)
 
         if mismatches.any():
-            detail = self.frame.text.compare(
+            detail = self.text.compare(
                 text_by_index, result_names=("stored", "by_index")
             )
-            keys = self.frame[mismatches].index.to_list()
+            keys = self[mismatches].index.to_list()
             info = f"Found {mismatches.sum()} mismatch(es): {keys}"
 
             if debug:
@@ -184,34 +185,18 @@ class AnnotationFrame:
 
         return self
 
-    def _repr_html_(self):
-        return self.frame._repr_html_()
-
-    def __repr__(self) -> str:
-        return repr(self.frame)
-
-    def copy(self) -> "AnnotationFrame":
-        return deepcopy(self)
-
-    def index(self) -> pd.Index:
-        return self.frame.index
-
-    def drop(self, *args, **kwargs):
-        new_frame = self.frame.drop(*args, **kwargs)
-        return replace(self, frame=new_frame)
-
     def add_attribute(self, name: str, values: pd.Series):
-        frame = self.frame.assign(**{name: values})
-        return replace(self, frame=frame)
+        new_frame = self.assign(**{name: values})
+        return new_frame
 
     def iter_spans(self, tag: Optional[str] = None):
-        frame = self.frame if tag is None else self.get_spans(tag)
+        frame = self if tag is None else self.get_spans(tag)
         for _, span in frame.iterrows():
             yield span
 
     def normalize_offsets(self):
-        offset = self.frame.start.min()
-        frame = self.frame.copy()
-        frame.loc[:, ["start", "end"]] -= offset
+        offset = self.start.min()
+        new_frame = self.copy()
+        new_frame.loc[:, ["start", "end"]] -= offset
 
-        return replace(self, frame=frame)
+        return new_frame
