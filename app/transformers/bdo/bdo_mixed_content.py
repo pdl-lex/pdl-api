@@ -1,65 +1,121 @@
+from typing import Union
+
 import pandas as pd
 
-from app.models.annotated_text import AnnotatedText
-from app.transformers.standoff import StandoffTransformer
+from app.models.annotated_text import (
+    BibRefAnnotationSpan,
+    CrossRefAnnotationSpan,
+    LinkAnnotationSpan,
+    TextAnnotationSpan,
+)
+from app.transformers.standoff.annotation_frame import AnnotationFrame
+from app.transformers.standoff.standoff_transformer import (
+    StandoffTransformer,
+    preprocess,
+    register,
+)
 
 
-class DetailsTransformer(StandoffTransformer):
-    text_tags = {"hoch": ["sup"]}
-
-    def serialize(self):
-        tag_id = self.aframe.get_first("details").name
-        aframe = self.aframe.get_subspans(tag_id)
-        aframe = aframe.normalize_offsets()
-
-        basetext = self.aframe.get_first("titel").text
-
-        return {"text": basetext, "annotations": self.serialize_spans(only=["hoch"])}
+def basedata(span, type_: str) -> dict:
+    return {"type": type_, **span[["start", "end", "text"]].to_dict()}
 
 
-class BdoMixedContentTransformer(StandoffTransformer):
-    tag_names = {
-        "verweis": "crossref",
-        "literatur-quelle": "bibref",
-    }
-    attr_names = {
-        "quelle-art": "prefix",
-        "verweis-typ": "variant",
-        "literatur": "bibId",
-        "ziel": "target",
-    }
+def textspan(span):
+    return basedata(span, "text")
 
-    def process_crossref(self):
-        self.aframe = self.aframe
 
-    def _cleanup_bibref(self):
-        self.aframe = self.aframe.remove_all_spans("details", remove_text=True)
-        self.aframe = self.aframe.drop("prefix", axis=1)
+REF_TYPE_PREFIXES = {
+    None: "",
+    "Pfeil": "",
+    "ohne": "",
+    "siehe": "siehe",
+    "siehe-auch": "siehe auch",
+    "vgl.": "vgl.",
+}
 
-    def process_bibref(self):
-        full_references = pd.Series()
 
-        for span in self.aframe.iter_spans("bibref"):
-            details_transformer = DetailsTransformer(
-                self.aframe.get_subspans(span.name)
+class BdoBaseTransformer(StandoffTransformer):
+    @preprocess(order=1)
+    def insert_crossref_prefixes(self, aframe: AnnotationFrame) -> AnnotationFrame:
+        if "verweis-typ" not in aframe.columns:
+            return aframe
+
+        mapped_ref_types = aframe["verweis-typ"].map(REF_TYPE_PREFIXES)
+
+        return (
+            aframe.assign(ref_type=mapped_ref_types)
+            .insert_attribute("verweis", "ref_type")
+            .drop("ref_type", axis=1)
+        )
+
+    @register("lemma-form")
+    def serialize_mention(self, span: pd.Series) -> TextAnnotationSpan:
+        return TextAnnotationSpan(**textspan(span), labels=["italic"])
+
+    @register("hoch")
+    def serialize_superscript(self, span: pd.Series) -> TextAnnotationSpan:
+        return TextAnnotationSpan(**textspan(span), labels=["superscript"])
+
+    @register("verweis")
+    def serialize_reference(
+        self, span: pd.Series
+    ) -> Union[CrossRefAnnotationSpan, LinkAnnotationSpan]:
+        if (target := span.get("ziel-extern")) is not None:
+            return LinkAnnotationSpan(**basedata(span, "link"), target=target)
+
+        target = span.get("ziel")
+
+        return CrossRefAnnotationSpan(
+            **basedata(span, "crossref"),
+            variant="arrow" if span.get("verweis-typ") == "Pfeil" else None,
+            target="." if target is None else f"/entry/{target}",
+        )
+
+
+class BdoLiteratureTransformer(StandoffTransformer):
+    @preprocess(order=1)
+    def insert_literature_prefixes(self, aframe: AnnotationFrame) -> AnnotationFrame:
+        return aframe.insert_attribute("literatur-quelle", "quelle-art")
+
+    @preprocess(order=3)
+    def add_bib_id_column(self, aframe: AnnotationFrame) -> AnnotationFrame:
+        bib_spans = aframe.get_spans("literatur-quelle").index
+
+        for span_id in bib_spans:
+            subspans = aframe.get_subspans(span_id).index
+            aframe.loc[subspans, "bib_id"] = span_id
+
+        return aframe
+
+    @preprocess(order=4)
+    def extract_embedded_bibliography(self, aframe: AnnotationFrame) -> AnnotationFrame:
+        try:
+            return aframe.remove_all_spans(
+                "details", remove_subspans=True, remove_text=True
             )
-            full_references.loc[span.name] = details_transformer.serialize()
+        except Exception as err:
+            print("Could not handle")
+            print(aframe)
+            print()
+            raise err
 
-            if not pd.isna(prefix := span["prefix"]):
-                self.aframe = self.aframe.insert_text(span.start, f"{prefix} ")
+    @register("literatur-quelle")
+    def serialize_bibref(self, span) -> Union[BibRefAnnotationSpan, None]:
+        details = self.aframe._deleted_spans
 
-        self.aframe = self.aframe.add_attribute("fullReference", full_references)
-        self._cleanup_bibref()
+        if details is None:
+            return None
 
-    def transform(self) -> AnnotatedText:
-        self.process_bibref()
-        serialized = {
-            "text": self.basetext,
-            "annotations": self.serialize_spans(
-                only=["crossref", "bibref"], exclude_attributes=["ziel-typ"]
-            ),
-        }
-        import json
+        details_transformer = BdoBaseTransformer(
+            details[details.bib_id == span.name].normalize_offsets()
+        )
 
-        print(json.dumps(serialized, indent=2, ensure_ascii=False))
-        AnnotatedText.model_validate(serialized)
+        return BibRefAnnotationSpan(
+            **basedata(span, "bibref"),
+            bibId=span.fillna("").get("literatur", ""),
+            fullReference=details_transformer.serialize(),
+        )
+
+
+class BdoMixedContentTransformer(BdoBaseTransformer, BdoLiteratureTransformer):
+    pass
