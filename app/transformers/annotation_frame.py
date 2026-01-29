@@ -162,6 +162,21 @@ class AnnotationFrame(pd.DataFrame):
 
         return new_frame
 
+    def insert_attribute(self, tag: str, attribute: str) -> "AnnotationFrame":
+        if attribute not in self.columns:
+            return self
+
+        spans = self.get_spans(tag).dropna(subset=[attribute]).index
+
+        new_frame = self.copy()
+
+        for tag_id in spans:
+            span = new_frame.get_span(tag_id)
+            value = span[attribute]
+            new_frame = new_frame.insert_text(span.start, f"{value} ")
+
+        return new_frame
+
     def validate(self, debug: bool = False) -> "AnnotationFrame":
         text_by_index = self.apply(
             lambda row: self._roottext[row.start : row.end], axis=1
