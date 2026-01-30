@@ -20,7 +20,9 @@ class TextAnnotationSpan(BaseAnnotationSpan):
 class BibRefAnnotationSpan(BaseAnnotationSpan):
     type: Literal["bibref"]
     bib_id: Optional[str] = Field(alias="bibId")
-    full_reference: "EmbeddedAnnotatedText" = Field(alias="fullReference")
+    full_reference: Optional["AnnotatedText"] = Field(
+        alias="fullReference", default=None
+    )
 
 
 class LinkAnnotationSpan(BaseAnnotationSpan):
