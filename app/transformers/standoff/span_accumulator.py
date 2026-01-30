@@ -1,12 +1,12 @@
 from typing import Optional, Sequence
 
-from app.data_processing.transformation.standoff.segment import (
+from app.models.annotated_text_display import AnnotatedTextDisplay
+from app.transformers.standoff.display_segment import (
     BibRefSegment,
     ContainerSegment,
     TextSegment,
 )
-from app.data_processing.transformation.standoff.span import Span
-from app.models.annotated_text import AnnotatedTextDisplay
+from app.transformers.standoff.span import Span
 
 
 class SpanAccumulator:

@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
 
-from app.data_processing.transformation.standoff.span import ComparableSpan
-from app.models.annotated_text import (
+from app.models.annotated_text_display import (
     AnnotatedTextDisplay,
     BibRefDisplay,
     CrossRefDisplay,
     LinkDisplay,
     TextDisplay,
 )
+from app.transformers.standoff.span import ComparableSpan
 
 
 class TextSegment(ComparableSpan):

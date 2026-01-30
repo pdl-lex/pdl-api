@@ -3,7 +3,8 @@ from typing import Optional, Union
 
 from pydantic import Field
 
-from app.models.annotated_text import AnnotatedText, AnnotatedTextDisplay
+from app.models.annotated_text import AnnotatedText
+from app.models.annotated_text_display import AnnotatedTextDisplay
 from app.models.base import BaseModel
 from app.models.rich_text import RichTextField
 
