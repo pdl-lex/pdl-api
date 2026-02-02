@@ -51,9 +51,14 @@ class ImportService:
         display_entry_list = TypeAdapter(list[DisplayEntry])
         dump = display_entry_list.dump_python(data, by_alias=True, mode="json")
 
-        self.display.insert_many(dump)
+        result = self.display.insert_many(dump)
 
         self._create_indexes()
+
+        return {
+            "inserted_count": len(result.inserted_ids),
+            "inserted_ids": result.inserted_ids,
+        }
 
 
 if __name__ == "__main__":
@@ -121,6 +126,10 @@ if __name__ == "__main__":
             raise err
 
     if response.status_code == 200:
-        console.log("[bold green]Data inserted successfully.")
+        result = response.json()
+        console.log(
+            f"[bold green]✅ {result['inserted_count']} documents inserted successfully."
+        )
     else:
+        console.print(f"[bold red]❌ Error: {response.status_code}")
         print(response.text)

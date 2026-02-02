@@ -86,4 +86,9 @@ def insert_display_data(
 ):
     import_service: ImportService = app.state.import_service
 
-    import_service.insert_display_data(data)
+    result = import_service.insert_display_data(data)
+    return {
+        "status": "success",
+        "inserted_count": result["inserted_count"],
+        "message": f"Successfully inserted {result['inserted_count']} documents",
+    }
