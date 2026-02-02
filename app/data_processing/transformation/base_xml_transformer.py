@@ -4,6 +4,10 @@ from typing import Any, Callable, Optional
 import lxml.etree as ET  # noqa: N812
 
 
+class TransformationError(ValueError):
+    pass
+
+
 class BaseXmlTransformer:
     def __init__(self, filepath):
         self.filepath = filepath
@@ -22,7 +26,12 @@ class BaseXmlTransformer:
                     if getattr(attr, "_alias", None) is not None
                     else attr_name
                 )
-                result[key] = attr(self.root)
+                try:
+                    result[key] = attr(self.root)
+                except AttributeError as err:
+                    raise TransformationError(
+                        f"Error transforming {attr_name} in {self.filepath}"
+                    ) from err
 
         result = self.postprocess(result, element)
 
@@ -67,7 +76,7 @@ def xpath(
             if multiple:
                 return func(self, results)
             else:
-                value = results[0] if results else default
+                value = results[0] if len(results) > 0 else default
                 return func(self, value)
 
         wrapper._xpath = path
