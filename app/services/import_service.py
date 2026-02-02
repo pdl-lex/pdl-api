@@ -1,15 +1,18 @@
 import os
 
+from dotenv import load_dotenv
 from pydantic import TypeAdapter
 from pymongo import ASCENDING, IndexModel, MongoClient
 
 from app.models.entry import DisplayEntry
 
+load_dotenv()
+
 fulltext_search_fields = [
     {"key": "headword.lemma", "weight": 10},
     {"key": "flatSenses.def", "weight": 1},
     {"key": "flatSenses.cit.quote", "weight": 1},
-    {"key": "etym", "weight": 1},
+    {"key": "etym.text", "weight": 1},
 ]
 index_fields = [
     "source",
@@ -51,3 +54,73 @@ class ImportService:
         self.display.insert_many(dump)
 
         self._create_indexes()
+
+
+if __name__ == "__main__":
+    import argparse
+    import json
+    import sys
+    from pathlib import Path
+
+    import requests
+    from requests.exceptions import ConnectionError
+    from rich.console import Console
+    from rich.prompt import Confirm
+
+    parser = argparse.ArgumentParser(
+        description="Import display entry data into the LexoTerm MongoDB instance"
+    )
+    parser.add_argument(
+        "--production", help="Write to production db", action="store_true"
+    )
+    parser.add_argument(
+        "--target", help="URL to FastAPI instance (overrides --production)"
+    )
+    parser.add_argument("filepath", help="Path to source json")
+
+    args = parser.parse_args()
+    filepath = Path(args.filepath).resolve()
+
+    URL = (
+        args.target
+        if args.target is not None
+        else os.environ["LEXOTERM_API_URL"]
+        if args.production
+        else "http://127.0.0.1:8000"
+    )
+
+    API_KEY = os.environ["MONGO_API_KEY"]
+    console = Console()
+
+    if args.production and not Confirm.ask(
+        "[bold red]⚠️  You are about to write to the PRODUCTION database. This will overwrite existing data. Are you sure?",
+        default=False,
+    ):
+        console.print("[yellow]Operation cancelled.")
+        sys.exit(0)
+
+    with open(
+        "/Users/di97put/projects/pdl-api/data/output/result.json", "r", encoding="utf-8"
+    ) as f:
+        data = json.load(f)
+
+    with console.status("[bold green]Importing data...") as status:
+        try:
+            response = requests.post(
+                f"{URL.rstrip('/')}/insert-display-data",
+                json=data,
+                headers={
+                    "Content-Type": "application/json",
+                    "X-API-Key": API_KEY,
+                },
+            )
+        except ConnectionError as err:
+            console.print(
+                f"[bold red]❌ Could not reach API – is the url {URL} correct and online?\n"
+            )
+            raise err
+
+    if response.status_code == 200:
+        console.log("[bold green]Data inserted successfully.")
+    else:
+        print(response.text)
