@@ -2,6 +2,7 @@ import os
 from contextlib import asynccontextmanager
 from typing import Optional
 
+from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -14,6 +15,8 @@ ORIGINS = [
     "http://127.0.0.1:8080",
     "https://lexoterm.de",
 ]
+
+load_dotenv()
 
 
 API_KEY = os.environ["MONGO_API_KEY"]
