@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from pymongo import MongoClient
 
 from app.models.entry import DisplayEntry, DisplayEntryList, Entry
+from app.transformers.standoff.span_accumulator import SpanAccumulator
 
 
 def _build_lemma_query(lemma: str) -> dict:
@@ -42,6 +43,14 @@ class LemmaService:
         self.entries = self.db.get_collection("entries")
         self.display = self.db.get_collection("display")
 
+    def _convert_spans_to_display(self, result: DisplayEntryList):
+        for index, item in enumerate(result["items"]):
+            if (etym := item.get("etym")) is not None:
+                etym = SpanAccumulator(etym).to_display()
+                result["items"][index]["etym"] = etym
+
+        return result
+
     def free_text_search(
         self,
         term: str,
@@ -72,7 +81,7 @@ class LemmaService:
             },
         ]
 
-        return next(self.display.aggregate(pipeline))
+        return self._convert_spans_to_display(next(self.display.aggregate(pipeline)))
 
     def fetch_lemma(self, lemma_id: str) -> Entry:
         result = self.entries.find_one({"entry.xml:id": lemma_id})

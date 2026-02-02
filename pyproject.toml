@@ -6,7 +6,14 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "fastapi[standard]>=0.122.0",
+    "ipykernel>=7.1.0",
+    "lxml>=6.0.2",
+    "pandas>=2.3.3",
+    "pydash>=8.0.6",
     "pymongo>=4.15.4",
+    "python-dotenv>=1.2.1",
+    "requests>=2.32.5",
+    "tqdm>=4.67.1",
 ]
 
 [dependency-groups]
@@ -45,7 +52,10 @@ indent-style = "space"
 lint = "ruff check ."
 format = "ruff format ."
 test = "pytest"
-dev = { shell = "set -a && source .env && set +a && uv run fastapi dev" }
+dev = "uv run fastapi dev"
+convert = "python -m app.data_processing.convert"
+insert-data = "python -m app.services.import_service"
+process = "python -m app.transformers.lex_transformer"
 
 [tool.poe.tasks.check]
 sequence = [
