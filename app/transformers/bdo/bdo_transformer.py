@@ -1,19 +1,19 @@
-import json
+import csv
 from pathlib import Path
 
 from pydash import omit, unique_id
 
-from app.data_processing.resources.bdo.bdo_standoff import process_etymology
 from app.data_processing.transformation.base_xml_transformer import (
     BaseXmlTransformer,
     xpath,
 )
-from app.models.entry import DisplayEntry
+from app.transformers.bdo.bdo_mixed_content import BdoMixedContentTransformer
 
-pos_map_path = Path(__file__).parent / "pos_mapping.json"
+pos_map_path = Path(__file__).parent / "pos_mapping.csv"
 
-with open(pos_map_path) as f:
-    POS_MAP = json.load(f)
+with open(pos_map_path, newline="") as csvfile:
+    reader = csv.DictReader(csvfile)
+    POS_MAPPING = {row["bdo_tag"]: row["normalized"] for row in reader}
 
 
 def flatten_senses(senses: list):
@@ -21,7 +21,9 @@ def flatten_senses(senses: list):
 
     for sense in senses:
         flat_senses.append(omit(sense, "sense"))
-        flat_senses.extend(flatten_senses(sense.get("sense", [])))
+        flat_senses.extend(
+            [] if sense is None else flatten_senses(sense.get("sense", []))
+        )
 
     return flat_senses
 
@@ -42,19 +44,26 @@ def extract_examples(sense):
     return examples
 
 
+def is_sense(element):
+    return element is not None and element.find("bedeutung") is not None
+
+
 def transform_sense(node):
-    text = node.find("bedeutung").text
-    number = node.attrib.get("nr")
-    id_ = node.attrib.get("id", unique_id("sense_"))
+    sense = node.find("bedeutung")
+    text = sense.text
+    number = sense.attrib.get("nr")
+    id_ = sense.attrib.get("id", unique_id("sense_"))
 
     return {
         "def": text,
         "xml:id": id_,
         "n": number,
         "sense": [
-            transform_sense(subsense) for subsense in node.findall("bedeutung-position")
+            transform_sense(subsense)
+            for subsense in sense.findall("bedeutung-position")
+            if is_sense(subsense)
         ],
-        "cit": extract_examples(node),
+        "cit": extract_examples(sense),
     }
 
 
@@ -78,9 +87,9 @@ class BdoXmlTransformer(BaseXmlTransformer):
     def xml_id(self, id_):
         return id_
 
-    @xpath(".//artikel/bedeutung-position", default="", multiple=True)
+    @xpath(".//artikel/bedeutung-position", default=[], multiple=True)
     def sense(self, senses):
-        return [transform_sense(sense) for sense in senses]
+        return [transform_sense(sense) for sense in senses if is_sense(sense)]
 
     @xpath(".//lemma-position/grammatik/@wortart")
     def pos(self, value):
@@ -95,14 +104,17 @@ class BdoXmlTransformer(BaseXmlTransformer):
         return value
 
     @xpath(".//etymologie-position")
-    def etym(self, value):
-        standoff = process_etymology(value)
+    def etym(self, node):
+        if node is None:
+            return None
 
-        return standoff
+        transformer = BdoMixedContentTransformer.load_xml(node)
+
+        return transformer.serialize()
 
     def postprocess(self, data, _element):
         data["xml:lang"] = "DE"
         data["flatSenses"] = flatten_senses(data.get("sense", []))
-        data["nPos"] = POS_MAP.get(data.get("pos"))
+        data["nPos"] = POS_MAPPING.get(data.get("pos"))
 
         return data
