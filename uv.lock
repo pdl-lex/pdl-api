@@ -23,6 +23,7 @@ dependencies = [
     { name = "pandas", version = "3.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "pydash" },
     { name = "pymongo" },
+    { name = "python-dotenv" },
     { name = "requests" },
     { name = "tqdm" },
 ]
@@ -41,6 +42,7 @@ requires-dist = [
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "pydash", specifier = ">=8.0.6" },
     { name = "pymongo", specifier = ">=4.15.4" },
+    { name = "python-dotenv", specifier = ">=1.2.1" },
     { name = "requests", specifier = ">=2.32.5" },
     { name = "tqdm", specifier = ">=4.67.1" },
 ]
