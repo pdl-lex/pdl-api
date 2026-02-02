@@ -55,6 +55,7 @@ test = "pytest"
 dev = "uv run fastapi dev"
 convert = "python -m app.data_processing.convert"
 insert-data = "python -m app.services.import_service"
+process = "python -m app.transformers.lex_transformer"
 
 [tool.poe.tasks.check]
 sequence = [
