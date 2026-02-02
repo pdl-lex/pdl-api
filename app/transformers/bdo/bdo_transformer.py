@@ -3,7 +3,7 @@ from pathlib import Path
 
 from pydash import omit, unique_id
 
-from app.data_processing.transformation.base_xml_transformer import (
+from app.transformers.base_xml_transformer import (
     BaseXmlTransformer,
     xpath,
 )
