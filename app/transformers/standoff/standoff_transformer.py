@@ -106,7 +106,7 @@ class StandoffTransformer:
                     result = None
 
                 if result is not None:
-                    serialized_spans.append(result.model_dump())
+                    serialized_spans.append(result.model_dump(by_alias=True))
 
         return serialized_spans
 
