@@ -8,13 +8,19 @@ API for the [LexoTerm](https://github.com/adl-lex/adl-platform) research platfor
 Requires [uv][uv].
 
 - Clone the project
-- Navigate to adl-api/
+- Navigate to the project directory
 - Run `uv sync`
-- Create a `.env` file in the project root and set `MONGODB_URI` with a local or remote connection
-  string.
+- Create a `.env` file in the project root and set the following variables:
+
+```env
+MONGODB_URI="..."
+MONGO_API_KEY="..."
+LEXOTERM_API_URL="..."
+ALLOWED_ORIGINS="..."  # use semicolon ";" to separate multiple URLs
+```
 
 To start the development server, run `uv run poe dev`. The command loads the .env variables and
-spins up the fastapi app.
+starts the fastapi app.
 
 It is **strongly recommended** to configure your code editor to handle formatting and linting (cf.
 the Code Quality section below). For example, to set up VS Code, install the [Ruff][ruffext]
