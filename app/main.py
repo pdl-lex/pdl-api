@@ -10,12 +10,6 @@ from app.models.entry import DisplayEntry, DisplayEntryList, Entry, Resource
 from app.services.import_service import ImportService
 from app.services.lemma_service import LemmaService
 
-ORIGINS = [
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
-    "https://lexoterm.de",
-]
-
 load_dotenv()
 
 
@@ -43,7 +37,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ORIGINS,
+    allow_origins=os.environ["ALLOWED_ORIGINS"].split(";"),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
