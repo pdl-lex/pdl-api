@@ -87,7 +87,7 @@ class AbstractBaseEntry(BaseModel):
     xr: Optional[list[CrossReference]] = []
 
 
-class GrammaticalFeatures(BaseModel):
+class GrammaticalFeatures:
     gender: Optional[str] = None
     pos: Optional[str] = None
     number: Optional[str] = None
