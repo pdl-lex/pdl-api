@@ -87,6 +87,13 @@ class AbstractBaseEntry(BaseModel):
     xr: Optional[list[CrossReference]] = []
 
 
+class GrammaticalFeatures(BaseModel):
+    gender: Optional[str] = None
+    pos: Optional[str] = None
+    number: Optional[str] = None
+    normalized_pos: Optional[str] = Field(alias="nPos", default=None)
+
+
 class Entry(AbstractBaseEntry):
     form: list[Form]
     gram_grp: Optional[list[GrammarGroup]] = Field(alias="gramGrp", default=None)
@@ -97,15 +104,11 @@ class Headword(BaseModel):
     index: Optional[int] = None
 
 
-class DisplayEntry(AbstractBaseEntry):
+class DisplayEntry(AbstractBaseEntry, GrammaticalFeatures):
     headword: Headword
     source: Resource
     variants: list[str]
     flat_senses: Optional[list[Sense]] = Field(alias="flatSenses", default=[])
-    gender: Optional[str] = None
-    pos: Optional[str] = None
-    number: Optional[str] = None
-    normalized_pos: Optional[str] = Field(alias="nPos", default=None)
     etym: Optional[Union[AnnotatedTextDisplay, AnnotatedText]] = None
 
 
