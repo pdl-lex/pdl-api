@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from pymongo import MongoClient
 
 from app.models.entry import DisplayEntry, DisplayEntryList, Entry
+from app.models.query_summary import QuerySummary
 from app.transformers.standoff.span_accumulator import SpanAccumulator
 
 
@@ -58,10 +59,8 @@ class LemmaService:
         results_per_page: int,
         **filters,
     ) -> DisplayEntryList:
-        query = _build_query(term=term, **filters)
-
         pipeline = [
-            {"$match": query},
+            {"$match": _build_query(term=term, **filters)},
             {"$project": {"_id": False}},
             {
                 "$facet": {
@@ -82,6 +81,53 @@ class LemmaService:
         ]
 
         return self._convert_spans_to_display(next(self.display.aggregate(pipeline)))
+
+    def query_summary(
+        self,
+        term: str,
+        **filters,
+    ) -> QuerySummary:
+        pipeline = [
+            {"$match": _build_query(term=term, **filters)},
+            {"$project": {"_id": False}},
+            {
+                "$facet": {
+                    "lemmaPreviews": [
+                        {
+                            "$project": {
+                                "headword": 1,
+                                "xml:id": 1,
+                                "source": 1,
+                                "mainSenses": "$sense.def",
+                            },
+                        },
+                    ],
+                    "total": [
+                        {
+                            "$count": "count",
+                        },
+                    ],
+                    "countsByResource": [
+                        {
+                            "$group": {
+                                "_id": "$source",
+                                "count": {"$sum": 1},
+                            },
+                        },
+                        {
+                            "$project": {
+                                "source": "$_id",
+                                "_id": "$$REMOVE",
+                                "count": {"$ifNull": ["$count", 0]},
+                            }
+                        },
+                    ],
+                }
+            },
+            {"$addFields": {"total": {"$ifNull": [{"$first": "$total.count"}, 0]}}},
+        ]
+
+        return next(self.display.aggregate(pipeline))
 
     def fetch_lemma(self, lemma_id: str) -> Entry:
         result = self.entries.find_one({"entry.xml:id": lemma_id})
