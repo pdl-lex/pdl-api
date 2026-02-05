@@ -9,7 +9,7 @@ from app.models.entry import DisplayEntry
 load_dotenv()
 
 fulltext_search_fields = [
-    {"key": "headword.lemma", "weight": 10},
+    {"key": "headword.lemma", "weight": 100},
     {"key": "flatSenses.def", "weight": 1},
     {"key": "flatSenses.cit.quote", "weight": 1},
     {"key": "etym.text", "weight": 1},
