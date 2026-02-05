@@ -1,5 +1,6 @@
 import os
 import re
+from typing import Optional
 
 from fastapi import HTTPException
 from pymongo import MongoClient
@@ -54,7 +55,7 @@ class LemmaService:
 
     def free_text_search(
         self,
-        term: str,
+        term: Optional[str],
         page: int,
         results_per_page: int,
         **filters,
@@ -84,7 +85,7 @@ class LemmaService:
 
     def query_summary(
         self,
-        term: str,
+        term: Optional[str],
         **filters,
     ) -> QuerySummary:
         max_senses = 10
@@ -93,6 +94,11 @@ class LemmaService:
         pipeline = [
             {"$match": _build_query(term=term, **filters)},
             {"$project": {"_id": False}},
+            *(
+                []
+                if term is None
+                else [{"$addFields": {"score": {"$meta": "textScore"}}}]
+            ),
             {
                 "$facet": {
                     "lemmaGroups": [
@@ -110,18 +116,28 @@ class LemmaService:
                             "$group": {
                                 "_id": "$headword.lemma",
                                 "items": {"$addToSet": "$$ROOT"},
+                                **(
+                                    {}
+                                    if term is None
+                                    else {"score": {"$max": "$score"}}
+                                ),
                             }
                         },
                         {
                             "$project": {
                                 "_id": 0,
                                 "lemma": "$_id",
-                                "items": "$items",
+                                "items": 1,
+                                "score": 1,
                                 "length": {"$size": "$items"},
                             }
                         },
-                        {"$sort": {"length": -1}},
-                        {"$unset": "length"},
+                        {
+                            "$sort": {"length": -1}
+                            if term is None
+                            else {"score": -1, "length": -1}
+                        },
+                        {"$unset": ["length", "score"]},
                         {"$limit": max_items},
                     ],
                     "total": [
