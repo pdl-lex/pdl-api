@@ -87,6 +87,9 @@ class LemmaService:
         term: str,
         **filters,
     ) -> QuerySummary:
+        max_senses = 10
+        max_items = 100
+
         pipeline = [
             {"$match": _build_query(term=term, **filters)},
             {"$project": {"_id": False}},
@@ -98,7 +101,9 @@ class LemmaService:
                                 "headword": 1,
                                 "xml:id": 1,
                                 "source": 1,
-                                "mainSenses": "$sense.def",
+                                "mainSenses": {
+                                    "$firstN": {"input": "$sense.def", "n": max_senses}
+                                },
                             },
                         },
                         {
@@ -117,7 +122,7 @@ class LemmaService:
                         },
                         {"$sort": {"length": -1}},
                         {"$unset": "length"},
-                        {"$limit": 100},
+                        {"$limit": max_items},
                     ],
                     "total": [
                         {
