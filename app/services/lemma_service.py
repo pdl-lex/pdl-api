@@ -92,7 +92,7 @@ class LemmaService:
             {"$project": {"_id": False}},
             {
                 "$facet": {
-                    "lemmaPreviews": [
+                    "lemmaGroups": [
                         {
                             "$project": {
                                 "headword": 1,
@@ -101,6 +101,23 @@ class LemmaService:
                                 "mainSenses": "$sense.def",
                             },
                         },
+                        {
+                            "$group": {
+                                "_id": "$headword.lemma",
+                                "items": {"$addToSet": "$$ROOT"},
+                            }
+                        },
+                        {
+                            "$project": {
+                                "_id": 0,
+                                "lemma": "$_id",
+                                "items": "$items",
+                                "length": {"$size": "$items"},
+                            }
+                        },
+                        {"$sort": {"length": -1}},
+                        {"$unset": "length"},
+                        {"$limit": 100},
                     ],
                     "total": [
                         {

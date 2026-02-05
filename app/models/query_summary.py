@@ -6,11 +6,16 @@ from app.models.base import BaseModel
 from app.models.entry import GrammaticalFeatures, Headword, Resource
 
 
-class LemmaPreview(BaseModel, GrammaticalFeatures):
+class LemmaInfo(BaseModel, GrammaticalFeatures):
     headword: Headword
     xml_id: str = Field(alias="xml:id")
     source: Resource
     main_senses: Optional[list[str]] = Field(alias="mainSenses", default=[])
+
+
+class LemmaPreview(BaseModel, GrammaticalFeatures):
+    lemma: str
+    items: list[LemmaInfo]
 
 
 class ResourceCount(BaseModel):
@@ -21,6 +26,4 @@ class ResourceCount(BaseModel):
 class QuerySummary(BaseModel):
     total: int
     counts_by_resource: list[ResourceCount] = Field(alias="countsByResource")
-    lemma_previews: Optional[list[LemmaPreview]] = Field(
-        alias="lemmaPreviews", default=None
-    )
+    lemma_groups: list[LemmaPreview] = Field(alias="lemmaGroups", default=[])
