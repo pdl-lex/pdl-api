@@ -1,5 +1,6 @@
 import os
 import re
+from functools import singledispatchmethod
 from typing import Optional
 
 from fastapi import HTTPException
@@ -45,11 +46,24 @@ class LemmaService:
         self.entries = self.db.get_collection("entries")
         self.display = self.db.get_collection("display")
 
-    def _convert_spans_to_display(self, result: DisplayEntryList):
+    @singledispatchmethod
+    def convert_spans_to_display(self, result):
+        raise NotImplementedError(f"Cannot handle elements of type {type(result)}")
+
+    @convert_spans_to_display.register
+    def _(self, result: list):
         for index, item in enumerate(result["items"]):
             if (etym := item.get("etym")) is not None:
                 etym = SpanAccumulator(etym).to_display()
                 result["items"][index]["etym"] = etym
+
+        return result
+
+    @convert_spans_to_display.register
+    def _(self, result: dict):
+        if (etym := result.get("etym")) is not None:
+            etym = SpanAccumulator(etym).to_display()
+            result["etym"] = etym
 
         return result
 
@@ -81,7 +95,7 @@ class LemmaService:
             },
         ]
 
-        return self._convert_spans_to_display(next(self.display.aggregate(pipeline)))
+        return self.convert_spans_to_display(next(self.display.aggregate(pipeline)))
 
     def query_summary(
         self,
@@ -181,4 +195,4 @@ class LemmaService:
         if result is None:
             raise HTTPException(status_code=404, detail=f"Unknown id: {lemma_id!r}")
 
-        return result
+        return self.convert_spans_to_display(result)
