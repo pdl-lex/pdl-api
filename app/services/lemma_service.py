@@ -124,6 +124,9 @@ class LemmaService:
                                 "mainSenses": {
                                     "$firstN": {"input": "$sense.def", "n": max_senses}
                                 },
+                                "nPos": 1,
+                                "gender": 1,
+                                "number": 1,
                             },
                         },
                         {
@@ -138,11 +141,8 @@ class LemmaService:
                             }
                         },
                         {
-                            "$project": {
-                                "_id": 0,
+                            "$addFields": {
                                 "lemma": "$_id",
-                                "items": 1,
-                                "score": 1,
                                 "length": {"$size": "$items"},
                             }
                         },
@@ -151,7 +151,7 @@ class LemmaService:
                             if term is None
                             else {"score": -1, "length": -1}
                         },
-                        {"$unset": ["length", "score"]},
+                        {"$unset": ["_id", "length", "score"]},
                         {"$limit": max_items},
                     ],
                     "total": [
@@ -169,7 +169,7 @@ class LemmaService:
                         {
                             "$project": {
                                 "source": "$_id",
-                                "_id": "$$REMOVE",
+                                "_id": 0,
                                 "count": {"$ifNull": ["$count", 0]},
                             }
                         },

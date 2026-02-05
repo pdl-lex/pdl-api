@@ -13,7 +13,7 @@ class LemmaInfo(BaseModel, GrammaticalFeatures):
     main_senses: Optional[list[str]] = Field(alias="mainSenses", default=[])
 
 
-class LemmaPreview(BaseModel, GrammaticalFeatures):
+class LemmaPreview(BaseModel):
     lemma: str
     items: list[LemmaInfo]
 
