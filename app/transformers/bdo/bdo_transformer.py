@@ -5,6 +5,7 @@ from pydash import omit, unique_id
 
 from app.transformers.base_xml_transformer import (
     BaseXmlTransformer,
+    extract_text,
     xpath,
 )
 from app.transformers.bdo.bdo_mixed_content import BdoMixedContentTransformer
@@ -50,7 +51,8 @@ def is_sense(element):
 
 def transform_sense(node):
     sense = node.find("bedeutung")
-    text = sense.text
+    text = extract_text(sense)
+
     number = sense.attrib.get("nr")
     id_ = sense.attrib.get("id", unique_id("sense_"))
 
