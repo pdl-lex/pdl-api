@@ -62,7 +62,7 @@ def transform_sense(node):
         "n": number,
         "sense": [
             transform_sense(subsense)
-            for subsense in sense.findall("bedeutung-position")
+            for subsense in node.findall("bedeutung-position")
             if is_sense(subsense)
         ],
         "cit": extract_examples(sense),
