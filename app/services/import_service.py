@@ -104,9 +104,7 @@ if __name__ == "__main__":
         console.print("[yellow]Operation cancelled.")
         sys.exit(0)
 
-    with open(
-        "/Users/di97put/projects/pdl-api/data/output/result.json", "r", encoding="utf-8"
-    ) as f:
+    with open(filepath, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     with console.status("[bold green]Importing data...") as status:
@@ -132,4 +130,4 @@ if __name__ == "__main__":
         )
     else:
         console.print(f"[bold red]❌ Error: {response.status_code}")
-        print(response.text)
+        console.print(response.text)
