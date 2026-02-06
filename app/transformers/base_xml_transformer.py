@@ -1,3 +1,4 @@
+import re
 from functools import wraps
 from typing import Any, Callable, Optional
 
@@ -6,6 +7,11 @@ import lxml.etree as ET  # noqa: N812
 
 class TransformationError(ValueError):
     pass
+
+
+def extract_text(node) -> str:
+    raw_text = "".join(node.itertext())
+    return " ".join(re.split(r"\s+", raw_text))
 
 
 class BaseXmlTransformer:
