@@ -53,7 +53,7 @@ def transform_sense(node):
     sense = node.find("bedeutung")
     text = extract_text(sense)
 
-    number = sense.attrib.get("nr")
+    number = node.attrib.get("nr")
     id_ = sense.attrib.get("id", unique_id("sense_"))
 
     return {
