@@ -127,8 +127,11 @@ class LemmaService:
                                 "nPos": 1,
                                 "gender": 1,
                                 "number": 1,
+                                "score": 1,
                             },
                         },
+                        {"$sort": {"score": -1}},
+                        {"$unset": "score"},
                         {"$limit": max_items},
                     ],
                     "total": [
