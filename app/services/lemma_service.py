@@ -115,7 +115,7 @@ class LemmaService:
             ),
             {
                 "$facet": {
-                    "lemmaGroups": [
+                    "items": [
                         {
                             "$project": {
                                 "headword": 1,
@@ -129,29 +129,6 @@ class LemmaService:
                                 "number": 1,
                             },
                         },
-                        {
-                            "$group": {
-                                "_id": "$headword.lemma",
-                                "items": {"$addToSet": "$$ROOT"},
-                                **(
-                                    {}
-                                    if term is None
-                                    else {"score": {"$max": "$score"}}
-                                ),
-                            }
-                        },
-                        {
-                            "$addFields": {
-                                "lemma": "$_id",
-                                "length": {"$size": "$items"},
-                            }
-                        },
-                        {
-                            "$sort": {"length": -1}
-                            if term is None
-                            else {"score": -1, "length": -1}
-                        },
-                        {"$unset": ["_id", "length", "score"]},
                         {"$limit": max_items},
                     ],
                     "total": [

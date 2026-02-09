@@ -13,11 +13,6 @@ class LemmaInfo(BaseModel, GrammaticalFeatures):
     main_senses: Optional[list[str]] = Field(alias="mainSenses", default=[])
 
 
-class LemmaPreview(BaseModel):
-    lemma: str
-    items: list[LemmaInfo]
-
-
 class ResourceCount(BaseModel):
     source: Resource
     count: int
@@ -26,4 +21,4 @@ class ResourceCount(BaseModel):
 class QuerySummary(BaseModel):
     total: int
     counts_by_resource: list[ResourceCount] = Field(alias="countsByResource")
-    lemma_groups: list[LemmaPreview] = Field(alias="lemmaGroups", default=[])
+    items: list[LemmaInfo] = []
