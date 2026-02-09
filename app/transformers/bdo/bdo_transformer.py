@@ -58,7 +58,7 @@ def transform_sense(node):
 
     return {
         "def": text,
-        "xml:id": id_,
+        "sourceId": id_,
         "n": number,
         "sense": [
             transform_sense(subsense)
