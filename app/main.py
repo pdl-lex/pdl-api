@@ -7,6 +7,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.models.entry import DisplayEntry, DisplayEntryList, Entry, Resource
+from app.models.query_summary import QuerySummary
 from app.services.import_service import ImportService
 from app.services.lemma_service import LemmaService
 
@@ -71,6 +72,25 @@ def free_text_search(
         lemma=lemma,
         page=page,
         results_per_page=results_per_page,
+        resources=resources,
+        pos=pos,
+        npos=npos,
+    )
+
+
+@app.get("/summary")
+def query_summary(
+    q: Optional[str] = None,
+    lemma: Optional[str] = Query(default=None),
+    pos: Optional[str] = Query(default=None),
+    npos: Optional[str] = Query(default=None),
+    resources: Optional[list[Resource]] = Query(default=None),
+) -> QuerySummary:
+    lemma_service: LemmaService = app.state.lemma_service
+
+    return lemma_service.query_summary(
+        term=q,
+        lemma=lemma,
         resources=resources,
         pos=pos,
         npos=npos,

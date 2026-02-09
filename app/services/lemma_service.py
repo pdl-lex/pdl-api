@@ -1,10 +1,13 @@
 import os
 import re
+from functools import singledispatchmethod
+from typing import Optional
 
 from fastapi import HTTPException
 from pymongo import MongoClient
 
 from app.models.entry import DisplayEntry, DisplayEntryList, Entry
+from app.models.query_summary import QuerySummary
 from app.transformers.standoff.span_accumulator import SpanAccumulator
 
 
@@ -43,7 +46,12 @@ class LemmaService:
         self.entries = self.db.get_collection("entries")
         self.display = self.db.get_collection("display")
 
-    def _convert_spans_to_display(self, result: DisplayEntryList):
+    @singledispatchmethod
+    def convert_spans_to_display(self, result):
+        raise NotImplementedError(f"Cannot handle elements of type {type(result)}")
+
+    @convert_spans_to_display.register
+    def _(self, result: list):
         for index, item in enumerate(result["items"]):
             if (etym := item.get("etym")) is not None:
                 etym = SpanAccumulator(etym).to_display()
@@ -51,17 +59,23 @@ class LemmaService:
 
         return result
 
+    @convert_spans_to_display.register
+    def _(self, result: dict):
+        if (etym := result.get("etym")) is not None:
+            etym = SpanAccumulator(etym).to_display()
+            result["etym"] = etym
+
+        return result
+
     def free_text_search(
         self,
-        term: str,
+        term: Optional[str],
         page: int,
         results_per_page: int,
         **filters,
     ) -> DisplayEntryList:
-        query = _build_query(term=term, **filters)
-
         pipeline = [
-            {"$match": query},
+            {"$match": _build_query(term=term, **filters)},
             {"$project": {"_id": False}},
             {
                 "$facet": {
@@ -81,7 +95,71 @@ class LemmaService:
             },
         ]
 
-        return self._convert_spans_to_display(next(self.display.aggregate(pipeline)))
+        return self.convert_spans_to_display(next(self.display.aggregate(pipeline)))
+
+    def query_summary(
+        self,
+        term: Optional[str],
+        **filters,
+    ) -> QuerySummary:
+        max_senses = 10
+        max_items = 100
+
+        pipeline = [
+            {"$match": _build_query(term=term, **filters)},
+            {"$project": {"_id": False}},
+            *(
+                []
+                if term is None
+                else [{"$addFields": {"score": {"$meta": "textScore"}}}]
+            ),
+            {
+                "$facet": {
+                    "items": [
+                        {
+                            "$project": {
+                                "headword": 1,
+                                "xml:id": 1,
+                                "source": 1,
+                                "mainSenses": {
+                                    "$firstN": {"input": "$sense.def", "n": max_senses}
+                                },
+                                "nPos": 1,
+                                "gender": 1,
+                                "number": 1,
+                                "score": 1,
+                            },
+                        },
+                        {"$sort": {"score": -1}},
+                        {"$unset": "score"},
+                        {"$limit": max_items},
+                    ],
+                    "total": [
+                        {
+                            "$count": "count",
+                        },
+                    ],
+                    "countsByResource": [
+                        {
+                            "$group": {
+                                "_id": "$source",
+                                "count": {"$sum": 1},
+                            },
+                        },
+                        {
+                            "$project": {
+                                "source": "$_id",
+                                "_id": 0,
+                                "count": {"$ifNull": ["$count", 0]},
+                            }
+                        },
+                    ],
+                }
+            },
+            {"$addFields": {"total": {"$ifNull": [{"$first": "$total.count"}, 0]}}},
+        ]
+
+        return next(self.display.aggregate(pipeline))
 
     def fetch_lemma(self, lemma_id: str) -> Entry:
         result = self.entries.find_one({"entry.xml:id": lemma_id})
@@ -97,4 +175,4 @@ class LemmaService:
         if result is None:
             raise HTTPException(status_code=404, detail=f"Unknown id: {lemma_id!r}")
 
-        return result
+        return self.convert_spans_to_display(result)
