@@ -16,7 +16,7 @@ fulltext_search_fields = [
 ]
 index_fields = [
     "source",
-    "xml:id",
+    "sourceId",
     "headword.lemma",
     "pos",
     "gender",

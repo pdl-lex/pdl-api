@@ -119,7 +119,7 @@ class LemmaService:
                         {
                             "$project": {
                                 "headword": 1,
-                                "xml:id": 1,
+                                "sourceId": 1,
                                 "source": 1,
                                 "mainSenses": {
                                     "$firstN": {"input": "$sense.def", "n": max_senses}
@@ -162,7 +162,7 @@ class LemmaService:
         return next(self.display.aggregate(pipeline))
 
     def fetch_lemma(self, lemma_id: str) -> Entry:
-        result = self.entries.find_one({"entry.xml:id": lemma_id})
+        result = self.entries.find_one({"entry.sourceId": lemma_id})
 
         if result is None:
             raise HTTPException(status_code=404, detail=f"Unknown id: {lemma_id!r}")
@@ -170,7 +170,9 @@ class LemmaService:
         return result["entry"]
 
     def fetch_lemma_display(self, lemma_id: str) -> DisplayEntry:
-        result = self.display.find_one({"xml:id": lemma_id}, projection={"_id": False})
+        result = self.display.find_one(
+            {"sourceId": lemma_id}, projection={"_id": False}
+        )
 
         if result is None:
             raise HTTPException(status_code=404, detail=f"Unknown id: {lemma_id!r}")
