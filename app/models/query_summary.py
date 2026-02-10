@@ -8,7 +8,8 @@ from app.models.entry import GrammaticalFeatures, Headword, Resource
 
 class LemmaInfo(BaseModel, GrammaticalFeatures):
     headword: Headword
-    xml_id: str = Field(alias="xml:id")
+    source_id: str = Field(alias="sourceId")
+    lex_id: str = Field(alias="lexId")
     source: Resource
     main_senses: Optional[list[str]] = Field(alias="mainSenses", default=[])
 

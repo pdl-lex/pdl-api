@@ -58,7 +58,7 @@ def transform_sense(node):
 
     return {
         "def": text,
-        "xml:id": id_,
+        "sourceId": id_,
         "n": number,
         "sense": [
             transform_sense(subsense)
@@ -85,8 +85,8 @@ class BdoXmlTransformer(BaseXmlTransformer):
     def source(self, source):
         return source
 
-    @xpath(".//artikel/@id", alias="xml:id")
-    def xml_id(self, id_):
+    @xpath(".//artikel/@id", alias="sourceId")
+    def source_id(self, id_):
         return id_
 
     @xpath(".//artikel/bedeutung-position", default=[], multiple=True)

@@ -26,7 +26,7 @@ class Citation(BaseModel):
     bibl: Optional[list[dict]] = []
     type_: str = Field(alias="type")
     quote: Optional[str] = None
-    xml_id: Optional[str] = Field(alias="xml:id", default=None)
+    source_id: Optional[str] = Field(alias="sourceId", default=None)
     note: Optional[list[dict]] = []
 
 
@@ -36,7 +36,7 @@ class Sense(BaseModel):
     sense: list["Sense"] = []
     cit: Optional[list[Citation]] = []
     usg: Optional[list[dict]] = []
-    xml_id: str = Field(alias="xml:id")
+    source_id: Optional[str] = Field(alias="sourceId", default=None)
     entry: Optional[list[dict]] = []
 
 
@@ -81,7 +81,8 @@ class CrossReference(BaseModel):
 class AbstractBaseEntry(BaseModel):
     etym: Optional[list[Etymology] | list[str]] = []
     sense: Optional[list[Sense]] = []
-    xml_id: str = Field(alias="xml:id")
+    source_id: Optional[str] = Field(alias="sourceId", default=None)
+    lex_id: str = Field(alias="lexId")
     xml_lang: str = Field(alias="xml:lang")
     list_bibl: Optional[ListBibl] = Field(alias="listBibl", default=None)
     xr: Optional[list[CrossReference]] = []

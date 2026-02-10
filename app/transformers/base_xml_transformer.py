@@ -1,8 +1,11 @@
 import re
+from collections import Counter
 from functools import wraps
+from pathlib import Path
 from typing import Any, Callable, Optional
 
 import lxml.etree as ET  # noqa: N812
+from unidecode import unidecode
 
 
 class TransformationError(ValueError):
@@ -15,14 +18,35 @@ def extract_text(node) -> str:
 
 
 class BaseXmlTransformer:
-    def __init__(self, filepath):
-        self.filepath = filepath
-        self.tree = ET.parse(filepath)
-        self.root = self.tree.getroot()
+    def __init__(self):
+        self._lex_ids = Counter()
 
-    def transform(self, element: Optional[ET._Element] = None) -> dict:
+    def _add_lex_id(self, entry: dict) -> dict:
+        pos_abbreviations = {"Substantiv": "n", "Verb": "v", "Adjektiv": "a"}
+        lemma = unidecode(
+            entry["headword"]["lemma"].lower() + (entry["headword"]["index"] or "")
+        )
+
+        lex_id = "__".join(
+            [
+                "lexoterm",
+                entry["source"],
+                lemma,
+                pos_abbreviations.get(entry["nPos"], "o"),  # o = other
+            ]
+        )
+        self._lex_ids[lex_id] += 1
+
+        if (count := self._lex_ids[lex_id]) > 1:
+            lex_id += f"__{count}"
+
+        return {**entry, "lexId": lex_id}
+
+    def transform(self, filepath: Path, element: Optional[ET._Element] = None) -> dict:
         """Extract all fields marked with @xpath decorator."""
         result = {}
+        self.tree = ET.parse(filepath)
+        self.root = self.tree.getroot()
 
         for attr_name in dir(self):
             attr = getattr(self, attr_name)
@@ -41,7 +65,7 @@ class BaseXmlTransformer:
 
         result = self.postprocess(result, element)
 
-        return result
+        return self._add_lex_id(result)
 
     def postprocess(self, data: dict, element: ET._Element) -> dict:
         """Hook for modifying transformed data.
