@@ -17,7 +17,9 @@ def _build_lemma_query(lemma: str) -> dict:
         flags = pattern_match.group(2) or ""
         return {"headword.lemma": {"$regex": pattern, "$options": flags}}
     else:
-        return {"headword.lemma": lemma}
+        return {
+            "$or": [{"headword.lemma": lemma}, {"sourceId": lemma}, {"lexId": lemma}]
+        }
 
 
 dispatcher = {
