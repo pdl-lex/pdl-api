@@ -82,7 +82,9 @@ if __name__ == "__main__":
         "--production", help="Write to production db", action="store_true"
     )
     parser.add_argument(
-        "--target", help="URL to FastAPI instance (overrides --production)"
+        "--api-url",
+        help="URL to FastAPI instance (overrides --production)",
+        default="http://127.0.0.1:8000",
     )
     parser.add_argument("filepath", help="Path to source json")
 
@@ -90,8 +92,8 @@ if __name__ == "__main__":
     filepath = Path(args.filepath).resolve()
 
     URL = (
-        args.target
-        if args.target is not None
+        args.api_url
+        if args.api_url is not None
         else os.environ["LEXOTERM_API_URL"]
         if args.production
         else "http://127.0.0.1:8000"
