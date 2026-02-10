@@ -16,13 +16,13 @@ def ensure_output_directories():
 def bdo_to_lexoterm(bdo_dir: Path) -> list[dict]:
     files = list(bdo_dir.rglob("*.xml"))
     result = []
-
+    bdo_transformer = BdoXmlTransformer()
     progress_bar = tqdm(files, desc="Converting BDO XML to LexoTerm format")
 
     for path in progress_bar:
         progress_bar.set_description(f"Processing {path.parent.parent.name}")
-        transformer = BdoXmlTransformer(path)
-        result.append(transformer.transform())
+
+        result.append(bdo_transformer.transform(path))
 
     return result
 
