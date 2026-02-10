@@ -91,13 +91,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     filepath = Path(args.filepath).resolve()
 
-    URL = (
-        args.api_url
-        if args.api_url is not None
-        else os.environ["LEXOTERM_API_URL"]
-        if args.production
-        else "http://127.0.0.1:8000"
-    )
+    URL = os.environ["LEXOTERM_API_URL"] if args.production else args.api_url
 
     API_KEY = os.environ["MONGO_API_KEY"]
     console = Console()
@@ -112,7 +106,7 @@ if __name__ == "__main__":
     with open(filepath, "r", encoding="utf-8") as f:
         data = json.load(f)
 
-    with console.status("[bold green]Importing data...") as status:
+    with console.status(f"[bold green]Sending data to {URL}...") as status:
         try:
             response = requests.post(
                 f"{URL.rstrip('/')}/insert-display-data",
