@@ -23,7 +23,9 @@ class BaseXmlTransformer:
 
     def _add_lex_id(self, entry: dict) -> dict:
         pos_abbreviations = {"Substantiv": "n", "Verb": "v", "Adjektiv": "a"}
-        lemma = unidecode(entry["headword"]["lemma"].lower())
+        lemma = unidecode(
+            entry["headword"]["lemma"].lower() + (entry["headword"]["index"] or "")
+        )
 
         lex_id = "__".join(
             [
