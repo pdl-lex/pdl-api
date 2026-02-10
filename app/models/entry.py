@@ -82,6 +82,7 @@ class AbstractBaseEntry(BaseModel):
     etym: Optional[list[Etymology] | list[str]] = []
     sense: Optional[list[Sense]] = []
     source_id: Optional[str] = Field(alias="sourceId", default=None)
+    lex_id: str = Field(alias="lexId")
     xml_lang: str = Field(alias="xml:lang")
     list_bibl: Optional[ListBibl] = Field(alias="listBibl", default=None)
     xr: Optional[list[CrossReference]] = []
