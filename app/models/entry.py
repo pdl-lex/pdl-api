@@ -86,6 +86,7 @@ class AbstractBaseEntry(BaseModel):
     xml_lang: str = Field(alias="xml:lang")
     list_bibl: Optional[ListBibl] = Field(alias="listBibl", default=None)
     xr: Optional[list[CrossReference]] = []
+    family: list[str] | None = None
 
 
 class GrammaticalFeatures:
