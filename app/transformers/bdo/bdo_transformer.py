@@ -54,7 +54,7 @@ def transform_sense(node):
     text = extract_text(sense)
 
     number = node.attrib.get("nr")
-    id_ = sense.attrib.get("id", unique_id("sense_"))
+    id_ = node.attrib.get("id", unique_id("sense_"))
 
     return {
         "def": text,
@@ -65,7 +65,7 @@ def transform_sense(node):
             for subsense in node.findall("bedeutung-position")
             if is_sense(subsense)
         ],
-        "cit": extract_examples(sense),
+        "cit": extract_examples(node),
     }
 
 
