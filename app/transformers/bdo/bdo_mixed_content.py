@@ -62,6 +62,10 @@ class BdoBaseTransformer(StandoffTransformer):
             .drop("ref_type", axis=1)
         )
 
+    @preprocess
+    def rename_compounds(self, aframe: AnnotationFrame) -> AnnotationFrame:
+        return aframe.assign(tag=aframe.tag.replace("kompositum", "verweis"))
+
     @register("lemma-form")
     def serialize_mention(self, span: pd.Series) -> TextAnnotationSpan:
         return TextAnnotationSpan(**textspan(span), labels=["italic"])

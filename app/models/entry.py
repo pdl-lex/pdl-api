@@ -88,6 +88,7 @@ class AbstractBaseEntry(BaseModel):
     xr: Optional[list[CrossReference]] = []
     family: list[str] | None = None
     derivations: list[AnnotatedTextDisplay | AnnotatedText] | None = []
+    compounds: list[AnnotatedTextDisplay | AnnotatedText] | None = []
 
 
 class GrammaticalFeatures:
