@@ -4,8 +4,8 @@ from tqdm import tqdm
 
 from app.transformers.bdo.bdo_transformer import BdoXmlTransformer
 
-OUTPUT_DATA_DIR = Path("data/display_data")
-OUTPUT_ERROR_DIR = Path("data/display_data")
+OUTPUT_DATA_DIR = Path("data/lexoterm")
+OUTPUT_ERROR_DIR = Path("data/lexoterm")
 
 
 def ensure_output_directories():
