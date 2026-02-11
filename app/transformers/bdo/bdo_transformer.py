@@ -118,6 +118,10 @@ class BdoXmlTransformer(BaseXmlTransformer):
     def family(self, nodes):
         return [extract_text(node).strip() for node in nodes]
 
+    @xpath(".//ableitung-position/verweis", multiple=True)
+    def derivations(self, nodes):
+        return [BdoMixedContentTransformer.load_xml(node).serialize() for node in nodes]
+
     def postprocess(self, data, _element):
         data["xml:lang"] = "DE"
         data["flatSenses"] = flatten_senses(data.get("sense", []))

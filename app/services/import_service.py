@@ -14,6 +14,7 @@ fulltext_search_fields = [
     {"key": "flatSenses.cit.quote", "weight": 1},
     {"key": "etym.text", "weight": 1},
     {"key": "family", "weight": 1},
+    {"key": "derivations.text", "weight": 1},
 ]
 index_fields = [
     "source",
