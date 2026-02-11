@@ -77,6 +77,7 @@ class CrossRefSegment(ContainerSegment):
 
         self.target = span.target
         self.variant = span.variant
+        self.missing = span.missing
 
     def to_display(self) -> CrossRefDisplay:
         return {
@@ -84,6 +85,7 @@ class CrossRefSegment(ContainerSegment):
             "text": self.text,
             "target": self.target,
             "variant": self.variant,
+            "missing": self.missing,
             "content": [segment.to_display() for segment in self.segments],
         }
 

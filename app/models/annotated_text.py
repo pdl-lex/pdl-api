@@ -33,6 +33,7 @@ class LinkAnnotationSpan(BaseAnnotationSpan):
 class CrossRefAnnotationSpan(LinkAnnotationSpan):
     type: Literal["crossref"]
     variant: Optional[str] = None
+    missing: Optional[bool] = False
 
 
 AnnotationSpan = Annotated[

@@ -65,6 +65,7 @@ class CrossRefSpan(Span):
 
         self.target = span_data["target"]
         self.variant = span_data["variant"]
+        self.missing = span_data["missing"]
 
 
 class BibRefSpan(Span):
