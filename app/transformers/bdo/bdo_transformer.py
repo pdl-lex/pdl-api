@@ -114,6 +114,10 @@ class BdoXmlTransformer(BaseXmlTransformer):
 
         return transformer.serialize()
 
+    @xpath(".//lemma-position/wortfamilie/verweis", multiple=True)
+    def family(self, nodes):
+        return [extract_text(node).strip() for node in nodes]
+
     def postprocess(self, data, _element):
         data["xml:lang"] = "DE"
         data["flatSenses"] = flatten_senses(data.get("sense", []))
