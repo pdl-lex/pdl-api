@@ -55,19 +55,22 @@ class LemmaService:
     @convert_spans_to_display.register
     def _(self, result: list):
         for index, item in enumerate(result["items"]):
-            if (etym := item.get("etym")) is not None:
-                etym = SpanAccumulator(etym).to_display()
-                result["items"][index]["etym"] = etym
+            result[index] = self.convert_spans_to_display(item)
 
         return result
 
     @convert_spans_to_display.register
-    def _(self, result: dict):
-        if (etym := result.get("etym")) is not None:
+    def _(self, item: dict):
+        if (etym := item.get("etym")) is not None:
             etym = SpanAccumulator(etym).to_display()
-            result["etym"] = etym
+            item["etym"] = etym
+        if (compounds := item.get("compounds")) is not None:
+            compounds = [
+                SpanAccumulator(compound).to_display() for compound in compounds
+            ]
+            item["compounds"] = compounds
 
-        return result
+        return item
 
     def free_text_search(
         self,
