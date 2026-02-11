@@ -75,7 +75,7 @@ class ListBibl(BaseModel):
 class CrossReference(BaseModel):
     ref: Optional[list] = []
     type_: Optional[str] = Field(alias="type")
-    subtype: Optional[str]
+    subtype: Optional[str] = None
 
 
 class AbstractBaseEntry(BaseModel):
@@ -87,6 +87,7 @@ class AbstractBaseEntry(BaseModel):
     list_bibl: Optional[ListBibl] = Field(alias="listBibl", default=None)
     xr: Optional[list[CrossReference]] = []
     family: list[str] | None = None
+    derivations: list[AnnotatedTextDisplay | AnnotatedText] | None = []
 
 
 class GrammaticalFeatures:
