@@ -34,6 +34,20 @@ REF_TYPE_PREFIXES = {
 }
 
 
+def get_target_link(span):
+    target_type = span.get("ziel-typ")
+    base_url = "/search?lemma={}"
+
+    match target_type:
+        case "Lemma":
+            return base_url.format(span["ziel"])
+        case "Bedeutung":
+            lemma_id = span["ziel"].rsplit("_", maxsplit=1)[0]
+            return base_url.format(lemma_id)
+        case _:
+            return "."
+
+
 class BdoBaseTransformer(StandoffTransformer):
     @preprocess(order=1)
     def insert_crossref_prefixes(self, aframe: AnnotationFrame) -> AnnotationFrame:
@@ -48,6 +62,10 @@ class BdoBaseTransformer(StandoffTransformer):
             .drop("ref_type", axis=1)
         )
 
+    @preprocess
+    def rename_compounds(self, aframe: AnnotationFrame) -> AnnotationFrame:
+        return aframe.assign(tag=aframe.tag.replace("kompositum", "verweis"))
+
     @register("lemma-form")
     def serialize_mention(self, span: pd.Series) -> TextAnnotationSpan:
         return TextAnnotationSpan(**textspan(span), labels=["italic"])
@@ -60,15 +78,14 @@ class BdoBaseTransformer(StandoffTransformer):
     def serialize_reference(
         self, span: pd.Series
     ) -> Union[CrossRefAnnotationSpan, LinkAnnotationSpan]:
-        if (target := span.get("ziel-extern")) is not None:
-            return LinkAnnotationSpan(**basedata(span, "link"), target=target)
-
-        target = span.get("ziel")
+        if (external := span.get("ziel-extern")) is not None:
+            return LinkAnnotationSpan(**basedata(span, "link"), target=external)
 
         return CrossRefAnnotationSpan(
             **basedata(span, "crossref"),
             variant="arrow" if span.get("verweis-typ") == "Pfeil" else None,
-            target="." if target is None else f"/entry/{target}",
+            target=get_target_link(span),
+            missing=span.get("fehlt") == "ja",
         )
 
 

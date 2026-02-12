@@ -12,7 +12,10 @@ class TransformationError(ValueError):
     pass
 
 
-def extract_text(node) -> str:
+def extract_text(node) -> str | None:
+    if node is None:
+        return None
+
     raw_text = "".join(node.itertext())
     return " ".join(re.split(r"\s+", raw_text))
 

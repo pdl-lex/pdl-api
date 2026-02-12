@@ -21,6 +21,7 @@ dependencies = [
 dev = [
     "poethepoet>=0.38.0",
     "ruff>=0.14.6",
+    "snakeviz>=2.2.2",
 ]
 
 [tool.ruff]
@@ -55,7 +56,7 @@ format = "ruff format ."
 test = "pytest"
 dev = "uv run fastapi dev"
 insert-data = "python -m app.services.import_service"
-process = "python -m app.transformers.lex_transformer"
+transform = "python -m app.transformers.lex_transformer"
 
 [tool.poe.tasks.check]
 sequence = [

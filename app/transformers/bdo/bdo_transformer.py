@@ -54,7 +54,7 @@ def transform_sense(node):
     text = extract_text(sense)
 
     number = node.attrib.get("nr")
-    id_ = sense.attrib.get("id", unique_id("sense_"))
+    id_ = node.attrib.get("id", unique_id("sense_"))
 
     return {
         "def": text,
@@ -65,7 +65,7 @@ def transform_sense(node):
             for subsense in node.findall("bedeutung-position")
             if is_sense(subsense)
         ],
-        "cit": extract_examples(sense),
+        "cit": extract_examples(node),
     }
 
 
@@ -113,6 +113,18 @@ class BdoXmlTransformer(BaseXmlTransformer):
         transformer = BdoMixedContentTransformer.load_xml(node)
 
         return transformer.serialize()
+
+    @xpath(".//lemma-position/wortfamilie/verweis", multiple=True)
+    def family(self, nodes):
+        return [extract_text(node).strip() for node in nodes]
+
+    @xpath(".//ableitung-position/verweis", multiple=True)
+    def derivations(self, nodes):
+        return [BdoMixedContentTransformer.load_xml(node).serialize() for node in nodes]
+
+    @xpath(".//komposita-position/kompositum", multiple=True)
+    def compounds(self, nodes):
+        return [BdoMixedContentTransformer.load_xml(node).serialize() for node in nodes]
 
     def postprocess(self, data, _element):
         data["xml:lang"] = "DE"

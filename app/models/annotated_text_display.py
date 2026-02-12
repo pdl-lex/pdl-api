@@ -26,6 +26,7 @@ class LinkDisplay(BaseContainerDisplay):
 class CrossRefDisplay(LinkDisplay):
     type: Literal["crossref"] = "crossref"
     variant: Optional[str] = None
+    missing: Optional[bool] = False
 
 
 class BibRefDisplay(BaseContainerDisplay):
