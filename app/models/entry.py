@@ -3,7 +3,7 @@ from typing import Optional, Union
 
 from pydantic import Field
 
-from app.models.annotated_text import AnnotatedText
+from app.models.annotated_text import AnnotatedTextData
 from app.models.annotated_text_display import AnnotatedTextDisplay
 from app.models.base import BaseModel
 from app.models.rich_text import RichTextField
@@ -87,8 +87,8 @@ class AbstractBaseEntry(BaseModel):
     list_bibl: Optional[ListBibl] = Field(alias="listBibl", default=None)
     xr: Optional[list[CrossReference]] = []
     family: list[str] | None = None
-    derivations: list[AnnotatedTextDisplay | AnnotatedText] | None = []
-    compounds: list[AnnotatedTextDisplay | AnnotatedText] | None = []
+    derivations: list[AnnotatedTextDisplay | AnnotatedTextData] | None = []
+    compounds: list[AnnotatedTextDisplay | AnnotatedTextData] | None = []
 
 
 class GrammaticalFeatures:
@@ -108,7 +108,7 @@ class DisplayEntry(AbstractBaseEntry, GrammaticalFeatures):
     source: Resource
     variants: list[str]
     flat_senses: Optional[list[Sense]] = Field(alias="flatSenses", default=[])
-    etym: Optional[Union[AnnotatedTextDisplay, AnnotatedText]] = None
+    etym: Optional[Union[AnnotatedTextDisplay, AnnotatedTextData]] = None
 
 
 class DisplayEntryList(BaseModel):
