@@ -5,7 +5,7 @@ from typing import Optional
 from fastapi import HTTPException
 from pymongo import MongoClient
 
-from app.models.entry import DisplayEntry, DisplayEntryList
+from app.models.entry import Entry, EntryList
 from app.models.query_summary import QuerySummary
 
 
@@ -52,7 +52,7 @@ class QueryService:
         page: int,
         results_per_page: int,
         **filters,
-    ) -> DisplayEntryList:
+    ) -> EntryList:
         pipeline = [
             {"$match": _build_query(term=term, **filters)},
             {"$project": {"_id": False}},
@@ -141,7 +141,7 @@ class QueryService:
 
         return next(self.display.aggregate(pipeline))
 
-    def fetch_lemma_display(self, lemma_id: str) -> DisplayEntry:
+    def fetch_lemma_display(self, lemma_id: str) -> Entry:
         result = self.display.find_one({"lexId": lemma_id}, projection={"_id": False})
 
         if result is None:

@@ -89,7 +89,7 @@ class Headword(BaseModel):
     index: Optional[int] = None
 
 
-class DisplayEntry(BaseModel, GrammaticalFeatures):
+class Entry(BaseModel, GrammaticalFeatures):
     headword: Headword
     source: Resource
     variants: list[str]
@@ -106,8 +106,8 @@ class DisplayEntry(BaseModel, GrammaticalFeatures):
     compounds: list[AnnotatedTextData] | None = []
 
 
-class DisplayEntryList(BaseModel):
-    items: list[DisplayEntry]
+class EntryList(BaseModel):
+    items: list[Entry]
     total: int
     page: int
     items_per_page: int = Field(alias="itemsPerPage")

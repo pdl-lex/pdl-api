@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.models.entry import DisplayEntry, DisplayEntryList, Resource
+from app.models.entry import Entry, EntryList, Resource
 from app.models.query_summary import QuerySummary
 from app.services.import_service import ImportService
 from app.services.query_service import QueryService
@@ -46,7 +46,7 @@ app.add_middleware(
 
 
 @app.get("/lemma-display/{lemma_id}")
-def fetch_lemma_display_entry(lemma_id: str = "bwb__Datschi") -> DisplayEntry:
+def fetch_lemma_display_entry(lemma_id: str = "bwb__Datschi") -> Entry:
     return app.state.query_service.fetch_lemma_display(lemma_id)
 
 
@@ -59,7 +59,7 @@ def free_text_search(
     resources: Optional[list[Resource]] = Query(default=None),
     page: int = 1,
     results_per_page: int = 10,
-) -> DisplayEntryList:
+) -> EntryList:
     query_service: QueryService = app.state.query_service
 
     return query_service.free_text_search(
@@ -93,9 +93,7 @@ def query_summary(
 
 
 @app.post("/insert-display-data")
-def insert_display_data(
-    data: list[DisplayEntry], _api_key: str = Depends(verify_api_key)
-):
+def insert_display_data(data: list[Entry], _api_key: str = Depends(verify_api_key)):
     import_service: ImportService = app.state.import_service
 
     result = import_service.insert_display_data(data)
