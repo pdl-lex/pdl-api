@@ -39,7 +39,7 @@ def _build_query(**kwargs) -> dict:
     return query
 
 
-class LemmaService:
+class QueryService:
     def __init__(self):
         self.client = MongoClient(os.environ["MONGODB_URI"])
         self.db = self.client["lex"]
