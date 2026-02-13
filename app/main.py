@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.models.entry import DisplayEntry, DisplayEntryList, Resource
 from app.models.query_summary import QuerySummary
 from app.services.import_service import ImportService
-from app.services.lemma_service import LemmaService
+from app.services.query_service import LemmaService
 
 load_dotenv()
 
