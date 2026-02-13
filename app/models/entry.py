@@ -1,10 +1,9 @@
 from enum import Enum
-from typing import Optional, Union
+from typing import Optional
 
 from pydantic import Field
 
-from app.models.annotated_text import AnnotatedText
-from app.models.annotated_text_display import AnnotatedTextDisplay
+from app.models.annotated_text import AnnotatedTextData
 from app.models.base import BaseModel
 from app.models.rich_text import RichTextField
 
@@ -78,19 +77,6 @@ class CrossReference(BaseModel):
     subtype: Optional[str] = None
 
 
-class AbstractBaseEntry(BaseModel):
-    etym: Optional[list[Etymology] | list[str]] = []
-    sense: Optional[list[Sense]] = []
-    source_id: Optional[str] = Field(alias="sourceId", default=None)
-    lex_id: str = Field(alias="lexId")
-    xml_lang: str = Field(alias="xml:lang")
-    list_bibl: Optional[ListBibl] = Field(alias="listBibl", default=None)
-    xr: Optional[list[CrossReference]] = []
-    family: list[str] | None = None
-    derivations: list[AnnotatedTextDisplay | AnnotatedText] | None = []
-    compounds: list[AnnotatedTextDisplay | AnnotatedText] | None = []
-
-
 class GrammaticalFeatures:
     gender: Optional[str] = None
     pos: Optional[str] = None
@@ -98,26 +84,30 @@ class GrammaticalFeatures:
     normalized_pos: Optional[str] = Field(alias="nPos", default=None)
 
 
-class Entry(AbstractBaseEntry):
-    form: list[Form]
-    gram_grp: Optional[list[GrammarGroup]] = Field(alias="gramGrp", default=None)
-
-
 class Headword(BaseModel):
     lemma: str
     index: Optional[int] = None
 
 
-class DisplayEntry(AbstractBaseEntry, GrammaticalFeatures):
+class Entry(BaseModel, GrammaticalFeatures):
     headword: Headword
     source: Resource
     variants: list[str]
     flat_senses: Optional[list[Sense]] = Field(alias="flatSenses", default=[])
-    etym: Optional[Union[AnnotatedTextDisplay, AnnotatedText]] = None
+    etym: Optional[AnnotatedTextData] = None
+    sense: Optional[list[Sense]] = []
+    source_id: Optional[str] = Field(alias="sourceId", default=None)
+    lex_id: str = Field(alias="lexId")
+    xml_lang: str = Field(alias="xml:lang")
+    list_bibl: Optional[ListBibl] = Field(alias="listBibl", default=None)
+    xr: Optional[list[CrossReference]] = []
+    family: list[str] | None = None
+    derivations: list[AnnotatedTextData] | None = []
+    compounds: list[AnnotatedTextData] | None = []
 
 
-class DisplayEntryList(BaseModel):
-    items: list[DisplayEntry]
+class EntryList(BaseModel):
+    items: list[Entry]
     total: int
     page: int
     items_per_page: int = Field(alias="itemsPerPage")

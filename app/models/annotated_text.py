@@ -20,7 +20,7 @@ class TextAnnotationSpan(BaseAnnotationSpan):
 class BibRefAnnotationSpan(BaseAnnotationSpan):
     type: Literal["bibref"]
     bib_id: Optional[str] = Field(alias="bibId")
-    full_reference: Optional["AnnotatedText"] = Field(
+    full_reference: Optional["AnnotatedTextData"] = Field(
         alias="fullReference", default=None
     )
 
@@ -47,6 +47,6 @@ AnnotationSpan = Annotated[
 ]
 
 
-class AnnotatedText(BaseModel):
+class AnnotatedTextData(BaseModel):
     text: str
     annotations: list[AnnotationSpan]

@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from pydantic import TypeAdapter
 from pymongo import ASCENDING, IndexModel, MongoClient
 
-from app.models.entry import DisplayEntry
+from app.models.entry import Entry
 
 load_dotenv()
 
@@ -48,10 +48,10 @@ class ImportService:
             [IndexModel([(field, ASCENDING)]) for field in index_fields]
         )
 
-    def insert_display_data(self, data: list[DisplayEntry]):
+    def insert_display_data(self, data: list[Entry]):
         self._reset_display_collection()
 
-        display_entry_list = TypeAdapter(list[DisplayEntry])
+        display_entry_list = TypeAdapter(list[Entry])
         dump = display_entry_list.dump_python(data, by_alias=True, mode="json")
 
         result = self.display.insert_many(

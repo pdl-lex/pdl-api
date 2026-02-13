@@ -1,14 +1,12 @@
 import os
 import re
-from functools import singledispatchmethod
 from typing import Optional
 
 from fastapi import HTTPException
 from pymongo import MongoClient
 
-from app.models.entry import DisplayEntry, DisplayEntryList, Entry
+from app.models.entry import Entry, EntryList
 from app.models.query_summary import QuerySummary
-from app.transformers.standoff.span_accumulator import SpanAccumulator
 
 
 def _build_lemma_query(lemma: str) -> dict:
@@ -41,36 +39,12 @@ def _build_query(**kwargs) -> dict:
     return query
 
 
-class LemmaService:
+class QueryService:
     def __init__(self):
         self.client = MongoClient(os.environ["MONGODB_URI"])
         self.db = self.client["lex"]
         self.entries = self.db.get_collection("entries")
         self.display = self.db.get_collection("display")
-
-    @singledispatchmethod
-    def convert_spans_to_display(self, result):
-        raise NotImplementedError(f"Cannot handle elements of type {type(result)}")
-
-    @convert_spans_to_display.register
-    def _(self, result: list):
-        for index, item in enumerate(result["items"]):
-            result[index] = self.convert_spans_to_display(item)
-
-        return result
-
-    @convert_spans_to_display.register
-    def _(self, item: dict):
-        if (etym := item.get("etym")) is not None:
-            etym = SpanAccumulator(etym).to_display()
-            item["etym"] = etym
-        if (compounds := item.get("compounds")) is not None:
-            compounds = [
-                SpanAccumulator(compound).to_display() for compound in compounds
-            ]
-            item["compounds"] = compounds
-
-        return item
 
     def free_text_search(
         self,
@@ -78,7 +52,7 @@ class LemmaService:
         page: int,
         results_per_page: int,
         **filters,
-    ) -> DisplayEntryList:
+    ) -> EntryList:
         pipeline = [
             {"$match": _build_query(term=term, **filters)},
             {"$project": {"_id": False}},
@@ -100,7 +74,7 @@ class LemmaService:
             },
         ]
 
-        return self.convert_spans_to_display(next(self.display.aggregate(pipeline)))
+        return next(self.display.aggregate(pipeline))
 
     def query_summary(
         self,
@@ -167,18 +141,10 @@ class LemmaService:
 
         return next(self.display.aggregate(pipeline))
 
-    def fetch_lemma(self, lemma_id: str) -> Entry:
-        result = self.entries.find_one({"entry.lexId": lemma_id})
-
-        if result is None:
-            raise HTTPException(status_code=404, detail=f"Unknown id: {lemma_id!r}")
-
-        return result["entry"]
-
-    def fetch_lemma_display(self, lemma_id: str) -> DisplayEntry:
+    def fetch_lemma_display(self, lemma_id: str) -> Entry:
         result = self.display.find_one({"lexId": lemma_id}, projection={"_id": False})
 
         if result is None:
             raise HTTPException(status_code=404, detail=f"Unknown id: {lemma_id!r}")
 
-        return self.convert_spans_to_display(result)
+        return result

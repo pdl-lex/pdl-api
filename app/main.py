@@ -6,10 +6,10 @@ from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.models.entry import DisplayEntry, DisplayEntryList, Entry, Resource
+from app.models.entry import Entry, EntryList, Resource
 from app.models.query_summary import QuerySummary
 from app.services.import_service import ImportService
-from app.services.lemma_service import LemmaService
+from app.services.query_service import QueryService
 
 load_dotenv()
 
@@ -25,8 +25,8 @@ def verify_api_key(x_api_key: str = Header(...)):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    lemma_service = LemmaService()
-    app.state.lemma_service = lemma_service
+    query_service = QueryService()
+    app.state.query_service = query_service
 
     import_service = ImportService()
     app.state.import_service = import_service
@@ -45,14 +45,9 @@ app.add_middleware(
 )
 
 
-@app.get("/lemma/{lemma_id}")
-def fetch_lemma_entry(lemma_id: str = "bwb__Datschi") -> Entry:
-    return app.state.lemma_service.fetch_lemma(lemma_id)
-
-
 @app.get("/lemma-display/{lemma_id}")
-def fetch_lemma_display_entry(lemma_id: str = "bwb__Datschi") -> DisplayEntry:
-    return app.state.lemma_service.fetch_lemma_display(lemma_id)
+def fetch_lemma_display_entry(lemma_id: str = "bwb__Datschi") -> Entry:
+    return app.state.query_service.fetch_lemma_display(lemma_id)
 
 
 @app.get("/search")
@@ -64,10 +59,10 @@ def free_text_search(
     resources: Optional[list[Resource]] = Query(default=None),
     page: int = 1,
     results_per_page: int = 10,
-) -> DisplayEntryList:
-    lemma_service: LemmaService = app.state.lemma_service
+) -> EntryList:
+    query_service: QueryService = app.state.query_service
 
-    return lemma_service.free_text_search(
+    return query_service.free_text_search(
         term=q,
         lemma=lemma,
         page=page,
@@ -86,9 +81,9 @@ def query_summary(
     npos: Optional[str] = Query(default=None),
     resources: Optional[list[Resource]] = Query(default=None),
 ) -> QuerySummary:
-    lemma_service: LemmaService = app.state.lemma_service
+    query_service: QueryService = app.state.query_service
 
-    return lemma_service.query_summary(
+    return query_service.query_summary(
         term=q,
         lemma=lemma,
         resources=resources,
@@ -98,9 +93,7 @@ def query_summary(
 
 
 @app.post("/insert-display-data")
-def insert_display_data(
-    data: list[DisplayEntry], _api_key: str = Depends(verify_api_key)
-):
+def insert_display_data(data: list[Entry], _api_key: str = Depends(verify_api_key)):
     import_service: ImportService = app.state.import_service
 
     result = import_service.insert_display_data(data)
