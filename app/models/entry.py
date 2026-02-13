@@ -77,19 +77,6 @@ class CrossReference(BaseModel):
     subtype: Optional[str] = None
 
 
-class AbstractBaseEntry(BaseModel):
-    etym: Optional[list[Etymology] | list[str]] = []
-    sense: Optional[list[Sense]] = []
-    source_id: Optional[str] = Field(alias="sourceId", default=None)
-    lex_id: str = Field(alias="lexId")
-    xml_lang: str = Field(alias="xml:lang")
-    list_bibl: Optional[ListBibl] = Field(alias="listBibl", default=None)
-    xr: Optional[list[CrossReference]] = []
-    family: list[str] | None = None
-    derivations: list[AnnotatedTextData] | None = []
-    compounds: list[AnnotatedTextData] | None = []
-
-
 class GrammaticalFeatures:
     gender: Optional[str] = None
     pos: Optional[str] = None
@@ -102,12 +89,22 @@ class Headword(BaseModel):
     index: Optional[int] = None
 
 
-class DisplayEntry(AbstractBaseEntry, GrammaticalFeatures):
+class DisplayEntry(GrammaticalFeatures):
     headword: Headword
     source: Resource
     variants: list[str]
     flat_senses: Optional[list[Sense]] = Field(alias="flatSenses", default=[])
     etym: Optional[AnnotatedTextData] = None
+    etym: Optional[list[Etymology] | list[str]] = []
+    sense: Optional[list[Sense]] = []
+    source_id: Optional[str] = Field(alias="sourceId", default=None)
+    lex_id: str = Field(alias="lexId")
+    xml_lang: str = Field(alias="xml:lang")
+    list_bibl: Optional[ListBibl] = Field(alias="listBibl", default=None)
+    xr: Optional[list[CrossReference]] = []
+    family: list[str] | None = None
+    derivations: list[AnnotatedTextData] | None = []
+    compounds: list[AnnotatedTextData] | None = []
 
 
 class DisplayEntryList(BaseModel):
