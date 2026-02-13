@@ -98,11 +98,6 @@ class GrammaticalFeatures:
     normalized_pos: Optional[str] = Field(alias="nPos", default=None)
 
 
-class Entry(AbstractBaseEntry):
-    form: list[Form]
-    gram_grp: Optional[list[GrammarGroup]] = Field(alias="gramGrp", default=None)
-
-
 class Headword(BaseModel):
     lemma: str
     index: Optional[int] = None

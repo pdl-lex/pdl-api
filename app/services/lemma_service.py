@@ -5,7 +5,7 @@ from typing import Optional
 from fastapi import HTTPException
 from pymongo import MongoClient
 
-from app.models.entry import DisplayEntry, DisplayEntryList, Entry
+from app.models.entry import DisplayEntry, DisplayEntryList
 from app.models.query_summary import QuerySummary
 
 
@@ -140,14 +140,6 @@ class LemmaService:
         ]
 
         return next(self.display.aggregate(pipeline))
-
-    def fetch_lemma(self, lemma_id: str) -> Entry:
-        result = self.entries.find_one({"entry.lexId": lemma_id})
-
-        if result is None:
-            raise HTTPException(status_code=404, detail=f"Unknown id: {lemma_id!r}")
-
-        return result["entry"]
 
     def fetch_lemma_display(self, lemma_id: str) -> DisplayEntry:
         result = self.display.find_one({"lexId": lemma_id}, projection={"_id": False})

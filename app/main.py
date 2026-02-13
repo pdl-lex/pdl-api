@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.models.entry import DisplayEntry, DisplayEntryList, Entry, Resource
+from app.models.entry import DisplayEntry, DisplayEntryList, Resource
 from app.models.query_summary import QuerySummary
 from app.services.import_service import ImportService
 from app.services.lemma_service import LemmaService
@@ -43,11 +43,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@app.get("/lemma/{lemma_id}")
-def fetch_lemma_entry(lemma_id: str = "bwb__Datschi") -> Entry:
-    return app.state.lemma_service.fetch_lemma(lemma_id)
 
 
 @app.get("/lemma-display/{lemma_id}")
