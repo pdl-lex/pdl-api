@@ -1,6 +1,5 @@
 import os
 import re
-from functools import singledispatchmethod
 from typing import Optional
 
 from fastapi import HTTPException
@@ -8,7 +7,6 @@ from pymongo import MongoClient
 
 from app.models.entry import DisplayEntry, DisplayEntryList, Entry
 from app.models.query_summary import QuerySummary
-from app.transformers.standoff.span_accumulator import SpanAccumulator
 
 
 def _build_lemma_query(lemma: str) -> dict:
@@ -48,30 +46,6 @@ class LemmaService:
         self.entries = self.db.get_collection("entries")
         self.display = self.db.get_collection("display")
 
-    @singledispatchmethod
-    def convert_spans_to_display(self, result):
-        raise NotImplementedError(f"Cannot handle elements of type {type(result)}")
-
-    @convert_spans_to_display.register
-    def _(self, result: list):
-        for index, item in enumerate(result["items"]):
-            result[index] = self.convert_spans_to_display(item)
-
-        return result
-
-    @convert_spans_to_display.register
-    def _(self, item: dict):
-        if (etym := item.get("etym")) is not None:
-            etym = SpanAccumulator(etym).to_display()
-            item["etym"] = etym
-        if (compounds := item.get("compounds")) is not None:
-            compounds = [
-                SpanAccumulator(compound).to_display() for compound in compounds
-            ]
-            item["compounds"] = compounds
-
-        return item
-
     def free_text_search(
         self,
         term: Optional[str],
@@ -100,7 +74,7 @@ class LemmaService:
             },
         ]
 
-        return self.convert_spans_to_display(next(self.display.aggregate(pipeline)))
+        return next(self.display.aggregate(pipeline))
 
     def query_summary(
         self,
@@ -181,4 +155,4 @@ class LemmaService:
         if result is None:
             raise HTTPException(status_code=404, detail=f"Unknown id: {lemma_id!r}")
 
-        return self.convert_spans_to_display(result)
+        return result
