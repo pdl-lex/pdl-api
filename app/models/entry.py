@@ -89,13 +89,12 @@ class Headword(BaseModel):
     index: Optional[int] = None
 
 
-class DisplayEntry(GrammaticalFeatures):
+class DisplayEntry(BaseModel, GrammaticalFeatures):
     headword: Headword
     source: Resource
     variants: list[str]
     flat_senses: Optional[list[Sense]] = Field(alias="flatSenses", default=[])
     etym: Optional[AnnotatedTextData] = None
-    etym: Optional[list[Etymology] | list[str]] = []
     sense: Optional[list[Sense]] = []
     source_id: Optional[str] = Field(alias="sourceId", default=None)
     lex_id: str = Field(alias="lexId")
