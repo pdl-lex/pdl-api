@@ -80,12 +80,16 @@ def query_summary(
     pos: Optional[str] = Query(default=None),
     npos: Optional[str] = Query(default=None),
     resources: Optional[list[Resource]] = Query(default=None),
+    page: int = 1,
+    results_per_page: int = 10,
 ) -> QuerySummary:
     query_service: QueryService = app.state.query_service
 
     return query_service.query_summary(
         term=q,
         lemma=lemma,
+        page=page,
+        results_per_page=results_per_page,
         resources=resources,
         pos=pos,
         npos=npos,
