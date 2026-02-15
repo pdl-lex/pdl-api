@@ -79,6 +79,8 @@ class QueryService:
     def query_summary(
         self,
         term: Optional[str],
+        page: int,
+        results_per_page: int,
         **filters,
     ) -> QuerySummary:
         max_senses = 10
@@ -112,7 +114,8 @@ class QueryService:
                         },
                         {"$sort": {"score": -1}},
                         {"$unset": "score"},
-                        {"$limit": max_items},
+                        {"$skip": (page - 1) * results_per_page},
+                        {"$limit": results_per_page},
                     ],
                     "total": [
                         {
