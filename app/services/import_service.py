@@ -1,12 +1,16 @@
 import os
+from string import ascii_uppercase
 
 from dotenv import load_dotenv
 from pydantic import TypeAdapter
 from pymongo import ASCENDING, IndexModel, MongoClient
+from unidecode import unidecode
 
 from app.models.entry import Entry
 
 load_dotenv()
+
+ALPHABET = set(ascii_uppercase)
 
 fulltext_search_fields = [
     {"key": "headword.lemma", "weight": 10},
@@ -20,6 +24,7 @@ index_fields = [
     "source",
     "sourceId",
     "lexId",
+    "indexLetter",
     "headword.lemma",
     "pos",
     "gender",
@@ -50,6 +55,12 @@ class ImportService:
             [IndexModel([(field, ASCENDING)]) for field in index_fields]
         )
 
+    def _extract_index_letter(self, lemma: str) -> str | None:
+        normalized_letter = unidecode(lemma[0]).upper()
+        assert len(normalized_letter) == 1
+
+        return normalized_letter if normalized_letter in ALPHABET else None
+
     def insert_display_data(self, data: list[Entry]):
         self._reset_display_collection()
 
@@ -57,7 +68,16 @@ class ImportService:
         dump = display_entry_list.dump_python(data, by_alias=True, mode="json")
 
         result = self.display.insert_many(
-            [{**entry, "_id": entry["lexId"]} for entry in dump]
+            [
+                {
+                    **entry,
+                    "_id": entry["lexId"],
+                    "indexLetter": self._extract_index_letter(
+                        entry["headword"]["lemma"]
+                    ),
+                }
+                for entry in dump
+            ]
         )
 
         self.create_indexes()
