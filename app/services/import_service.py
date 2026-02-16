@@ -37,7 +37,9 @@ class ImportService:
         self.display.delete_many({})
         self.display.drop_indexes()
 
-    def _create_indexes(self):
+    def create_indexes(self, drop=False):
+        if drop:
+            self.display.drop_indexes()
         self.display.create_index(
             [(field["key"], "text") for field in fulltext_search_fields],
             name="fulltextIndex",
@@ -58,7 +60,7 @@ class ImportService:
             [{**entry, "_id": entry["lexId"]} for entry in dump]
         )
 
-        self._create_indexes()
+        self.create_indexes()
 
         return {
             "inserted_count": len(result.inserted_ids),
