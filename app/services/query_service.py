@@ -9,7 +9,7 @@ from app.models.entry import Entry, EntryList
 from app.models.query_summary import QuerySummary
 
 
-def _build_lemma_query(lemma: str) -> dict:
+def build_lemma_query(lemma: str) -> dict:
     if pattern_match := re.match(r"^/([^/]+)/([imxs]*)?$", lemma):
         pattern = pattern_match.group(1)
         flags = pattern_match.group(2) or ""
@@ -22,14 +22,14 @@ def _build_lemma_query(lemma: str) -> dict:
 
 dispatcher = {
     "term": lambda args: {"$text": {"$search": args["term"]}},
-    "lemma": lambda args: _build_lemma_query(args["lemma"]),
+    "lemma": lambda args: build_lemma_query(args["lemma"]),
     "resources": lambda args: {"source": {"$in": [s.value for s in args["resources"]]}},
     "pos": lambda args: {"pos": args["pos"]},
     "npos": lambda args: {"nPos": args["npos"]},
 }
 
 
-def _build_query(**kwargs) -> dict:
+def build_query(**kwargs) -> dict:
     query = {}
 
     for key, func in dispatcher.items():
@@ -37,6 +37,27 @@ def _build_query(**kwargs) -> dict:
             query = {**query, **func(kwargs)}
 
     return query
+
+
+def item_pagination(page: int, results_per_page: int) -> list[dict]:
+    return [
+        {
+            "$facet": {
+                "items": [
+                    {"$skip": (page - 1) * results_per_page},
+                    {"$limit": results_per_page},
+                ],
+                "total": [{"$count": "count"}],
+            }
+        },
+        {
+            "$addFields": {
+                "total": {"$ifNull": [{"$first": "$total.count"}, 0]},
+                "page": {"$literal": page},
+                "itemsPerPage": {"$literal": results_per_page},
+            }
+        },
+    ]
 
 
 class QueryService:
@@ -54,24 +75,9 @@ class QueryService:
         **filters,
     ) -> EntryList:
         pipeline = [
-            {"$match": _build_query(term=term, **filters)},
+            {"$match": build_query(term=term, **filters)},
             {"$project": {"_id": False}},
-            {
-                "$facet": {
-                    "items": [
-                        {"$skip": (page - 1) * results_per_page},
-                        {"$limit": results_per_page},
-                    ],
-                    "total": [{"$count": "count"}],
-                }
-            },
-            {
-                "$addFields": {
-                    "total": {"$ifNull": [{"$first": "$total.count"}, 0]},
-                    "page": {"$literal": page},
-                    "itemsPerPage": {"$literal": results_per_page},
-                }
-            },
+            *item_pagination(page, results_per_page),
         ]
 
         return next(self.display.aggregate(pipeline))
@@ -84,10 +90,9 @@ class QueryService:
         **filters,
     ) -> QuerySummary:
         max_senses = 10
-        max_items = 100
 
         pipeline = [
-            {"$match": _build_query(term=term, **filters)},
+            {"$match": build_query(term=term, **filters)},
             {"$project": {"_id": False}},
             *(
                 []
@@ -151,3 +156,26 @@ class QueryService:
             raise HTTPException(status_code=404, detail=f"Unknown id: {lemma_id!r}")
 
         return result
+
+    def fetch_by_index_letter(
+        self, letter: str | None, page: int, results_per_page: int
+    ):
+        cursor = self.display.aggregate(
+            [
+                {
+                    "$match": {
+                        "indexLetter": letter if letter is None else letter.upper()
+                    }
+                },
+                {
+                    "$project": {
+                        "_id": False,
+                        "lexId": True,
+                        "source": True,
+                        "headword": True,
+                    }
+                },
+                *item_pagination(page, results_per_page),
+            ]
+        )
+        return next(cursor)
