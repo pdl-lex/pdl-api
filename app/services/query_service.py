@@ -157,16 +157,10 @@ class QueryService:
 
         return result
 
-    def fetch_by_index_letter(
-        self, letter: str | None, page: int, results_per_page: int
-    ):
+    def fetch_by_index_letter(self, letter: str, page: int, results_per_page: int):
         cursor = self.display.aggregate(
             [
-                {
-                    "$match": {
-                        "indexLetter": letter if letter is None else letter.upper()
-                    }
-                },
+                {"$match": {"indexLetter": letter.upper()}},
                 {
                     "$project": {
                         "_id": False,

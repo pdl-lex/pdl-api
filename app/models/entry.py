@@ -94,8 +94,8 @@ class Entry(BaseModel, GrammaticalFeatures):
     lex_id: str = Field(alias="lexId")
     source_id: Optional[str] = Field(alias="sourceId", default=None)
     source: Resource
-    index_letter: str | None = Field(
-        alias="indexLetter", min_length=1, max_length=1, default=None
+    index_letter: str = Field(
+        alias="indexLetter", min_length=1, max_length=1, default="#"
     )
     variants: list[str]
     flat_senses: Optional[list[Sense]] = Field(alias="flatSenses", default=[])

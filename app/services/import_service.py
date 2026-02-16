@@ -10,7 +10,7 @@ from app.models.entry import Entry
 
 load_dotenv()
 
-ALPHABET = set(ascii_uppercase)
+ALPHABET = set(ascii_uppercase) | {"-"}
 
 fulltext_search_fields = [
     {"key": "headword.lemma", "weight": 10},
@@ -55,11 +55,11 @@ class ImportService:
             [IndexModel([(field, ASCENDING)]) for field in index_fields]
         )
 
-    def _extract_index_letter(self, lemma: str) -> str | None:
+    def _extract_index_letter(self, lemma: str) -> str:
         normalized_letter = unidecode(lemma[0]).upper()
         assert len(normalized_letter) == 1
 
-        return normalized_letter if normalized_letter in ALPHABET else None
+        return normalized_letter if normalized_letter in ALPHABET else "#"
 
     def insert_display_data(self, data: list[Entry]):
         self._reset_display_collection()
