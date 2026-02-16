@@ -74,7 +74,7 @@ class BdoXmlTransformer(BaseXmlTransformer):
     def headword(self, lemma_node):
         return {
             "lemma": lemma_node.text,
-            "index": getattr(lemma_node.find("hoch"), "text", None),
+            "index": int(getattr(lemma_node.find("hoch"), "text", "0")),
         }
 
     @xpath(".//lemma-position/lemma-variante/@vollform", multiple=True, default="")

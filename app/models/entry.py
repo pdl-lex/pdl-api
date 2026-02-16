@@ -86,7 +86,7 @@ class GrammaticalFeatures:
 
 class Headword(BaseModel):
     lemma: str
-    index: Optional[int] = None
+    index: int
 
 
 class Entry(BaseModel, GrammaticalFeatures):
