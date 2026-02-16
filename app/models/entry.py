@@ -91,13 +91,16 @@ class Headword(BaseModel):
 
 class Entry(BaseModel, GrammaticalFeatures):
     headword: Headword
+    lex_id: str = Field(alias="lexId")
+    source_id: Optional[str] = Field(alias="sourceId", default=None)
     source: Resource
+    index_letter: str | None = Field(
+        alias="indexLetter", min_length=1, max_length=1, default=None
+    )
     variants: list[str]
     flat_senses: Optional[list[Sense]] = Field(alias="flatSenses", default=[])
     etym: Optional[AnnotatedTextData] = None
     sense: Optional[list[Sense]] = []
-    source_id: Optional[str] = Field(alias="sourceId", default=None)
-    lex_id: str = Field(alias="lexId")
     xml_lang: str = Field(alias="xml:lang")
     list_bibl: Optional[ListBibl] = Field(alias="listBibl", default=None)
     xr: Optional[list[CrossReference]] = []
