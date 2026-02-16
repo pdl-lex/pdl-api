@@ -157,7 +157,7 @@ class QueryService:
 
         return result
 
-    def fetch_by_index_letter(self, letter: str, page: int, results_per_page: int):
+    def fetch_keywords(self, letter: str, page: int, results_per_page: int):
         cursor = self.display.aggregate(
             [
                 {"$match": {"indexLetter": letter.upper()}},

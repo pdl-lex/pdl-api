@@ -116,14 +116,14 @@ class EntryList(BaseModel):
     items_per_page: int = Field(alias="itemsPerPage")
 
 
-class AlphabeticalListItem(BaseModel):
+class KeywordListItem(BaseModel):
     headword: Headword
     lex_id: str = Field(alias="lexId")
     source: Resource
 
 
-class AlphabeticalList(BaseModel):
-    items: list[AlphabeticalListItem]
+class KeywordList(BaseModel):
+    items: list[KeywordListItem]
     total: int
     page: int
     items_per_page: int = Field(alias="itemsPerPage")
