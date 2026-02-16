@@ -166,13 +166,8 @@ class QueryService:
                         "_id": "$headword",
                     }
                 },
-                {
-                    "$project": {
-                        "_id": False,
-                        "headword": "$_id",
-                    }
-                },
-                {"$sort": {"headword.lemma": 1, "headword.index": 1}},
+                {"$replaceRoot": {"newRoot": "$_id"}},
+                {"$sort": {"lemma": 1, "index": 1}},
                 *item_pagination(page, results_per_page),
             ]
         )

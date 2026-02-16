@@ -116,12 +116,8 @@ class EntryList(BaseModel):
     items_per_page: int = Field(alias="itemsPerPage")
 
 
-class KeywordListItem(BaseModel):
-    headword: Headword
-
-
 class KeywordList(BaseModel):
-    items: list[KeywordListItem]
+    items: list[Headword]
     total: int
     page: int
     items_per_page: int = Field(alias="itemsPerPage")
