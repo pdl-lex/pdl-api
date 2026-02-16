@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.models.entry import Entry, EntryList, Resource
+from app.models.entry import Entry, EntryList, KeywordList, Resource
 from app.models.query_summary import QuerySummary
 from app.services.import_service import ImportService
 from app.services.query_service import QueryService
@@ -106,3 +106,14 @@ def insert_display_data(data: list[Entry], _api_key: str = Depends(verify_api_ke
         "inserted_count": result["inserted_count"],
         "message": f"Successfully inserted {result['inserted_count']} documents",
     }
+
+
+@app.get("/keywords/{letter}")
+def get_by_letter(
+    letter: str | None, page: int = 1, results_per_page: int = 10
+) -> KeywordList:
+    query_service: QueryService = app.state.query_service
+
+    return query_service.fetch_keywords(
+        letter, page=page, results_per_page=results_per_page
+    )

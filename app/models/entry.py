@@ -86,18 +86,21 @@ class GrammaticalFeatures:
 
 class Headword(BaseModel):
     lemma: str
-    index: Optional[int] = None
+    index: int
 
 
 class Entry(BaseModel, GrammaticalFeatures):
     headword: Headword
+    lex_id: str = Field(alias="lexId")
+    source_id: Optional[str] = Field(alias="sourceId", default=None)
     source: Resource
+    index_letter: str = Field(
+        alias="indexLetter", min_length=1, max_length=1, default="#"
+    )
     variants: list[str]
     flat_senses: Optional[list[Sense]] = Field(alias="flatSenses", default=[])
     etym: Optional[AnnotatedTextData] = None
     sense: Optional[list[Sense]] = []
-    source_id: Optional[str] = Field(alias="sourceId", default=None)
-    lex_id: str = Field(alias="lexId")
     xml_lang: str = Field(alias="xml:lang")
     list_bibl: Optional[ListBibl] = Field(alias="listBibl", default=None)
     xr: Optional[list[CrossReference]] = []
@@ -108,6 +111,13 @@ class Entry(BaseModel, GrammaticalFeatures):
 
 class EntryList(BaseModel):
     items: list[Entry]
+    total: int
+    page: int
+    items_per_page: int = Field(alias="itemsPerPage")
+
+
+class KeywordList(BaseModel):
+    items: list[Headword]
     total: int
     page: int
     items_per_page: int = Field(alias="itemsPerPage")
