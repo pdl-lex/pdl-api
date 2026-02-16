@@ -162,13 +162,17 @@ class QueryService:
             [
                 {"$match": {"indexLetter": letter.upper()}},
                 {
-                    "$project": {
-                        "_id": False,
-                        "lexId": True,
-                        "source": True,
-                        "headword": True,
+                    "$group": {
+                        "_id": "$headword",
                     }
                 },
+                {
+                    "$project": {
+                        "_id": False,
+                        "headword": "$_id",
+                    }
+                },
+                {"$sort": {"headword.lemma": 1, "headword.index": 1}},
                 *item_pagination(page, results_per_page),
             ]
         )

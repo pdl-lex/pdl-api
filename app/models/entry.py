@@ -118,8 +118,6 @@ class EntryList(BaseModel):
 
 class KeywordListItem(BaseModel):
     headword: Headword
-    lex_id: str = Field(alias="lexId")
-    source: Resource
 
 
 class KeywordList(BaseModel):
