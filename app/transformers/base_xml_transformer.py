@@ -1,5 +1,5 @@
 import re
-from collections import Counter
+from collections import Counter, defaultdict
 from functools import wraps
 from pathlib import Path
 from typing import Any, Callable, Optional
@@ -23,6 +23,7 @@ def extract_text(node) -> str | None:
 class BaseXmlTransformer:
     def __init__(self):
         self._lex_ids = Counter()
+        self.report_data = None
 
     def _add_lex_id(self, entry: dict) -> dict:
         pos_abbreviations = {"Substantiv": "n", "Verb": "v", "Adjektiv": "a"}
@@ -47,7 +48,10 @@ class BaseXmlTransformer:
     def transform(self, filepath: Path, element: Optional[ET._Element] = None) -> dict:
         """Extract all fields marked with @xpath decorator."""
         result = {}
-        self.tree = ET.parse(filepath)
+        self.filepath = filepath
+        self.report_data = defaultdict(dict)
+
+        self.tree = ET.parse(self.filepath)
         self.root = self.tree.getroot()
 
         for attr_name in dir(self):
@@ -102,14 +106,25 @@ def xpath(
 
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        def wrapper(self, element) -> Any:
-            results = element.xpath(path)
+        def wrapper(self: BaseXmlTransformer, element) -> Any:
+            nodes = element.xpath(path)
+
+            def track_coverage(inputs: int, outputs: int, is_list=False):
+                key = func.__name__ if alias is None else alias
+
+                self.report_data[key]["in"] = inputs
+                self.report_data[key]["out"] = outputs
 
             if multiple:
-                return func(self, results)
+                result = func(self, nodes)
+                track_coverage(len(nodes), len(result), is_list=True)
+                return result
+            elif len(nodes) > 0:
+                track_coverage(1, 1)
+                return func(self, nodes[0])
             else:
-                value = results[0] if len(results) > 0 else default
-                return func(self, value)
+                track_coverage(0, 0)
+                return func(self, default)
 
         wrapper._xpath = path
         wrapper._alias = alias

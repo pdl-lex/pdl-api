@@ -16,15 +16,19 @@ def ensure_output_directories():
 def bdo_to_lexoterm(bdo_dir: Path) -> list[dict]:
     files = list(bdo_dir.rglob("*.xml"))
     result = []
+    report_data = {}
     bdo_transformer = BdoXmlTransformer()
     progress_bar = tqdm(files, desc="Converting BDO XML to LexoTerm format")
 
     for path in progress_bar:
         progress_bar.set_description(f"Processing {path.parent.parent.name}")
 
-        result.append(bdo_transformer.transform(path))
+        transformed = bdo_transformer.transform(path)
+        result.append(transformed)
 
-    return result
+        report_data[str(path)] = bdo_transformer.report_data
+
+    return result, report_data
 
 
 def dwds_to_lexoterm(dwds_dir: Path):
@@ -50,13 +54,18 @@ if __name__ == "__main__":
         "dwds": dwds_to_lexoterm,
     }
 
-    result = dispatch[args.resource](args.path)
+    result, report_data = dispatch[args.resource](args.path)
 
     ensure_output_directories()
 
     output_path = OUTPUT_DATA_DIR / f"{args.resource}.json"
+    report_path = OUTPUT_DATA_DIR / f"{args.resource}_report.json"
 
     with open(output_path, "w") as json_file:
         json.dump(result, json_file, ensure_ascii=False, indent=2)
 
-    print(f"Stored data in {output_path}")
+    with open(report_path, "w") as json_file:
+        json.dump(report_data, json_file, ensure_ascii=False, indent=2)
+
+    print(f"Stored data in {output_path}.")
+    print(f"See {report_path} for coverage details.")
