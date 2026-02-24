@@ -125,9 +125,9 @@ def insert_display_data(data: list[Entry], _api_key: str = Depends(verify_api_ke
             "message": f"Successfully inserted {result['inserted_count']} documents",
         }
     except Exception as err:
-        logger.error(f"Insert operation failed: {str(e)}")
+        logger.error(f"Insert operation failed: {str(err)}")
         raise HTTPException(
-            status_code=500, detail=f"Insert operation failed: {str(e)}"
+            status_code=500, detail=f"Insert operation failed: {str(err)}"
         ) from err
 
 
