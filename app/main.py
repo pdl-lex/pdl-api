@@ -1,4 +1,5 @@
 import gzip
+import logging
 import os
 from contextlib import asynccontextmanager
 from typing import Optional
@@ -14,6 +15,9 @@ from app.services.import_service import ImportService
 from app.services.query_service import QueryService
 
 load_dotenv()
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 API_KEY = os.environ["MONGO_API_KEY"]
@@ -109,14 +113,22 @@ def query_summary(
 
 @app.post("/insert-display-data")
 def insert_display_data(data: list[Entry], _api_key: str = Depends(verify_api_key)):
+    logger.info(f"Starting insert operation for {len(data)} entries")
     import_service: ImportService = app.state.import_service
 
-    result = import_service.insert_display_data(data)
-    return {
-        "status": "success",
-        "inserted_count": result["inserted_count"],
-        "message": f"Successfully inserted {result['inserted_count']} documents",
-    }
+    try:
+        result = import_service.insert_display_data(data)
+        logger.info(f"Successfully inserted {result['inserted_count']} documents")
+        return {
+            "status": "success",
+            "inserted_count": result["inserted_count"],
+            "message": f"Successfully inserted {result['inserted_count']} documents",
+        }
+    except Exception as err:
+        logger.error(f"Insert operation failed: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Insert operation failed: {str(e)}"
+        ) from err
 
 
 @app.get("/keywords/{letter}")

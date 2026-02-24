@@ -128,10 +128,13 @@ if __name__ == "__main__":
         console.print("[yellow]Operation cancelled.")
         sys.exit(0)
 
-    with open(filepath, "r", encoding="utf-8") as f:
+    with (
+        console.status(f"Compressing data...") as status,
+        open(filepath, "r", encoding="utf-8") as f,
+    ):
         data = gzip.compress(json.dumps(json.load(f)).encode("utf-8"))
 
-    with console.status(f"[bold green]Sending data to {URL}...") as status:
+    with console.status(f"Sending data to {URL}...") as status:
         try:
             response = requests.post(
                 f"{URL.rstrip('/')}/insert-display-data",
