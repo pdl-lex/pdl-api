@@ -62,7 +62,7 @@ class ImportService:
 
         return normalized_letter if normalized_letter in ALPHABET else "#"
 
-    def insert_display_data(self, data: list[Entry]):
+    def insert_data(self, data: list[Entry]):
         self._reset_display_collection()
 
         display_entry_list = TypeAdapter(list[Entry])
@@ -137,7 +137,7 @@ if __name__ == "__main__":
     with console.status(f"Sending data to {URL}...") as status:
         try:
             response = requests.post(
-                f"{URL.rstrip('/')}/insert-display-data",
+                f"{URL.rstrip('/')}/upload",
                 data=data,
                 headers={
                     "Content-Type": "application/json",

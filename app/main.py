@@ -111,13 +111,13 @@ def query_summary(
     )
 
 
-@app.post("/insert-display-data")
-def insert_display_data(data: list[Entry], _api_key: str = Depends(verify_api_key)):
+@app.post("/upload")
+def upload(data: list[Entry], _api_key: str = Depends(verify_api_key)):
     logger.info(f"Starting insert operation for {len(data)} entries")
     import_service: ImportService = app.state.import_service
 
     try:
-        result = import_service.insert_display_data(data)
+        result = import_service.insert_data(data)
         logger.info(f"Successfully inserted {result['inserted_count']} documents")
         return {
             "status": "success",
