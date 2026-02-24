@@ -55,7 +55,7 @@ lint = "ruff check ."
 format = "ruff format ."
 test = "pytest"
 dev = "uv run fastapi dev"
-insert-data = "python -m app.services.import_service"
+upload = "python -m app.services.import_service"
 transform = "python -m app.transformers.lex_transformer"
 
 [tool.poe.tasks.check]

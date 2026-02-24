@@ -1,3 +1,4 @@
+import gzip
 import os
 from string import ascii_uppercase
 
@@ -61,7 +62,7 @@ class ImportService:
 
         return normalized_letter if normalized_letter in ALPHABET else "#"
 
-    def insert_display_data(self, data: list[Entry]):
+    def insert_data(self, data: list[Entry]):
         self._reset_display_collection()
 
         display_entry_list = TypeAdapter(list[Entry])
@@ -117,7 +118,7 @@ if __name__ == "__main__":
 
     URL = os.environ["LEXOTERM_API_URL"] if args.production else args.api_url
 
-    API_KEY = os.environ["MONGO_API_KEY"]
+    API_KEY = os.environ["API_UPLOAD_KEY"]
     console = Console()
 
     if args.production and not Confirm.ask(
@@ -127,16 +128,20 @@ if __name__ == "__main__":
         console.print("[yellow]Operation cancelled.")
         sys.exit(0)
 
-    with open(filepath, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    with (
+        console.status(f"Compressing data...") as status,
+        open(filepath, "r", encoding="utf-8") as f,
+    ):
+        data = gzip.compress(json.dumps(json.load(f)).encode("utf-8"))
 
-    with console.status(f"[bold green]Sending data to {URL}...") as status:
+    with console.status(f"Sending data to {URL}...") as status:
         try:
             response = requests.post(
-                f"{URL.rstrip('/')}/insert-display-data",
-                json=data,
+                f"{URL.rstrip('/')}/upload",
+                data=data,
                 headers={
                     "Content-Type": "application/json",
+                    "Content-Encoding": "gzip",
                     "X-API-Key": API_KEY,
                 },
             )

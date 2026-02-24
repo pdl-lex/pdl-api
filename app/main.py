@@ -1,10 +1,13 @@
+import gzip
+import logging
 import os
 from contextlib import asynccontextmanager
 from typing import Optional
 
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, Header, HTTPException, Query
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.models.entry import Entry, EntryList, KeywordList, Resource
 from app.models.query_summary import QuerySummary
@@ -13,8 +16,11 @@ from app.services.query_service import QueryService
 
 load_dotenv()
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-API_KEY = os.environ["MONGO_API_KEY"]
+
+API_KEY = os.environ["API_UPLOAD_KEY"]
 
 
 def verify_api_key(x_api_key: str = Header(...)):
@@ -34,6 +40,14 @@ async def lifespan(app: FastAPI):
     yield
 
 
+class DecompressMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if request.headers.get("Content-Encoding") == "gzip":
+            body = await request.body()
+            request._body = gzip.decompress(body)
+        return await call_next(request)
+
+
 app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
@@ -43,6 +57,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(DecompressMiddleware)
 
 
 @app.get("/lemma-display/{lemma_id}")
@@ -96,16 +111,24 @@ def query_summary(
     )
 
 
-@app.post("/insert-display-data")
-def insert_display_data(data: list[Entry], _api_key: str = Depends(verify_api_key)):
+@app.post("/upload")
+def upload(data: list[Entry], _api_key: str = Depends(verify_api_key)):
+    logger.info(f"Starting insert operation for {len(data)} entries")
     import_service: ImportService = app.state.import_service
 
-    result = import_service.insert_display_data(data)
-    return {
-        "status": "success",
-        "inserted_count": result["inserted_count"],
-        "message": f"Successfully inserted {result['inserted_count']} documents",
-    }
+    try:
+        result = import_service.insert_data(data)
+        logger.info(f"Successfully inserted {result['inserted_count']} documents")
+        return {
+            "status": "success",
+            "inserted_count": result["inserted_count"],
+            "message": f"Successfully inserted {result['inserted_count']} documents",
+        }
+    except Exception as err:
+        logger.error(f"Insert operation failed: {str(err)}")
+        raise HTTPException(
+            status_code=500, detail=f"Insert operation failed: {str(err)}"
+        ) from err
 
 
 @app.get("/keywords/{letter}")
