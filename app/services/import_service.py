@@ -1,3 +1,4 @@
+import gzip
 import os
 from string import ascii_uppercase
 
@@ -128,15 +129,16 @@ if __name__ == "__main__":
         sys.exit(0)
 
     with open(filepath, "r", encoding="utf-8") as f:
-        data = json.load(f)
+        data = gzip.compress(json.dumps(json.load(f)).encode("utf-8"))
 
     with console.status(f"[bold green]Sending data to {URL}...") as status:
         try:
             response = requests.post(
                 f"{URL.rstrip('/')}/insert-display-data",
-                json=data,
+                data=data,
                 headers={
                     "Content-Type": "application/json",
+                    "Content-Encoding": "gzip",
                     "X-API-Key": API_KEY,
                 },
             )

@@ -1,10 +1,12 @@
+import gzip
 import os
 from contextlib import asynccontextmanager
 from typing import Optional
 
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, Header, HTTPException, Query
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.models.entry import Entry, EntryList, KeywordList, Resource
 from app.models.query_summary import QuerySummary
@@ -34,6 +36,14 @@ async def lifespan(app: FastAPI):
     yield
 
 
+class DecompressMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if request.headers.get("Content-Encoding") == "gzip":
+            body = await request.body()
+            request._body = gzip.decompress(body)
+        return await call_next(request)
+
+
 app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
@@ -43,6 +53,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(DecompressMiddleware)
 
 
 @app.get("/lemma-display/{lemma_id}")
