@@ -14,7 +14,7 @@ Requires [uv][uv].
 
 ```env
 MONGODB_URI="..."
-MONGO_API_KEY="..."
+API_UPLOAD_KEY="..."  # optional: only for uploading data (see below)
 LEXOTERM_API_URL="..."
 ALLOWED_ORIGINS="..."  # use semicolon ";" to separate multiple URLs
 ```
@@ -39,6 +39,23 @@ extension and add the following contents to your .vscode/settings.json:
   "ruff.nativeServer": true
 }
 ```
+
+## Updating the Database
+
+The api includes a POST endpoint to feed lexicographic data to the database without the need to log
+into the server. Setup requires the `API_UPLOAD_KEY` environment variable to be set.
+
+To upload transformed data to a fastapi instance, run:
+
+```sh
+# local/development
+uv run poe upload path/to/transformed/bdo.json
+
+# production
+uv run poe upload --production path/to/transformed/bdo.json
+```
+
+> ⚠️ Note that this removes all existing data from the target collection!
 
 ## Code Quality
 
