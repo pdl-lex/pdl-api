@@ -118,7 +118,7 @@ if __name__ == "__main__":
 
     URL = os.environ["LEXOTERM_API_URL"] if args.production else args.api_url
 
-    API_KEY = os.environ["MONGO_API_KEY"]
+    API_KEY = os.environ["API_UPLOAD_KEY"]
     console = Console()
 
     if args.production and not Confirm.ask(

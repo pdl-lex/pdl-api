@@ -20,7 +20,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-API_KEY = os.environ["MONGO_API_KEY"]
+API_KEY = os.environ["API_UPLOAD_KEY"]
 
 
 def verify_api_key(x_api_key: str = Header(...)):
