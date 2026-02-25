@@ -30,28 +30,14 @@ def flatten_senses(senses: list):
 
 
 def extract_examples(sense):
-    examples = []
-
-    for example in sense.findall("beleg-position/beleg-angabe"):
-        text = getattr(example.find("beleg-text"), "text", None)
-        if text is not None:
-            examples.append(
-                {
-                    "type": "example",
-                    "quote": text,
-                }
-            )
-
-    return examples
-
-
-def is_sense(element):
-    return element is not None and element.find("bedeutung") is not None
+    return [
+        {**BdoMixedContentTransformer.load_xml(node).serialize(), "type": "example"}
+        for node in sense.findall("beleg-position/beleg-angabe")
+    ]
 
 
 def transform_sense(node):
-    sense = node.find("bedeutung")
-    text = extract_text(sense)
+    text = "" if (sense := node.find("bedeutung")) is None else extract_text(sense)
 
     number = node.attrib.get("nr")
     id_ = node.attrib.get("id", unique_id("sense_"))
@@ -63,7 +49,7 @@ def transform_sense(node):
         "sense": [
             transform_sense(subsense)
             for subsense in node.findall("bedeutung-position")
-            if is_sense(subsense)
+            if subsense is not None
         ],
         "cit": extract_examples(node),
     }
@@ -91,7 +77,7 @@ class BdoXmlTransformer(BaseXmlTransformer):
 
     @xpath(".//artikel/bedeutung-position", default=[], multiple=True)
     def sense(self, senses):
-        return [transform_sense(sense) for sense in senses if is_sense(sense)]
+        return [transform_sense(sense) for sense in senses if sense is not None]
 
     @xpath(".//lemma-position/grammatik/@wortart")
     def pos(self, value):

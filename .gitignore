@@ -22,3 +22,6 @@ wheels/
 
 # import and test data
 data/
+
+# jupyter notebooks
+*.ipynb

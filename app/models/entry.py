@@ -21,12 +21,8 @@ class Form(BaseModel):
     form: Optional[list["Form"]] = []
 
 
-class Citation(BaseModel):
-    bibl: Optional[list[dict]] = []
+class Citation(AnnotatedTextData):
     type_: str = Field(alias="type")
-    quote: Optional[str] = None
-    source_id: Optional[str] = Field(alias="sourceId", default=None)
-    note: Optional[list[dict]] = []
 
 
 class Sense(BaseModel):

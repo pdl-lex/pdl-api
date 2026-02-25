@@ -42,6 +42,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-p", "--path", help="Path to source folder", required=True, type=Path
     )
+    parser.add_argument("-o", "--out", help="Path to output file", type=Path)
 
     args = parser.parse_args()
 
@@ -54,7 +55,9 @@ if __name__ == "__main__":
 
     ensure_output_directories()
 
-    output_path = OUTPUT_DATA_DIR / f"{args.resource}.json"
+    output_path = (
+        OUTPUT_DATA_DIR / f"{args.resource}.json" if args.out is None else args.out
+    )
 
     with open(output_path, "w") as json_file:
         json.dump(result, json_file, ensure_ascii=False, indent=2)
