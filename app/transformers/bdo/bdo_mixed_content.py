@@ -74,6 +74,10 @@ class BdoBaseTransformer(StandoffTransformer):
     def serialize_superscript(self, span: pd.Series) -> TextAnnotationSpan:
         return TextAnnotationSpan(**textspan(span), labels=["superscript"])
 
+    @register("beleg-text")
+    def serialize_example(self, span: pd.Series) -> TextAnnotationSpan:
+        return TextAnnotationSpan(**textspan(span), labels=["italic"])
+
     @register("verweis")
     def serialize_reference(
         self, span: pd.Series
