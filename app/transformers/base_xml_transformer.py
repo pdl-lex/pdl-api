@@ -44,7 +44,12 @@ class BaseXmlTransformer:
 
         return {**entry, "lexId": lex_id}
 
-    def transform(self, filepath: Path, element: Optional[ET._Element] = None) -> dict:
+    def transform(
+        self,
+        filepath: Path,
+        element: Optional[ET._Element] = None,
+        only: Optional[list[str]] = None,
+    ) -> dict:
         """Extract all fields marked with @xpath decorator."""
         result = {}
         self.tree = ET.parse(filepath)
@@ -58,6 +63,8 @@ class BaseXmlTransformer:
                     if getattr(attr, "_alias", None) is not None
                     else attr_name
                 )
+                if only is not None and key not in only:
+                    continue
                 try:
                     result[key] = attr(self.root)
                 except AttributeError as err:
