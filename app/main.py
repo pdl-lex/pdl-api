@@ -43,6 +43,7 @@ async def lifespan(app: FastAPI):
 class DecompressMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         if request.headers.get("Content-Encoding") == "gzip":
+            logger.info(f"Receiving compressed data")
             body = await request.body()
             request._body = gzip.decompress(body)
         return await call_next(request)
