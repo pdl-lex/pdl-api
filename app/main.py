@@ -112,7 +112,7 @@ def query_summary(
     )
 
 
-@app.post("/upload")
+@app.post("/upload", include_in_schema=False)
 def upload(data: list[Entry], _api_key: str = Depends(verify_api_key)):
     logger.info(f"Starting insert operation for {len(data)} entries")
     import_service: ImportService = app.state.import_service
