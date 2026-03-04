@@ -61,6 +61,6 @@ if __name__ == "__main__":
 
     with open(output_path, "w") as json_file:
         for entry in result:
-            print(json.dumps(entry, ensure_ascii=False), file=output_path)
+            print(json.dumps(entry, ensure_ascii=False), file=json_file)
 
     print(f"Stored data in {output_path}")
