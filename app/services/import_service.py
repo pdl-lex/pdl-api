@@ -37,22 +37,22 @@ class ImportService:
     def __init__(self):
         self.client = MongoClient(os.environ["MONGODB_URI"])
         self.db = self.client["lex"]
-        self.display = self.db.get_collection("display")
+        self.entries = self.db.get_collection("entries")
 
     def _reset_display_collection(self):
-        self.display.delete_many({})
-        self.display.drop_indexes()
+        self.entries.delete_many({})
+        self.entries.drop_indexes()
 
     def create_indexes(self, drop=False):
         if drop:
-            self.display.drop_indexes()
-        self.display.create_index(
+            self.entries.drop_indexes()
+        self.entries.create_index(
             [(field["key"], "text") for field in fulltext_search_fields],
             name="fulltextIndex",
             weights={field["key"]: field["weight"] for field in fulltext_search_fields},
         )
 
-        self.display.create_indexes(
+        self.entries.create_indexes(
             [IndexModel([(field, ASCENDING)]) for field in index_fields]
         )
 
@@ -68,7 +68,7 @@ class ImportService:
         display_entry_list = TypeAdapter(list[Entry])
         dump = display_entry_list.dump_python(data, by_alias=True, mode="json")
 
-        result = self.display.insert_many(
+        result = self.entries.insert_many(
             [
                 {
                     **entry,
