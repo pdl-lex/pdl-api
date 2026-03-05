@@ -65,7 +65,6 @@ class QueryService:
         self.client = MongoClient(os.environ["MONGODB_URI"])
         self.db = self.client["lex"]
         self.entries = self.db.get_collection("entries")
-        self.display = self.db.get_collection("display")
 
     def free_text_search(
         self,
@@ -80,7 +79,7 @@ class QueryService:
             *item_pagination(page, results_per_page),
         ]
 
-        return next(self.display.aggregate(pipeline))
+        return next(self.entries.aggregate(pipeline))
 
     def query_summary(
         self,
@@ -147,10 +146,10 @@ class QueryService:
             {"$addFields": {"total": {"$ifNull": [{"$first": "$total.count"}, 0]}}},
         ]
 
-        return next(self.display.aggregate(pipeline))
+        return next(self.entries.aggregate(pipeline))
 
     def fetch_lemma_display(self, lemma_id: str) -> Entry:
-        result = self.display.find_one({"lexId": lemma_id}, projection={"_id": False})
+        result = self.entries.find_one({"lexId": lemma_id}, projection={"_id": False})
 
         if result is None:
             raise HTTPException(status_code=404, detail=f"Unknown id: {lemma_id!r}")
@@ -158,7 +157,7 @@ class QueryService:
         return result
 
     def fetch_keywords(self, letter: str, page: int, results_per_page: int):
-        cursor = self.display.aggregate(
+        cursor = self.entries.aggregate(
             [
                 {"$match": {"indexLetter": letter.upper()}},
                 {

@@ -1,5 +1,6 @@
 import gzip
 import os
+from io import BytesIO
 from string import ascii_uppercase
 
 from dotenv import load_dotenv
@@ -37,22 +38,22 @@ class ImportService:
     def __init__(self):
         self.client = MongoClient(os.environ["MONGODB_URI"])
         self.db = self.client["lex"]
-        self.display = self.db.get_collection("display")
+        self.entries = self.db.get_collection("entries")
 
     def _reset_display_collection(self):
-        self.display.delete_many({})
-        self.display.drop_indexes()
+        self.entries.delete_many({})
+        self.entries.drop_indexes()
 
     def create_indexes(self, drop=False):
         if drop:
-            self.display.drop_indexes()
-        self.display.create_index(
+            self.entries.drop_indexes()
+        self.entries.create_index(
             [(field["key"], "text") for field in fulltext_search_fields],
             name="fulltextIndex",
             weights={field["key"]: field["weight"] for field in fulltext_search_fields},
         )
 
-        self.display.create_indexes(
+        self.entries.create_indexes(
             [IndexModel([(field, ASCENDING)]) for field in index_fields]
         )
 
@@ -62,13 +63,12 @@ class ImportService:
 
         return normalized_letter if normalized_letter in ALPHABET else "#"
 
-    def insert_data(self, data: list[Entry]):
+    def insert_data(self, data: list[dict]):
         self._reset_display_collection()
 
         display_entry_list = TypeAdapter(list[Entry])
-        dump = display_entry_list.dump_python(data, by_alias=True, mode="json")
-
-        result = self.display.insert_many(
+        display_entry_list.validate_python(data, by_alias=True)
+        result = self.entries.insert_many(
             [
                 {
                     **entry,
@@ -77,7 +77,7 @@ class ImportService:
                         entry["headword"]["lemma"]
                     ),
                 }
-                for entry in dump
+                for entry in data
             ]
         )
 
@@ -91,7 +91,6 @@ class ImportService:
 
 if __name__ == "__main__":
     import argparse
-    import json
     import sys
     from pathlib import Path
 
@@ -130,19 +129,19 @@ if __name__ == "__main__":
 
     with (
         console.status(f"Compressing data...") as status,
-        open(filepath, "r", encoding="utf-8") as f,
+        open(filepath, "rb") as f,
     ):
-        data = gzip.compress(json.dumps(json.load(f)).encode("utf-8"))
+        data = BytesIO(gzip.compress(f.read()))
 
     with console.status(f"Sending data to {URL}...") as status:
         try:
+            files = {"file": ("bdo.jsonl", data, "application/jsonl")}
             response = requests.post(
                 f"{URL.rstrip('/')}/upload",
-                data=data,
+                files=files,
                 headers={
-                    "Content-Type": "application/json",
-                    "Content-Encoding": "gzip",
                     "X-API-Key": API_KEY,
+                    "Content-Encoding": "gzip",
                 },
             )
         except ConnectionError as err:

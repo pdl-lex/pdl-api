@@ -1,13 +1,14 @@
 import gzip
+import json
 import logging
 import os
 from contextlib import asynccontextmanager
 from typing import Optional
 
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
+from tqdm import tqdm
 
 from app.models.entry import Entry, EntryList, KeywordList, Resource
 from app.models.query_summary import QuerySummary
@@ -40,15 +41,6 @@ async def lifespan(app: FastAPI):
     yield
 
 
-class DecompressMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        if request.headers.get("Content-Encoding") == "gzip":
-            logger.info(f"Receiving compressed data")
-            body = await request.body()
-            request._body = gzip.decompress(body)
-        return await call_next(request)
-
-
 app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
@@ -58,7 +50,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(DecompressMiddleware)
 
 
 @app.get("/lemma-display/{lemma_id}")
@@ -112,10 +103,25 @@ def query_summary(
     )
 
 
-@app.post("/upload")
-def upload(data: list[Entry], _api_key: str = Depends(verify_api_key)):
-    logger.info(f"Starting insert operation for {len(data)} entries")
+@app.post("/upload", include_in_schema=False)
+async def upload(file: UploadFile, _api_key: str = Depends(verify_api_key)):
+    logger.info(f"Starting db update")
     import_service: ImportService = app.state.import_service
+
+    content = await file.read()
+
+    logger.info(f"Decompressing data")
+    lines = gzip.decompress(content).decode("utf-8").splitlines()
+
+    logger.info(f"Validating data")
+    data: list[dict] = []
+
+    for line in tqdm(lines):
+        if not line.strip():
+            continue
+        data.append(json.loads(line))
+
+    logger.info(f"Inserting {len(data)} entries into db")
 
     try:
         result = import_service.insert_data(data)
