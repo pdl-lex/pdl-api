@@ -1,5 +1,6 @@
 import gzip
 import os
+from io import BytesIO
 from string import ascii_uppercase
 
 from dotenv import load_dotenv
@@ -62,12 +63,11 @@ class ImportService:
 
         return normalized_letter if normalized_letter in ALPHABET else "#"
 
-    def insert_data(self, data: list[Entry]):
+    def insert_data(self, data: list[dict]):
         self._reset_display_collection()
 
         display_entry_list = TypeAdapter(list[Entry])
-        dump = display_entry_list.dump_python(data, by_alias=True, mode="json")
-
+        display_entry_list.validate_python(data, by_alias=True)
         result = self.entries.insert_many(
             [
                 {
@@ -77,7 +77,7 @@ class ImportService:
                         entry["headword"]["lemma"]
                     ),
                 }
-                for entry in dump
+                for entry in data
             ]
         )
 
@@ -91,7 +91,6 @@ class ImportService:
 
 if __name__ == "__main__":
     import argparse
-    import json
     import sys
     from pathlib import Path
 
@@ -130,19 +129,19 @@ if __name__ == "__main__":
 
     with (
         console.status(f"Compressing data...") as status,
-        open(filepath, "r", encoding="utf-8") as f,
+        open(filepath, "rb") as f,
     ):
-        data = gzip.compress(json.dumps(json.load(f)).encode("utf-8"))
+        data = BytesIO(gzip.compress(f.read()))
 
     with console.status(f"Sending data to {URL}...") as status:
         try:
+            files = {"file": ("bdo.jsonl", data, "application/jsonl")}
             response = requests.post(
                 f"{URL.rstrip('/')}/upload",
-                data=data,
+                files=files,
                 headers={
-                    "Content-Type": "application/json",
-                    "Content-Encoding": "gzip",
                     "X-API-Key": API_KEY,
+                    "Content-Encoding": "gzip",
                 },
             )
         except ConnectionError as err:

@@ -1,13 +1,14 @@
 import gzip
+import json
 import logging
 import os
 from contextlib import asynccontextmanager
 from typing import Optional
 
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
+from tqdm import tqdm
 
 from app.models.entry import Entry, EntryList, KeywordList, Resource
 from app.models.query_summary import QuerySummary
@@ -103,9 +104,24 @@ def query_summary(
 
 
 @app.post("/upload", include_in_schema=False)
-def upload(data: list[Entry], _api_key: str = Depends(verify_api_key)):
-    logger.info(f"Starting insert operation for {len(data)} entries")
+async def upload(file: UploadFile, _api_key: str = Depends(verify_api_key)):
+    logger.info(f"Starting db update")
     import_service: ImportService = app.state.import_service
+
+    content = await file.read()
+
+    logger.info(f"Decompressing data")
+    lines = gzip.decompress(content).decode("utf-8").splitlines()
+
+    logger.info(f"Validating data")
+    data: list[dict] = []
+
+    for line in tqdm(lines):
+        if not line.strip():
+            continue
+        data.append(json.loads(line))
+
+    logger.info(f"Inserting {len(data)} entries into db")
 
     try:
         result = import_service.insert_data(data)
