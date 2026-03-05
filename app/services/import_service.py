@@ -1,5 +1,8 @@
 import gzip
+import json
 import os
+import subprocess
+import tempfile
 from io import BytesIO
 from string import ascii_uppercase
 
@@ -40,10 +43,6 @@ class ImportService:
         self.db = self.client["lex"]
         self.entries = self.db.get_collection("entries")
 
-    def _reset_display_collection(self):
-        self.entries.delete_many({})
-        self.entries.drop_indexes()
-
     def create_indexes(self, drop=False):
         if drop:
             self.entries.drop_indexes()
@@ -64,25 +63,39 @@ class ImportService:
         return normalized_letter if normalized_letter in ALPHABET else "#"
 
     def insert_data(self, data: list[dict]):
-        self._reset_display_collection()
-
         display_entry_list = TypeAdapter(list[Entry])
         display_entry_list.validate_python(data, by_alias=True)
-        result = self.entries.insert_many(
-            {
-                **entry,
-                "_id": entry["lexId"],
-                "indexLetter": self._extract_index_letter(entry["headword"]["lemma"]),
-            }
-            for entry in data
-        )
 
-        self.create_indexes()
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".jsonl", delete=False
+        ) as temp_file:
+            temp_file.write(json.dumps(data, ensure_ascii=False))
 
-        return {
-            "inserted_count": len(result.inserted_ids),
-            "inserted_ids": result.inserted_ids,
-        }
+            temp_file_path = temp_file.name
+
+        try:
+            subprocess.run(
+                [
+                    "mongoimport",
+                    "--uri",
+                    os.environ["MONGODB_URI"],
+                    "--collection",
+                    "entries",
+                    "--file",
+                    temp_file_path,
+                    "--jsonArray",
+                    "--drop",
+                ],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+        except subprocess.CalledProcessError as e:
+            print(f"mongoimport stderr: {e.stderr}")
+            print(f"mongoimport stdout: {e.stdout}")
+            raise RuntimeError(f"mongoimport failed: {e.stderr}") from e
+        finally:
+            os.unlink(temp_file_path)
 
 
 if __name__ == "__main__":
