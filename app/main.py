@@ -40,15 +40,6 @@ async def lifespan(app: FastAPI):
     yield
 
 
-class DecompressMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        if request.headers.get("Content-Encoding") == "gzip":
-            logger.info(f"Receiving compressed data")
-            body = await request.body()
-            request._body = gzip.decompress(body)
-        return await call_next(request)
-
-
 app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
@@ -58,7 +49,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(DecompressMiddleware)
 
 
 @app.get("/lemma-display/{lemma_id}")
