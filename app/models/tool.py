@@ -19,4 +19,5 @@ class Tool(BaseModel):
     teaser: str
     image_url: str | None = Field(alias="imageUrl", default=None)
     tool_url: str | None = Field(alias="toolUrl", default=None)
+    labels: list[str] | None = None
     details: ToolDetails | None = None
