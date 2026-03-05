@@ -74,30 +74,34 @@ class ImportService:
 
         return normalized_letter if normalized_letter in ALPHABET else "#"
 
-    def insert_data(self, data: list[dict]):
+    def insert_data(self, data: list[dict], batch_size=100):
         self._reset_display_collection()
 
         display_entry_list = TypeAdapter(list[Entry])
         display_entry_list.validate_python(data, by_alias=True)
-        result = self.entries.insert_many(
-            (
-                {
-                    **entry,
-                    "_id": entry["lexId"],
-                    "indexLetter": self._extract_index_letter(
-                        entry["headword"]["lemma"]
-                    ),
-                }
-                for entry in data
-            ),
-            ordered=False,
-        )
+
+        inserted_count = 0
+
+        for batch in batched(data, n=batch_size):
+            result = self.entries.insert_many(
+                (
+                    {
+                        **entry,
+                        "_id": entry["lexId"],
+                        "indexLetter": self._extract_index_letter(
+                            entry["headword"]["lemma"]
+                        ),
+                    }
+                    for entry in batch
+                ),
+                ordered=False,
+            )
+            inserted_count += len(result.inserted_ids)
 
         self.create_indexes()
 
         return {
-            "inserted_count": len(result.inserted_ids),
-            "inserted_ids": result.inserted_ids,
+            "inserted_count": inserted_count,
         }
 
 
