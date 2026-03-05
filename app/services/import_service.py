@@ -3,6 +3,7 @@ import os
 from io import BytesIO
 from itertools import islice
 from string import ascii_uppercase
+from typing import Iterable
 
 from dotenv import load_dotenv
 from pydantic import TypeAdapter
@@ -74,11 +75,12 @@ class ImportService:
 
         return normalized_letter if normalized_letter in ALPHABET else "#"
 
-    def insert_data(self, data: list[dict], batch_size=100):
+    def insert_data(self, data: Iterable[dict], batch_size=100):
         self._reset_display_collection()
 
-        display_entry_list = TypeAdapter(list[Entry])
-        display_entry_list.validate_python(data, by_alias=True)
+        def ensure_valid(item: dict):
+            Entry.model_validate(item, by_alias=True)
+            return item
 
         inserted_count = 0
 
@@ -86,7 +88,7 @@ class ImportService:
             result = self.entries.insert_many(
                 (
                     {
-                        **entry,
+                        **ensure_valid(entry),
                         "_id": entry["lexId"],
                         "indexLetter": self._extract_index_letter(
                             entry["headword"]["lemma"]
