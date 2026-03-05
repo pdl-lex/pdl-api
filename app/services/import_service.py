@@ -69,12 +69,17 @@ class ImportService:
         display_entry_list = TypeAdapter(list[Entry])
         display_entry_list.validate_python(data, by_alias=True)
         result = self.entries.insert_many(
-            {
-                **entry,
-                "_id": entry["lexId"],
-                "indexLetter": self._extract_index_letter(entry["headword"]["lemma"]),
-            }
-            for entry in data
+            (
+                {
+                    **entry,
+                    "_id": entry["lexId"],
+                    "indexLetter": self._extract_index_letter(
+                        entry["headword"]["lemma"]
+                    ),
+                }
+                for entry in data
+            ),
+            ordered=False,
         )
 
         self.create_indexes()
