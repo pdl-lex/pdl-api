@@ -6,9 +6,8 @@ from contextlib import asynccontextmanager
 from typing import Optional
 
 from dotenv import load_dotenv
-from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, UploadFile
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from tqdm import tqdm
 
 from app.models.entry import Entry, EntryList, KeywordList, Resource
 from app.models.query_summary import QuerySummary
