@@ -1,6 +1,7 @@
 import gzip
 import os
 from io import BytesIO
+from itertools import islice
 from string import ascii_uppercase
 
 from dotenv import load_dotenv
@@ -32,6 +33,16 @@ index_fields = [
     "gender",
     "number",
 ]
+
+
+def batched(iterable, n):
+    "Batch data into lists of length n. The last batch may be shorter."
+    it = iter(iterable)
+    while True:
+        batch = tuple(islice(it, n))
+        if not batch:
+            return
+        yield batch
 
 
 class ImportService:
