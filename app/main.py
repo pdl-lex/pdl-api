@@ -114,17 +114,13 @@ async def upload(file: UploadFile, _api_key: str = Depends(verify_api_key)):
     lines = gzip.decompress(content).decode("utf-8").splitlines()
 
     logger.info(f"Loading data")
-    data: list[dict] = []
 
-    for line in tqdm(lines):
-        if not line.strip():
-            continue
-        data.append(json.loads(line))
-
-    logger.info(f"Inserting {len(data)} entries into db")
+    logger.info(f"Inserting entries into db")
 
     try:
-        result = import_service.insert_data(data)
+        result = import_service.insert_data(
+            json.loads(line) for line in lines if line.strip()
+        )
         logger.info(f"Successfully inserted {result['inserted_count']} documents")
         return {
             "status": "success",
