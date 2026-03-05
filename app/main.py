@@ -112,18 +112,20 @@ async def upload(file: UploadFile, _api_key: str = Depends(verify_api_key)):
 
     logger.info(f"Decompressing data")
     lines = gzip.decompress(content).decode("utf-8").splitlines()
-    data = [json.loads(line) for line in lines if line.strip()]
+
+    logger.info(f"Loading data")
 
     logger.info(f"Inserting entries into db")
 
     try:
-        import_service.insert_data(data)
-        logger.info(f"Building index")
-        import_service.create_indexes()
-        logger.info(f"Successfully inserted documents")
+        result = import_service.insert_data(
+            json.loads(line) for line in lines if line.strip()
+        )
+        logger.info(f"Successfully inserted {result['inserted_count']} documents")
         return {
             "status": "success",
-            "message": f"Successfully inserted documents",
+            "inserted_count": result["inserted_count"],
+            "message": f"Successfully inserted {result['inserted_count']} documents",
         }
     except Exception as err:
         logger.error(f"Insert operation failed: {str(err)}")

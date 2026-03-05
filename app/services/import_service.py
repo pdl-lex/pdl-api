@@ -1,10 +1,9 @@
 import gzip
-import json
 import os
-import subprocess
-import tempfile
 from io import BytesIO
+from itertools import islice
 from string import ascii_uppercase
+from typing import Iterable
 
 from dotenv import load_dotenv
 from pydantic import TypeAdapter
@@ -37,11 +36,25 @@ index_fields = [
 ]
 
 
+def batched(iterable, n):
+    "Batch data into lists of length n. The last batch may be shorter."
+    it = iter(iterable)
+    while True:
+        batch = tuple(islice(it, n))
+        if not batch:
+            return
+        yield batch
+
+
 class ImportService:
     def __init__(self):
         self.client = MongoClient(os.environ["MONGODB_URI"])
         self.db = self.client["lex"]
         self.entries = self.db.get_collection("entries")
+
+    def _reset_display_collection(self):
+        self.entries.delete_many({})
+        self.entries.drop_indexes()
 
     def create_indexes(self, drop=False):
         if drop:
@@ -62,40 +75,36 @@ class ImportService:
 
         return normalized_letter if normalized_letter in ALPHABET else "#"
 
-    def insert_data(self, data: list[dict]):
-        display_entry_list = TypeAdapter(list[Entry])
-        display_entry_list.validate_python(data, by_alias=True)
+    def insert_data(self, data: Iterable[dict], batch_size=100):
+        self._reset_display_collection()
 
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".jsonl", delete=False
-        ) as temp_file:
-            temp_file.write(json.dumps(data, ensure_ascii=False))
+        def ensure_valid(item: dict):
+            Entry.model_validate(item, by_alias=True)
+            return item
 
-            temp_file_path = temp_file.name
+        inserted_count = 0
 
-        try:
-            subprocess.run(
-                [
-                    "mongoimport",
-                    "--uri",
-                    os.environ["MONGODB_URI"],
-                    "--collection",
-                    "entries",
-                    "--file",
-                    temp_file_path,
-                    "--jsonArray",
-                    "--drop",
-                ],
-                capture_output=True,
-                text=True,
-                check=True,
+        for batch in batched(data, n=batch_size):
+            result = self.entries.insert_many(
+                (
+                    {
+                        **ensure_valid(entry),
+                        "_id": entry["lexId"],
+                        "indexLetter": self._extract_index_letter(
+                            entry["headword"]["lemma"]
+                        ),
+                    }
+                    for entry in batch
+                ),
+                ordered=False,
             )
-        except subprocess.CalledProcessError as e:
-            print(f"mongoimport stderr: {e.stderr}")
-            print(f"mongoimport stdout: {e.stdout}")
-            raise RuntimeError(f"mongoimport failed: {e.stderr}") from e
-        finally:
-            os.unlink(temp_file_path)
+            inserted_count += len(result.inserted_ids)
+
+        self.create_indexes()
+
+        return {
+            "inserted_count": inserted_count,
+        }
 
 
 if __name__ == "__main__":
