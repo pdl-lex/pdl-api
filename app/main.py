@@ -113,7 +113,7 @@ async def upload(file: UploadFile, _api_key: str = Depends(verify_api_key)):
     logger.info(f"Decompressing data")
     lines = gzip.decompress(content).decode("utf-8").splitlines()
 
-    logger.info(f"Validating data")
+    logger.info(f"Loading data")
     data: list[dict] = []
 
     for line in tqdm(lines):
