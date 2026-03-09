@@ -11,8 +11,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.models.entry import Entry, EntryList, KeywordList, Resource
 from app.models.query_summary import QuerySummary
+from app.models.tool import Tool
 from app.services.import_service import ImportService
 from app.services.query_service import QueryService
+from app.services.tool_service import ToolService
 
 load_dotenv()
 
@@ -34,6 +36,9 @@ async def lifespan(app: FastAPI):
     query_service = QueryService()
     app.state.query_service = query_service
 
+    tool_service = ToolService()
+    app.state.tool_service = tool_service
+
     import_service = ImportService()
     app.state.import_service = import_service
 
@@ -51,12 +56,12 @@ app.add_middleware(
 )
 
 
-@app.get("/lemma-display/{lemma_id}")
+@app.get("/lemma/{lemma_id}", tags=["Search"])
 def fetch_lemma_display_entry(lemma_id: str = "bwb__Datschi") -> Entry:
     return app.state.query_service.fetch_lemma_display(lemma_id)
 
 
-@app.get("/search")
+@app.get("/search", tags=["Search"])
 def free_text_search(
     q: Optional[str] = None,
     lemma: Optional[str] = Query(default=None),
@@ -79,7 +84,7 @@ def free_text_search(
     )
 
 
-@app.get("/summary")
+@app.get("/summary", tags=["Search"])
 def query_summary(
     q: Optional[str] = None,
     lemma: Optional[str] = Query(default=None),
@@ -133,7 +138,7 @@ async def upload(file: UploadFile, _api_key: str = Depends(verify_api_key)):
         ) from err
 
 
-@app.get("/keywords/{letter}")
+@app.get("/keywords/{letter}", tags=["Search"])
 def get_by_letter(
     letter: str | None, page: int = 1, results_per_page: int = 10
 ) -> KeywordList:
@@ -142,3 +147,27 @@ def get_by_letter(
     return query_service.fetch_keywords(
         letter, page=page, results_per_page=results_per_page
     )
+
+
+@app.get("/tools", tags=["Tools"])
+def get_tools() -> list[Tool]:
+    tool_service: ToolService = app.state.tool_service
+    return tool_service.list()
+
+
+@app.post("/tools", tags=["Tools"])
+def add_tool(tool: Tool, _api_key: str = Depends(verify_api_key)):
+    tool_service: ToolService = app.state.tool_service
+    return tool_service.add(tool)
+
+
+@app.delete("/tools/{tool_id}", tags=["Tools"])
+def delete_tool(tool_id: str, _api_key: str = Depends(verify_api_key)):
+    tool_service: ToolService = app.state.tool_service
+    if tool_service.delete(tool_id):
+        return {
+            "status": "success",
+            "message": f"Tool '{tool_id}' deleted successfully",
+        }
+    else:
+        raise HTTPException(status_code=404, detail=f"Tool '{tool_id}' not found")
