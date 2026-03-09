@@ -56,7 +56,7 @@ app.add_middleware(
 )
 
 
-@app.get("/lemma-display/{lemma_id}", tags=["Search"])
+@app.get("/lemma/{lemma_id}", tags=["Search"])
 def fetch_lemma_display_entry(lemma_id: str = "bwb__Datschi") -> Entry:
     return app.state.query_service.fetch_lemma_display(lemma_id)
 
