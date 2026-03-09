@@ -56,12 +56,12 @@ app.add_middleware(
 )
 
 
-@app.get("/lemma-display/{lemma_id}")
+@app.get("/lemma-display/{lemma_id}", tags=["Search"])
 def fetch_lemma_display_entry(lemma_id: str = "bwb__Datschi") -> Entry:
     return app.state.query_service.fetch_lemma_display(lemma_id)
 
 
-@app.get("/search")
+@app.get("/search", tags=["Search"])
 def free_text_search(
     q: Optional[str] = None,
     lemma: Optional[str] = Query(default=None),
@@ -84,7 +84,7 @@ def free_text_search(
     )
 
 
-@app.get("/summary")
+@app.get("/summary", tags=["Search"])
 def query_summary(
     q: Optional[str] = None,
     lemma: Optional[str] = Query(default=None),
@@ -138,7 +138,7 @@ async def upload(file: UploadFile, _api_key: str = Depends(verify_api_key)):
         ) from err
 
 
-@app.get("/keywords/{letter}")
+@app.get("/keywords/{letter}", tags=["Search"])
 def get_by_letter(
     letter: str | None, page: int = 1, results_per_page: int = 10
 ) -> KeywordList:
@@ -149,19 +149,19 @@ def get_by_letter(
     )
 
 
-@app.get("/tools")
+@app.get("/tools", tags=["Tools"])
 def get_tools() -> list[Tool]:
     tool_service: ToolService = app.state.tool_service
     return tool_service.list()
 
 
-@app.post("/tools")
+@app.post("/tools", tags=["Tools"])
 def add_tool(tool: Tool, _api_key: str = Depends(verify_api_key)):
     tool_service: ToolService = app.state.tool_service
     return tool_service.add(tool)
 
 
-@app.delete("/tools/{tool_id}")
+@app.delete("/tools/{tool_id}", tags=["Tools"])
 def delete_tool(tool_id: str, _api_key: str = Depends(verify_api_key)):
     tool_service: ToolService = app.state.tool_service
     if tool_service.delete(tool_id):
