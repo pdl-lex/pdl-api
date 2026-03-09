@@ -152,4 +152,22 @@ def get_by_letter(
 @app.get("/tools")
 def get_tools() -> list[Tool]:
     tool_service: ToolService = app.state.tool_service
-    return tool_service.get_tools()
+    return tool_service.list()
+
+
+@app.post("/tools")
+def add_tool(tool: Tool, _api_key: str = Depends(verify_api_key)):
+    tool_service: ToolService = app.state.tool_service
+    return tool_service.add(tool)
+
+
+@app.delete("/tools/{tool_id}")
+def delete_tool(tool_id: str, _api_key: str = Depends(verify_api_key)):
+    tool_service: ToolService = app.state.tool_service
+    if tool_service.delete(tool_id):
+        return {
+            "status": "success",
+            "message": f"Tool '{tool_id}' deleted successfully",
+        }
+    else:
+        raise HTTPException(status_code=404, detail=f"Tool '{tool_id}' not found")
