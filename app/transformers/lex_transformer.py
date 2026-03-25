@@ -4,6 +4,7 @@ from typing import Generator
 from tqdm import tqdm
 
 from app.transformers.bdo.bdo_transformer import BdoXmlTransformer
+from app.transformers.dwds.dwds_transformer import DwdsXmlTransformer
 
 OUTPUT_DATA_DIR = Path("data/lexoterm")
 OUTPUT_ERROR_DIR = Path("data/lexoterm")
@@ -26,7 +27,11 @@ def bdo_to_lexoterm(bdo_dir: Path) -> Generator[dict]:
 
 
 def dwds_to_lexoterm(dwds_dir: Path):
-    raise NotImplementedError()
+    files = list(dwds_dir.rglob("*.xml"))
+    dwds_transformer = DwdsXmlTransformer()
+
+    for path in tqdm(files):
+        yield dwds_transformer.transform(path)
 
 
 if __name__ == "__main__":
