@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Generator
+from typing import Iterator
 
 from tqdm import tqdm
 
@@ -14,7 +14,7 @@ def ensure_output_directories():
     OUTPUT_ERROR_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def bdo_to_lexoterm(bdo_dir: Path) -> Generator[dict]:
+def bdo_to_lexoterm(bdo_dir: Path) -> Iterator[dict]:
     files = list(bdo_dir.rglob("*.xml"))
     bdo_transformer = BdoXmlTransformer()
     progress_bar = tqdm(files, desc="Converting BDO XML to LexoTerm format")
