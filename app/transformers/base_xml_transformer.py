@@ -34,7 +34,7 @@ class BaseXmlTransformer:
                 "lex",
                 entry["source"],
                 f"{lemma}{'' if lemma_index == 0 else lemma_index}",
-                pos_abbreviations.get(entry["nPos"], "o"),  # o = other
+                pos_abbreviations.get(entry.get("nPos"), "o"),  # o = other
             ]
         )
         self._lex_ids[lex_id] += 1
