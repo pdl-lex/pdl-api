@@ -62,7 +62,7 @@ class BaseXmlTransformer:
                     result[key] = attr(self.root)
                 except AttributeError as err:
                     raise TransformationError(
-                        f"Error transforming {attr_name} in {self.filepath}"
+                        f"Error transforming {attr_name} in {filepath}"
                     ) from err
 
         result = self.postprocess(result, element)
