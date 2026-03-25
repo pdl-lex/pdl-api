@@ -44,11 +44,17 @@ class BaseXmlTransformer:
 
         return {**entry, "lexId": lex_id}
 
+    def _strip_element_namespaces(self, root):
+        for elem in root.iter():
+            if isinstance(elem.tag, str) and elem.tag.startswith("{"):
+                elem.tag = elem.tag.split("}", 1)[1]
+
     def transform(self, filepath: Path, element: Optional[ET._Element] = None) -> dict:
         """Extract all fields marked with @xpath decorator."""
         result = {}
         self.tree = ET.parse(filepath)
         self.root = self.tree.getroot()
+        self._strip_element_namespaces(self.root)
 
         for attr_name in dir(self):
             attr = getattr(self, attr_name)
