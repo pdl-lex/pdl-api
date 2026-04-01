@@ -25,3 +25,7 @@ data/
 
 # jupyter notebooks
 *.ipynb
+
+# Claude
+claude/
+.claude

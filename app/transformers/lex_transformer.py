@@ -4,6 +4,7 @@ from typing import Iterator
 from tqdm import tqdm
 
 from app.transformers.bdo.bdo_transformer import BdoXmlTransformer
+from app.transformers.dwds.dwds_transformer import DwdsXmlTransformer
 
 OUTPUT_DATA_DIR = Path("data/lexoterm")
 OUTPUT_ERROR_DIR = Path("data/lexoterm")
@@ -25,8 +26,14 @@ def bdo_to_lexoterm(bdo_dir: Path) -> Iterator[dict]:
         yield bdo_transformer.transform(path)
 
 
-def dwds_to_lexoterm(dwds_dir: Path):
-    raise NotImplementedError()
+def dwds_to_lexoterm(dwds_dir: Path) -> Iterator[dict]:
+    files = list(dwds_dir.rglob("*.xml"))
+    dwds_transformer = DwdsXmlTransformer()
+    progress_bar = tqdm(files, desc="Converting DWDS XML to LexoTerm format")
+
+    for path in progress_bar:
+        progress_bar.set_description(f"Processing {path.name}")
+        yield dwds_transformer.transform(path)
 
 
 if __name__ == "__main__":
@@ -59,7 +66,7 @@ if __name__ == "__main__":
         OUTPUT_DATA_DIR / f"{args.resource}.jsonl" if args.out is None else args.out
     )
 
-    with open(output_path, "w") as json_file:
+    with open(output_path, "w", encoding="utf-8") as json_file:
         for entry in result:
             print(json.dumps(entry, ensure_ascii=False), file=json_file)
 
