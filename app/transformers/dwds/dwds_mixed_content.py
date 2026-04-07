@@ -16,7 +16,6 @@ def textspan(span):
 
 
 class DwdsBaseTransformer(StandoffTransformer):
-
     @register("Stichwort")
     def serialize_stichwort(self, span: pd.Series) -> TextAnnotationSpan:
         return TextAnnotationSpan(**textspan(span), labels=["bold"])
@@ -24,7 +23,7 @@ class DwdsBaseTransformer(StandoffTransformer):
     @register("Paraphrase")
     def serialize_paraphrase(self, span: pd.Series) -> TextAnnotationSpan:
         return TextAnnotationSpan(**textspan(span), labels=["italic"])
-    
+
     @register("Autorenzusatz")
     def serialize_autorenzusatz(self, span: pd.Series) -> TextAnnotationSpan:
         return TextAnnotationSpan(**textspan(span), labels=["italic"])
