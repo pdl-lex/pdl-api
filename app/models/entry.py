@@ -9,9 +9,14 @@ from app.models.rich_text import RichTextField
 
 
 class Resource(Enum):
+    BDO = "bdo"
     BWB = "bwb"
     DIBS = "dibs"
     WBF = "wbf"
+    DWDS = "dwds"
+
+
+BDO_RESOURCES = [Resource.BWB, Resource.DIBS, Resource.WBF]
 
 
 class Form(BaseModel):
