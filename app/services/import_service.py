@@ -166,7 +166,7 @@ if __name__ == "__main__":
         try:
             files = {"file": ("bdo.jsonl", data, "application/jsonl")}
             response = requests.post(
-                f"{URL.rstrip('/')}/upload",
+                f"{URL.rstrip('/')}/upload?resource={args.resource}",
                 files=files,
                 headers={
                     "X-API-Key": API_KEY,
