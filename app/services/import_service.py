@@ -10,7 +10,7 @@ from pydantic import TypeAdapter
 from pymongo import ASCENDING, IndexModel, MongoClient
 from unidecode import unidecode
 
-from app.models.entry import Entry
+from app.models.entry import BDO_RESOURCES, Entry, Resource
 
 load_dotenv()
 
@@ -52,8 +52,13 @@ class ImportService:
         self.db = self.client["lex"]
         self.entries = self.db.get_collection("entries")
 
-    def _reset_display_collection(self):
-        self.entries.delete_many({})
+    def _drop_entries(self, resource: Resource):
+        if resource == Resource.BDO:
+            self.entries.delete_many(
+                {"source": {"$in": [r.value for r in BDO_RESOURCES]}}
+            )
+        else:
+            self.entries.delete_many({"source": resource.value})
         self.entries.drop_indexes()
 
     def create_indexes(self, drop=False):
@@ -75,8 +80,8 @@ class ImportService:
 
         return normalized_letter if normalized_letter in ALPHABET else "#"
 
-    def insert_data(self, data: Iterable[dict], batch_size=100):
-        self._reset_display_collection()
+    def insert_data(self, data: Iterable[dict], resource: Resource, batch_size=100):
+        self._drop_entries(resource)
 
         def ensure_valid(item: dict):
             Entry.model_validate(item, by_alias=True)
@@ -118,7 +123,10 @@ if __name__ == "__main__":
     from rich.prompt import Confirm
 
     parser = argparse.ArgumentParser(
-        description="Import display entry data into the LexoTerm MongoDB instance"
+        description="Import dictionaries into the LexoTerm MongoDB instance"
+    )
+    parser.add_argument(
+        "resource", help="Target resource name", choices=["bdo", "dwds"]
     )
     parser.add_argument(
         "--production", help="Write to production db", action="store_true"
@@ -139,7 +147,10 @@ if __name__ == "__main__":
     console = Console()
 
     if args.production and not Confirm.ask(
-        "[bold red]⚠️  You are about to write to the PRODUCTION database. This will overwrite existing data. Are you sure?",
+        (
+            "[bold red]⚠️ You are about to write to the PRODUCTION database. "
+            f"This will overwrite existing {args.resource} data. Are you sure?"
+        ),
         default=False,
     ):
         console.print("[yellow]Operation cancelled.")

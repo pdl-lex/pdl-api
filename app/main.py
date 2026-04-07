@@ -108,8 +108,10 @@ def query_summary(
 
 
 @app.post("/upload", include_in_schema=False)
-async def upload(file: UploadFile, _api_key: str = Depends(verify_api_key)):
-    logger.info(f"Starting db update")
+async def upload(
+    file: UploadFile, resource: Resource, _api_key: str = Depends(verify_api_key)
+):
+    logger.info(f"Starting {resource.value} update")
     import_service: ImportService = app.state.import_service
 
     content = await file.read()
@@ -123,7 +125,7 @@ async def upload(file: UploadFile, _api_key: str = Depends(verify_api_key)):
 
     try:
         result = import_service.insert_data(
-            json.loads(line) for line in lines if line.strip()
+            (json.loads(line) for line in lines if line.strip()), resource=resource
         )
         logger.info(f"Successfully inserted {result['inserted_count']} documents")
         return {
