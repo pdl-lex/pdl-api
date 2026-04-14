@@ -1,49 +1,4 @@
-# This module contains the DwdsXmlTransformer class, which transforms DWDS XML data into a structured format suitable for the target model.
-# It supports the following fields, as specified in the Lexoterm-Lemma-Kopfdaten-Modell:
-
-# Run with: uv run python -m app.transformers.lex_transformer dwds -p app\transformers\dwds\data -o app\transformers\dwds\output\output.jsonl
-# Validate data with: uv run python -m app.transformers.dwds.validate_output
-
-
-# == Umfang: Minimal ==
-# - Lemma/Stichwort:
-#       def headword
-#  - Vollständige URL zum Eintrag im Ursprungs-WB:
-#       def _build_source_url
-
-
-# == Umfang: Basis ==
-# - Grammatik-Angaben: Wortart, [kein Numerus], Genus:
-#       def pos, def gender; gender wird zudem in postprocess normalisiert zu nGender
-# - Erste Bedeutung, Hauptbedeutung oder Anrisstext davon:
-#       def transform_sense, dort ggf. nur die erste ausgeben
-# - Anzahl der vorhandenen Bedeutungen:
-#       möglich über len(flat_senses)
-# - Sachgruppe:
-#       nicht vorhanden, da DWDS keine Sachgruppen angibt
-# - Liste weiterer vorhandener Rubriken, z.B.: Etymologie, Synonyme, Komposita, etc. (aber ohne deren Inhalte):
-#       def _detect_additional_info_types
-
-
-# == Umfang: Detail ==
-# - Alle Bedeutungen:
-#       def transform_sense
-# - evtl. einzelne Mediendateien:
-#       def _extract_media_files (wertet nur Illustrationen aus)
-
-
-# == Umfang: Maximal ==
-# - Alle Textinformationen zu Etymologie, Synonyme, Komposita, etc.:
-#        TODO Implementation fehlt; aufwändig. Zieldatenstruktur fehlt.
-# - ausgewählte Belege:
-#       def extract_constructed_examples: Extrahiert die DWDS-Standardform: Beispiele ohne Belege (aus Leasart)
-#       def extract_attested_examples: Extrahiert Belege mit Fundstellen (aus Lesart)
-#       def _extract_corpus_examples: Extrahiert Belege aus dem Rohdaten-Abschnitt, die nicht an eine Lesart gebunden sind, sondern aus dem Gesamtkorpus erzeugt werden. (NICHT aus Lesart, sondern zum Entry gehörend)
-#       Hinweis: def extract_eamples wertet die ersten beiden für Sense aus. Korpusbelege werden auf Entry-Ebene in postprocess hinzugefügt.
-# - ausgewählte Mediendateien:
-#       def _extract_media_files (wertet nur Illustrationen aus) TODO: evtl. noch weitere Medientypen ergänzen
-# - Enthält NICHT: Aussprache, Literaturquellen, Grafiken, Statistiken, weitere Rubriken
-
+# See readme.md in app/transformers/dwds/ for details on the DWDS data and transformation approach.
 
 import csv
 from pathlib import Path
@@ -58,15 +13,18 @@ from app.transformers.base_xml_transformer import (
 )
 from app.transformers.dwds.dwds_mixed_content import DwdsMixedContentTransformer
 
-# The DWDS sample data set uses standardized POS tags that are compatible with the target model. No mapping required.
-# However, only "Substantiv" and "Verb" appear in the sample. Additional data sets may contain differing POS tags.
-# pos_map_path = Path(__file__).parent / "pos_mapping.csv"
-# with open(pos_map_path, newline="") as csvfile
-#     reader = csv.DictReader(csvfile)
-#     POS_MAPPING = {row["bdo_tag"]: row["normalized"] for row in reader}
+ADDITIONAL_INFO_FIELDS = {
+    "Aussprache": ".//IPA",
+    "Etymologie": './/Etymologie | .//Verweis[@Typ="EtymWB"]',
+    "Syntagmatik": ".//Lesart/Syntagmatik",
+    "Diasystematik": ".//Lesart/Diasystematik",
+    "Kollokationen": ".//Lesart/Kollokationen",
+    "Illustration": ".//Lesart/Illustration",
+    "Korpusbeispiele": ".//Rohdaten/Verwendungsbeispiele/Beleg/Belegtext",
+    "Antonyme": './/Verweis[@Typ="Antonym"]',
+    "Mehrwortausdrücke": './/Verweis[@Typ="MWA"]',
+}
 
-# DWDS uses different values for gender than the target model, so we need to map them, just like for POS.
-# Also added gender_mapping.csv and nGender to the Entry model.
 gender_map_path = Path(__file__).parent / "gender_mapping.csv"
 with open(gender_map_path, newline="") as csvfile:
     reader = csv.DictReader(csvfile)
@@ -158,11 +116,6 @@ def extract_examples(sense):
     return extract_constructed_examples(sense) + extract_attested_examples(sense)
 
 
-# Note: DWDS has more types of senses which do not rely on a given, textual "Definition",
-# but are generated via types such as Grammatik/Einschränkung oder Antonym.
-# TODO: Check if these can be ommitted or need transformation
-
-
 def transform_sense(node):
     """Transform a <Lesart> node into a sense dict with definition, examples, and recursively nested sub-senses."""
     text = "" if (sense := node.find("Definition")) is None else extract_text(sense)
@@ -228,12 +181,6 @@ class DwdsXmlTransformer(BaseXmlTransformer):
             "index": int(node.get("hidx", "0")),
         }
 
-    # The DWDS sample data set does not contain any variants. For further data, re-check. (Is there a "Nebenform" or similar in <Formangabe> that can be extracted here?)
-    # @xpath(".//lemma-position/lemma-variante/@vollform", multiple=True, default="")
-    # def variants(self, items):
-    #     return items
-
-    # Newly added as original_source to the Entry model
     # Specifies the data source the DWDS entry was taken from, e.g. "DWDS", "DWB", "DWDEtym", etc.
     @xpath(".//Artikel/@Quelle", alias="originalSource")
     def original_source(self, source):
@@ -258,11 +205,6 @@ class DwdsXmlTransformer(BaseXmlTransformer):
     @xpath(".//Grammatik/Genus")
     def gender(self, value):
         return value.text if value is not None else None
-
-    # Numerus does not appear in the DWDS sample data set
-    # @xpath(".//Artikel/Formangabe/Grammatik/Numerus")
-    # def number(self, value):
-    #     return value.text if value is not None else None
 
     # --- Static utilities ---
 
@@ -289,30 +231,11 @@ class DwdsXmlTransformer(BaseXmlTransformer):
 
     def _detect_additional_info_types(self) -> list[str]:
         """Detect which additional information categories (e.g. etymology, pronunciation) are present in the article."""
-        result = []
-        if self._any_has_text(self.root.xpath(".//IPA")):
-            result.append("Aussprache")
-        if self._any_has_text(self.root.xpath(".//Etymologie")) or self.root.xpath(
-            './/Verweis[@Typ="EtymWB"]'
-        ):
-            result.append("Etymologie")
-        if self._any_has_text(self.root.xpath(".//Lesart/Syntagmatik")):
-            result.append("Syntagmatik")
-        if self._any_has_text(self.root.xpath(".//Lesart/Diasystematik")):
-            result.append("Diasystematik")
-        if self._any_has_text(self.root.xpath(".//Lesart/Kollokationen")):
-            result.append("Kollokationen")
-        if self._any_has_text(self.root.xpath(".//Lesart/Illustration")):
-            result.append("Illustration")
-        if self._any_has_text(
-            self.root.xpath(".//Rohdaten/Verwendungsbeispiele/Beleg/Belegtext")
-        ):
-            result.append("Korpusbeispiele")
-        if self.root.xpath('.//Verweis[@Typ="Antonym"]'):
-            result.append("Antonyme")
-        if self.root.xpath('.//Verweis[@Typ="MWA"]'):
-            result.append("Mehrwortausdrücke")
-        return result
+        return [
+            name
+            for name, path in ADDITIONAL_INFO_FIELDS.items()
+            if self._any_has_text(self.root.xpath(path))
+        ]
 
     def _extract_media_files(self) -> list[dict]:
         """Extract illustration metadata (URL, author, title, license) from the article."""
@@ -350,9 +273,8 @@ class DwdsXmlTransformer(BaseXmlTransformer):
         data["xml:lang"] = "DE"
         flat_senses = flatten_senses(data.get("sense", []))
         data["flatSenses"] = flat_senses
-        data["corpusExamples"] = self._extract_corpus_examples()
+        data["cit"] = self._extract_corpus_examples()
         data["sourceUrl"] = self._build_source_url(data.get("headword", {}))
-        # data["nPos"] = POS_MAPPING.get(data.get("pos"))
         data["nGender"] = GENDER_MAPPING.get(data.get("gender"))
         data["variants"] = []
         data["additionalInfoTypeAvailable"] = self._detect_additional_info_types()
