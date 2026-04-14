@@ -36,10 +36,6 @@ class Sense(BaseModel):
     entry: Optional[list[dict]] = []
 
 
-class CorpusExample(AnnotatedTextData):
-    type_: Literal["corpus_example"] = Field(alias="type", default="corpus_example")
-
-
 class EtymologySegment(BaseModel):
     type_: str = Field(alias="type")
     content: RichTextField
@@ -112,9 +108,6 @@ class Entry(BaseModel, GrammaticalFeatures):
     flat_senses: Optional[list[Sense]] = Field(alias="flatSenses", default=[])
     etym: Optional[AnnotatedTextData] = None
     sense: Optional[list[Sense]] = []
-    corpus_examples: Optional[list[CorpusExample]] = Field(
-        alias="corpusExamples", default=[]
-    )  # Added for DWDS examples taken from the corpus, which are not sense-attached
     xml_lang: str = Field(alias="xml:lang")
     list_bibl: Optional[ListBibl] = Field(alias="listBibl", default=None)
     xr: Optional[list[CrossReference]] = []
