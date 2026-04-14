@@ -1,20 +1,11 @@
-from enum import Enum
 from typing import Optional
 
 from pydantic import Field
 
 from app.models.annotated_text import AnnotatedTextData
 from app.models.base import BaseModel
+from app.models.resource import ResourceName
 from app.models.rich_text import RichTextField
-
-
-class ResourceName(Enum):
-    BDO = "bdo"
-    BWB = "bwb"
-    DIBS = "dibs"
-    WBF = "wbf"
-    DWDS = "dwds"
-
 
 BDO_RESOURCES = [ResourceName.BWB, ResourceName.DIBS, ResourceName.WBF]
 

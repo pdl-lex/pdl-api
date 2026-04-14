@@ -9,8 +9,9 @@ from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.models.entry import Entry, EntryList, KeywordList, ResourceName
+from app.models.entry import Entry, EntryList, KeywordList
 from app.models.query_summary import QuerySummary
+from app.models.resource import ResourceName
 from app.models.tool import Tool
 from app.services.import_service import ImportService
 from app.services.query_service import QueryService

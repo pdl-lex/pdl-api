@@ -10,7 +10,8 @@ from pydantic import TypeAdapter
 from pymongo import ASCENDING, IndexModel, MongoClient
 from unidecode import unidecode
 
-from app.models.entry import BDO_RESOURCES, Entry, ResourceName
+from app.models.entry import BDO_RESOURCES, Entry
+from app.models.resource import ResourceName
 
 load_dotenv()
 

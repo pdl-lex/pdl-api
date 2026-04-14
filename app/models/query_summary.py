@@ -3,7 +3,8 @@ from typing import Optional
 from pydantic import Field
 
 from app.models.base import BaseModel
-from app.models.entry import GrammaticalFeatures, Headword, ResourceName
+from app.models.entry import GrammaticalFeatures, Headword
+from app.models.resource import ResourceName
 
 
 class LemmaInfo(BaseModel, GrammaticalFeatures):
