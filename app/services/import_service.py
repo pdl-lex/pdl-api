@@ -10,7 +10,7 @@ from pydantic import TypeAdapter
 from pymongo import ASCENDING, IndexModel, MongoClient
 from unidecode import unidecode
 
-from app.models.entry import BDO_RESOURCES, Entry, Resource
+from app.models.entry import BDO_RESOURCES, Entry, ResourceName
 
 load_dotenv()
 
@@ -52,8 +52,8 @@ class ImportService:
         self.db = self.client["lex"]
         self.entries = self.db.get_collection("entries")
 
-    def _drop_entries(self, resource: Resource):
-        if resource == Resource.BDO:
+    def _drop_entries(self, resource: ResourceName):
+        if resource == ResourceName.BDO:
             self.entries.delete_many(
                 {"source": {"$in": [r.value for r in BDO_RESOURCES]}}
             )
@@ -80,7 +80,7 @@ class ImportService:
 
         return normalized_letter if normalized_letter in ALPHABET else "#"
 
-    def insert_data(self, data: Iterable[dict], resource: Resource, batch_size=100):
+    def insert_data(self, data: Iterable[dict], resource: ResourceName, batch_size=100):
         self._drop_entries(resource)
 
         def ensure_valid(item: dict):

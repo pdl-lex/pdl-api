@@ -8,7 +8,7 @@ from app.models.base import BaseModel
 from app.models.rich_text import RichTextField
 
 
-class Resource(Enum):
+class ResourceName(Enum):
     BDO = "bdo"
     BWB = "bwb"
     DIBS = "dibs"
@@ -16,7 +16,7 @@ class Resource(Enum):
     DWDS = "dwds"
 
 
-BDO_RESOURCES = [Resource.BWB, Resource.DIBS, Resource.WBF]
+BDO_RESOURCES = [ResourceName.BWB, ResourceName.DIBS, ResourceName.WBF]
 
 
 class Form(BaseModel):
@@ -94,7 +94,7 @@ class Entry(BaseModel, GrammaticalFeatures):
     headword: Headword
     lex_id: str = Field(alias="lexId")
     source_id: Optional[str] = Field(alias="sourceId", default=None)
-    source: Resource
+    source: ResourceName
     index_letter: str = Field(
         alias="indexLetter", min_length=1, max_length=1, default="#"
     )

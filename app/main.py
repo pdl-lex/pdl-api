@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.models.entry import Entry, EntryList, KeywordList, Resource
+from app.models.entry import Entry, EntryList, KeywordList, ResourceName
 from app.models.query_summary import QuerySummary
 from app.models.tool import Tool
 from app.services.import_service import ImportService
@@ -67,7 +67,7 @@ def free_text_search(
     lemma: Optional[str] = Query(default=None),
     pos: Optional[str] = Query(default=None),
     npos: Optional[str] = Query(default=None),
-    resources: Optional[list[Resource]] = Query(default=None),
+    resources: Optional[list[ResourceName]] = Query(default=None),
     page: int = 1,
     results_per_page: int = 10,
 ) -> EntryList:
@@ -90,7 +90,7 @@ def query_summary(
     lemma: Optional[str] = Query(default=None),
     pos: Optional[str] = Query(default=None),
     npos: Optional[str] = Query(default=None),
-    resources: Optional[list[Resource]] = Query(default=None),
+    resources: Optional[list[ResourceName]] = Query(default=None),
     page: int = 1,
     results_per_page: int = 10,
 ) -> QuerySummary:
@@ -109,7 +109,7 @@ def query_summary(
 
 @app.post("/upload", include_in_schema=False)
 async def upload(
-    file: UploadFile, resource: Resource, _api_key: str = Depends(verify_api_key)
+    file: UploadFile, resource: ResourceName, _api_key: str = Depends(verify_api_key)
 ):
     logger.info(f"Starting {resource.value} update")
     import_service: ImportService = app.state.import_service
