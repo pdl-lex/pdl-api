@@ -121,7 +121,7 @@ class Entry(BaseModel, GrammaticalFeatures):
     additional_info_type_available: Optional[list[str]] = Field(
         alias="additionalInfoTypeAvailable", default=[]
     )
-    citation: Optional[list[Citation]] = Field(alias="cit", default=[])
+    cit: Optional[list[Citation]] = []
     media_files: Optional[list[MediaFile]] = Field(alias="mediaFiles", default=[])
 
 
