@@ -168,6 +168,7 @@ class QueryService:
                 {"$replaceRoot": {"newRoot": "$_id"}},
                 {"$sort": {"lemma": 1, "index": 1}},
                 *item_pagination(page, results_per_page),
-            ]
+            ],
+            collation={"locale": "de"},
         )
         return next(cursor)

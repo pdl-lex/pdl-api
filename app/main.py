@@ -11,10 +11,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.models.entry import Entry, EntryList, KeywordList, Resource
 from app.models.query_summary import QuerySummary
-from app.models.tool import Tool
 from app.services.import_service import ImportService
 from app.services.query_service import QueryService
-from app.services.tool_service import ToolService
 
 load_dotenv()
 
@@ -35,9 +33,6 @@ def verify_api_key(x_api_key: str = Header(...)):
 async def lifespan(app: FastAPI):
     query_service = QueryService()
     app.state.query_service = query_service
-
-    tool_service = ToolService()
-    app.state.tool_service = tool_service
 
     import_service = ImportService()
     app.state.import_service = import_service
@@ -149,27 +144,3 @@ def get_by_letter(
     return query_service.fetch_keywords(
         letter, page=page, results_per_page=results_per_page
     )
-
-
-@app.get("/tools", tags=["Tools"])
-def get_tools() -> list[Tool]:
-    tool_service: ToolService = app.state.tool_service
-    return tool_service.list()
-
-
-@app.post("/tools", tags=["Tools"])
-def add_tool(tool: Tool, _api_key: str = Depends(verify_api_key)):
-    tool_service: ToolService = app.state.tool_service
-    return tool_service.add(tool)
-
-
-@app.delete("/tools/{tool_id}", tags=["Tools"])
-def delete_tool(tool_id: str, _api_key: str = Depends(verify_api_key)):
-    tool_service: ToolService = app.state.tool_service
-    if tool_service.delete(tool_id):
-        return {
-            "status": "success",
-            "message": f"Tool '{tool_id}' deleted successfully",
-        }
-    else:
-        raise HTTPException(status_code=404, detail=f"Tool '{tool_id}' not found")
