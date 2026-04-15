@@ -22,6 +22,11 @@ wheels/
 
 # import and test data
 data/
+app/transformers/dwds/output/*
 
 # jupyter notebooks
 *.ipynb
+
+# Claude
+claude/
+.claude

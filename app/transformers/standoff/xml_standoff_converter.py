@@ -36,6 +36,8 @@ def xml_to_standoff(
     offset += len(node.text or "")
 
     for subnode in node:
+        if not isinstance(subnode.tag, str):
+            continue
         xml_to_standoff(
             subnode, offset, depth + 1, spans, basetext, normalize_ws=normalize_ws
         )

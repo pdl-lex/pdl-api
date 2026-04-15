@@ -32,7 +32,7 @@ class BaseXmlTransformer:
         lex_id = "__".join(
             [
                 "lex",
-                entry["source"],
+                entry["source"] or "",
                 f"{lemma}{'' if lemma_index == 0 else lemma_index}",
                 pos_abbreviations.get(entry.get("nPos"), "o"),  # o = other
             ]
@@ -44,11 +44,25 @@ class BaseXmlTransformer:
 
         return {**entry, "lexId": lex_id}
 
+    def _prepare_tree(self, root):
+        """Hook for subclasses to modify the parsed tree before extraction.
+
+        Override this method to strip namespaces, normalize elements,
+        or perform any other tree-level preprocessing.
+
+        Args:
+            root: The root element of the parsed XML tree
+
+        Returns:
+            The (possibly modified) root element
+        """
+        return root
+
     def transform(self, filepath: Path, element: Optional[ET._Element] = None) -> dict:
         """Extract all fields marked with @xpath decorator."""
         result = {}
         self.tree = ET.parse(filepath)
-        self.root = self.tree.getroot()
+        self.root = self._prepare_tree(self.tree.getroot())
 
         for attr_name in dir(self):
             attr = getattr(self, attr_name)

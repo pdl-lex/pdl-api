@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Optional
+from typing import Literal, Optional
 
 from pydantic import Field
 
@@ -72,6 +72,13 @@ class ListBibl(BaseModel):
     type_: str = Field(alias="type")
 
 
+class MediaFile(BaseModel):
+    url: str
+    author: str
+    title: str
+    license: str
+
+
 class CrossReference(BaseModel):
     ref: Optional[list] = []
     type_: Optional[str] = Field(alias="type")
@@ -83,6 +90,7 @@ class GrammaticalFeatures:
     pos: Optional[str] = None
     number: Optional[str] = None
     normalized_pos: Optional[str] = Field(alias="nPos", default=None)
+    normalized_gender: Optional[str] = Field(alias="nGender", default=None)
 
 
 class Headword(BaseModel):
@@ -95,6 +103,8 @@ class Entry(BaseModel, GrammaticalFeatures):
     lex_id: str = Field(alias="lexId")
     source_id: Optional[str] = Field(alias="sourceId", default=None)
     source: Resource
+    original_source: Optional[str] = Field(alias="originalSource", default=None)
+    source_url: Optional[str] = Field(alias="sourceUrl", default=None)
     index_letter: str = Field(
         alias="indexLetter", min_length=1, max_length=1, default="#"
     )
@@ -108,6 +118,11 @@ class Entry(BaseModel, GrammaticalFeatures):
     family: list[str] | None = None
     derivations: list[AnnotatedTextData] | None = []
     compounds: list[AnnotatedTextData] | None = []
+    additional_info_type_available: Optional[list[str]] = Field(
+        alias="additionalInfoTypeAvailable", default=[]
+    )
+    cit: Optional[list[Citation]] = []
+    media_files: Optional[list[MediaFile]] = Field(alias="mediaFiles", default=[])
 
 
 class EntryList(BaseModel):
