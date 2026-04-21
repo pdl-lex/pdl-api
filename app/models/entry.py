@@ -132,8 +132,12 @@ class EntryList(BaseModel):
     items_per_page: int = Field(alias="itemsPerPage")
 
 
+class KeywordListItem(BaseModel):
+    lemma: str
+
+
 class KeywordList(BaseModel):
-    items: list[Headword]
+    items: list[KeywordListItem]
     total: int
     page: int
     items_per_page: int = Field(alias="itemsPerPage")
