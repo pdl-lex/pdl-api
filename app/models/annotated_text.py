@@ -23,6 +23,7 @@ class BibRefAnnotationSpan(BaseAnnotationSpan):
     full_reference: Optional["AnnotatedTextData"] = Field(
         alias="fullReference", default=None
     )
+    target: Optional[str] = None
 
 
 class LinkAnnotationSpan(BaseAnnotationSpan):
