@@ -162,10 +162,10 @@ class QueryService:
                 {"$match": {"indexLetter": letter.upper()}},
                 {
                     "$group": {
-                        "_id": "$headword",
+                        "_id": "$headword.lemma",
                     }
                 },
-                {"$replaceRoot": {"newRoot": "$_id"}},
+                {"$project": {"lemma": "$_id", "_id": False}},
                 {"$sort": {"lemma": 1, "index": 1}},
                 *item_pagination(page, results_per_page),
             ],
