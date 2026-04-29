@@ -47,8 +47,8 @@ def flatten_senses(senses: list):
     return flat_senses
 
 
-def parse_fundstelle(beleg_node, text_length: int = 0):
-    """Parse <Fundstelle> into a BibRefAnnotationSpan dict to be added to annotations."""
+def parse_fundstelle(beleg_node):
+    """Parse <Fundstelle> into a BibRefAnnotationSpan dict (start/end/text are placeholders, set by the caller)."""
     fundstelle = beleg_node.find("Fundstelle")
     if fundstelle is None:
         return None
@@ -73,21 +73,36 @@ def parse_fundstelle(beleg_node, text_length: int = 0):
     else:
         full_reference = {"text": (fundstelle.text or "").strip(), "annotations": []}
 
+    bibliography_url = (
+        f"https://www.dwds.de/wb/{fundort.lower()}/bibl#{sigle}"
+        if fundort and sigle
+        else None
+    )
+
     return {
         "type": "bibref",
-        "start": text_length,
-        "end": text_length,
+        "start": 0,
+        "end": 0,
         "text": "",
         "bibId": sigle or fundort or "",
         "fullReference": full_reference,
+        "bibliographyUrl": bibliography_url,
     }
 
 
 def _serialize_beleg(node, type_: str):
-    """Serialize a <Beleg> or <Kompetenzbeispiel> node into a citation dict with annotations and bibliographic reference."""
+    """Serialize a <Beleg> or <Kompetenzbeispiel> node into a citation dict, appending the bibliographic reference text so the bibref annotation spans real characters."""
     data = DwdsMixedContentTransformer.load_xml(node.find("Belegtext")).serialize()
-    fundstelle = parse_fundstelle(node, text_length=len(data["text"]))
+    fundstelle = parse_fundstelle(node)
     if fundstelle is not None:
+        ref_text = fundstelle["fullReference"]["text"]
+        data["text"] = data["text"].rstrip()
+        separator = " " if ref_text else ""
+        start = len(data["text"]) + len(separator)
+        data["text"] += separator + ref_text
+        fundstelle["text"] = ref_text
+        fundstelle["start"] = start
+        fundstelle["end"] = start + len(ref_text)
         data["annotations"].append(fundstelle)
     return {**data, "type": type_}
 
