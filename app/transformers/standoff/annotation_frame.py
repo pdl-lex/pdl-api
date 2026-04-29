@@ -182,7 +182,7 @@ class AnnotationFrame(pd.DataFrame):
 
         spans = self.get_spans(tag).dropna(subset=[attribute]).index
 
-        new_frame = self.copy()
+        new_frame: AnnotationFrame = self.copy()
 
         for tag_id in spans:
             span = new_frame.get_span(tag_id)
