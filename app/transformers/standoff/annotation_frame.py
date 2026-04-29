@@ -192,6 +192,21 @@ class AnnotationFrame(pd.DataFrame):
 
         return new_frame
 
+    def annotate_span(self, start: int, end: int, tag: str):
+        text = self.get_root().text[start:end]
+        id_ = self.index.max() + 1
+        anno_data = {
+            "start": start,
+            "end": end,
+            "depth": 1,
+            "tag": tag,
+            "text": text,
+        }
+
+        new_annotation = pd.DataFrame.from_dict({id_: anno_data}, orient="index")
+
+        return pd.concat([self, new_annotation])
+
     def validate(self, debug: bool = False) -> "AnnotationFrame":
         text_by_index = self.apply(
             lambda row: self._roottext[row.start : row.end], axis=1
