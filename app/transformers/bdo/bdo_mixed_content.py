@@ -58,7 +58,7 @@ class BdoBaseTransformer(StandoffTransformer):
 
         return (
             aframe.assign(ref_type=mapped_ref_types)
-            .insert_attribute("verweis", "ref_type")
+            .insert_attribute("ref_type", "verweis")
             .drop("ref_type", axis=1)
         )
 
@@ -96,7 +96,7 @@ class BdoBaseTransformer(StandoffTransformer):
 class BdoLiteratureTransformer(StandoffTransformer):
     @preprocess(order=1)
     def insert_literature_prefixes(self, aframe: AnnotationFrame) -> AnnotationFrame:
-        return aframe.insert_attribute("literatur-quelle", "quelle-art")
+        return aframe.insert_attribute("quelle-art", "literatur-quelle")
 
     @preprocess(order=3)
     def add_bib_id_column(self, aframe: AnnotationFrame) -> AnnotationFrame:

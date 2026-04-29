@@ -176,7 +176,7 @@ class AnnotationFrame(pd.DataFrame):
 
         return new_frame
 
-    def insert_attribute(self, tag: str, attribute: str) -> "AnnotationFrame":
+    def insert_attribute(self, attribute: str, tag: str) -> "AnnotationFrame":
         if attribute not in self.columns:
             return self
 
