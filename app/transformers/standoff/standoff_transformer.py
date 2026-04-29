@@ -48,9 +48,9 @@ class StandoffTransformer:
     @classmethod
     def _init_dataframe(cls, span_data: list[dict]) -> pd.DataFrame:
         frame = pd.DataFrame(
-            span_data, columns=["start", "end", "depth", "tag", "attributes", "text"]
+            span_data, columns=["start", "end", "depth", "tag", "_attributes", "text"]
         )
-        extra_attributes = pd.DataFrame.from_records(frame.pop("attributes"))
+        extra_attributes = pd.DataFrame.from_records(frame.pop("_attributes"))
         frame = pd.concat([frame, extra_attributes], axis=1)
 
         frame = cls._add_unique_ids(frame)
