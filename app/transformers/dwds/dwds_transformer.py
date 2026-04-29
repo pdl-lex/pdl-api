@@ -58,6 +58,7 @@ def parse_fundstelle(beleg_node):
 
     has_children = any(child.text for child in fundstelle if isinstance(child.tag, str))
 
+    full_reference = {"text": (fundstelle.text or "").strip(), "annotations": []}
     if has_children:
         full_reference = DwdsMixedContentTransformer.load_xml(fundstelle).serialize()
         # Strip leading/trailing whitespace from XML indentation and adjust offsets
@@ -70,8 +71,6 @@ def parse_fundstelle(beleg_node):
             if ann["start"]
             != ann["end"]  # filter out zero-width spans (empty elements)
         ]
-    else:
-        full_reference = {"text": (fundstelle.text or "").strip(), "annotations": []}
 
     bibliography_url = (
         f"https://www.dwds.de/wb/{fundort.lower()}/bibl#{sigle}"
