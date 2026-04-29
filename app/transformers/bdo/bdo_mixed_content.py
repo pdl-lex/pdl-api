@@ -96,7 +96,7 @@ class BdoBaseTransformer(StandoffTransformer):
 class BdoLiteratureTransformer(StandoffTransformer):
     @preprocess(order=1)
     def insert_literature_prefixes(self, aframe: AnnotationFrame) -> AnnotationFrame:
-        return aframe.pluck_attribute("literatur-quelle", "quelle-art")
+        return aframe.pluck_attribute("literatur-quelle", "quelle-art", padding="right")
 
     @preprocess(order=3)
     def add_bib_id_column(self, aframe: AnnotationFrame) -> AnnotationFrame:
