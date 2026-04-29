@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 
 import pandas as pd
 
@@ -20,6 +20,9 @@ def _insert_text(row, position, text):
     offset = row.start
     position -= offset
     return row.text[:position] + text + row.text[position:]
+
+
+Padding = Literal["both", "left", "right"]
 
 
 class AnnotationFrame(pd.DataFrame):
@@ -176,8 +179,13 @@ class AnnotationFrame(pd.DataFrame):
 
         return new_frame
 
-    def pluck_attribute(self, tag: str, attribute: str) -> "AnnotationFrame":
-        """Take the values of an annotation layer and insert them into the base text"""
+    def pluck_attribute(
+        self, tag: str, attribute: str, padding: Padding | None = None
+    ) -> "AnnotationFrame":
+        """
+        Take the values of an annotation layer and insert them into the base text.
+        Mark inserted spans with special plucked: annotations.
+        """
         if attribute not in self.columns:
             return self
 
@@ -188,7 +196,22 @@ class AnnotationFrame(pd.DataFrame):
         for tag_id in spans:
             span = new_frame.get_span(tag_id)
             value = span[attribute]
-            new_frame = new_frame.insert_text(span.start, f"{value} ")
+
+            match padding:
+                case "both":
+                    value = f" {value} "
+                case "left":
+                    value = f" {value}"
+                case "right":
+                    value = f"{value} "
+
+            new_frame = new_frame.insert_text(span.start, value)
+
+            new_frame = new_frame.annotate_span(
+                span.start,
+                span.start + len(value),
+                f"plucked:{tag}/{attribute}",
+            )
 
         return new_frame
 
