@@ -131,11 +131,40 @@ def extract_examples(sense):
     return extract_constructed_examples(sense) + extract_attested_examples(sense)
 
 
+def _fallback_definition(node) -> str:
+    """Build a plain-text definition from <Formangabe>/<Grammatik> or <Verweise> for senses without a <Definition>."""
+    grammatik = node.find("Formangabe/Grammatik")
+    if grammatik is not None:
+        gram_text = extract_text(grammatik).strip()
+        if gram_text:
+            return f"Grammatik: {gram_text}"
+
+    refs = []
+    for verweis in node.findall("Verweise/Verweis"):
+        ziellemma = (verweis.findtext("Ziellemma") or "").strip()
+        if not ziellemma:
+            continue
+        ziellesart = (verweis.findtext("Ziellesart") or "").strip()
+        refs.append(f"{ziellemma} ({ziellesart})" if ziellesart else ziellemma)
+    if refs:
+        return "siehe auch " + ", ".join(refs)
+
+    return ""
+
+
 def transform_sense(node):
     """Transform a <Lesart> node into a sense dict with definition, examples, and recursively nested sub-senses."""
-    text = "" if (sense := node.find("Definition")) is None else extract_text(sense)
+    definition = node.find("Definition")
+    text = extract_text(definition).strip() if definition is not None else ""
+    if not text:
+        text = _fallback_definition(node)
 
-    number = node.attrib.get("n")
+    diasystematik = node.find("Diasystematik")
+    dia_text = extract_text(diasystematik).strip() if diasystematik is not None else ""
+    if dia_text:
+        text = f"[{dia_text}] {text}".strip()
+
+    number = (node.attrib.get("n") or "").rstrip(".") or None
     id_ = node.attrib.get("xml:id", unique_id("sense_"))
 
     return {
