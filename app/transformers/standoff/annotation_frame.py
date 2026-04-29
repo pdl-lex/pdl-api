@@ -215,7 +215,7 @@ class AnnotationFrame(pd.DataFrame):
 
         return new_frame
 
-    def annotate_span(self, start: int, end: int, tag: str):
+    def annotate_span(self, start: int, end: int, tag: str) -> "AnnotationFrame":
         text = self.get_root().text[start:end]
         id_ = self.index.max() + 1
         anno_data = {
