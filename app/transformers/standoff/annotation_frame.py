@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 
 import pandas as pd
 
@@ -20,6 +20,9 @@ def _insert_text(row, position, text):
     offset = row.start
     position -= offset
     return row.text[:position] + text + row.text[position:]
+
+
+Padding = Literal["both", "left", "right"]
 
 
 class AnnotationFrame(pd.DataFrame):
@@ -176,20 +179,56 @@ class AnnotationFrame(pd.DataFrame):
 
         return new_frame
 
-    def insert_attribute(self, tag: str, attribute: str) -> "AnnotationFrame":
+    def pluck_attribute(
+        self, tag: str, attribute: str, padding: Padding | None = None
+    ) -> "AnnotationFrame":
+        """
+        Take the values of an annotation layer and insert them into the base text.
+        Mark inserted spans with special plucked: annotations.
+        """
         if attribute not in self.columns:
             return self
 
         spans = self.get_spans(tag).dropna(subset=[attribute]).index
 
-        new_frame = self.copy()
+        new_frame: AnnotationFrame = self.copy()
 
         for tag_id in spans:
             span = new_frame.get_span(tag_id)
             value = span[attribute]
-            new_frame = new_frame.insert_text(span.start, f"{value} ")
+
+            match padding:
+                case "both":
+                    value = f" {value} "
+                case "left":
+                    value = f" {value}"
+                case "right":
+                    value = f"{value} "
+
+            new_frame = new_frame.insert_text(span.start, value)
+
+            new_frame = new_frame.annotate_span(
+                span.start,
+                span.start + len(value),
+                f"plucked:{tag}/{attribute}",
+            )
 
         return new_frame
+
+    def annotate_span(self, start: int, end: int, tag: str) -> "AnnotationFrame":
+        text = self.get_root().text[start:end]
+        id_ = self.index.max() + 1
+        anno_data = {
+            "start": start,
+            "end": end,
+            "depth": 1,
+            "tag": tag,
+            "text": text,
+        }
+
+        new_annotation = pd.DataFrame.from_dict({id_: anno_data}, orient="index")
+
+        return pd.concat([self, new_annotation])
 
     def validate(self, debug: bool = False) -> "AnnotationFrame":
         text_by_index = self.apply(
