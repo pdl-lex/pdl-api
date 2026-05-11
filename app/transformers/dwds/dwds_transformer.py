@@ -72,7 +72,7 @@ def _build_collapse_map(text):
     return "".join(new_chars), old_to_new
 
 
-def normalize_standoff_whitespace(data, *, strip="both", collapse=False):
+def normalize_standoff_whitespace(data, *, strip="both", collapse=True):
     """Normalize whitespace in a str or standoff dict {"text": str, "annotations": [...]}.
 
     strip:    "none" | "leading" | "trailing" | "both"
