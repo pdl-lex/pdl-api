@@ -50,6 +50,7 @@ AnnotationSpan = Annotated[
         BibRefAnnotationSpan,
         CrossRefAnnotationSpan,
         LinkAnnotationSpan,
+        XmlAttributeSpan,
     ],
     Field(discriminator="type"),
 ]
