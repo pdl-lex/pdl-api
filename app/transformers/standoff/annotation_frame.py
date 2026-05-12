@@ -184,7 +184,7 @@ class AnnotationFrame(pd.DataFrame):
     ) -> "AnnotationFrame":
         """
         Take the values of an annotation layer and insert them into the base text.
-        Mark inserted spans with special plucked: annotations.
+        Mark inserted spans with special starred (*) annotations.
         """
         if attribute not in self.columns:
             return self
@@ -210,14 +210,16 @@ class AnnotationFrame(pd.DataFrame):
             new_frame = new_frame.annotate_span(
                 span.start,
                 span.start + len(value),
-                f"plucked:{tag}/{attribute}",
+                f"*{tag}/@{attribute}",
             )
 
         return new_frame
 
     def annotate_span(self, start: int, end: int, tag: str) -> "AnnotationFrame":
         text = self.get_root().text[start:end]
-        id_ = self.index.max() + 1
+        max_id = (
+            self.get_spans(tag).index.str.rsplit("_", n=1).str[-1].astype(int).max()
+        )
         anno_data = {
             "start": start,
             "end": end,
@@ -226,7 +228,9 @@ class AnnotationFrame(pd.DataFrame):
             "text": text,
         }
 
-        new_annotation = pd.DataFrame.from_dict({id_: anno_data}, orient="index")
+        new_annotation = pd.DataFrame.from_dict(
+            {f"{tag}_{1 if pd.isna(max_id) else max_id + 1}": anno_data}, orient="index"
+        )
 
         return pd.concat([self, new_annotation])
 
