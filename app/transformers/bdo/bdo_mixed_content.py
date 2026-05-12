@@ -58,7 +58,7 @@ class BdoBaseTransformer(StandoffTransformer):
 
         return (
             aframe.assign(ref_type=mapped_ref_types)
-            .insert_attribute("verweis", "ref_type")
+            .pluck_attribute("verweis", "ref_type")
             .drop("ref_type", axis=1)
         )
 
