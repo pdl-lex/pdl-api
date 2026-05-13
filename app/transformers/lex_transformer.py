@@ -15,25 +15,39 @@ def ensure_output_directories():
     OUTPUT_ERROR_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def id_factory(source_dir: Path, namespace: str):
+    def create_id(filepath: Path | str) -> str:
+        subpath = Path(filepath).relative_to(source_dir).with_suffix("")
+        return f"{namespace}:{subpath}"
+
+    return create_id
+
+
 def bdo_to_lexoterm(bdo_dir: Path) -> Iterator[dict]:
     files = list(bdo_dir.rglob("*.xml"))
     bdo_transformer = BdoXmlTransformer()
     progress_bar = tqdm(files, desc="Converting BDO XML to LexoTerm format")
+    create_bdo_id = id_factory(bdo_dir, "bdo")
 
     for path in progress_bar:
         progress_bar.set_description(f"Processing {path.parent.parent.name}")
 
-        yield bdo_transformer.transform(path)
+        result = bdo_transformer.transform(path)
+        result["lexId"] = create_bdo_id(path)
+        yield result
 
 
 def dwds_to_lexoterm(dwds_dir: Path) -> Iterator[dict]:
     files = list(dwds_dir.rglob("*.xml"))
     dwds_transformer = DwdsXmlTransformer()
     progress_bar = tqdm(files, desc="Converting DWDS XML to LexoTerm format")
+    create_dwds_id = id_factory(dwds_dir, "dwds")
 
     for path in progress_bar:
         progress_bar.set_description(f"Processing {path.name}")
-        yield dwds_transformer.transform(path)
+        result = dwds_transformer.transform(path)
+        result["lexId"] = create_dwds_id(path)
+        yield result
 
 
 if __name__ == "__main__":
