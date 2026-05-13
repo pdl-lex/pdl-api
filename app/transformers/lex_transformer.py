@@ -3,11 +3,16 @@ from typing import Iterator
 
 from tqdm import tqdm
 
+from app.transformers.base_xml_transformer import BaseXmlTransformer
 from app.transformers.bdo.bdo_transformer import BdoXmlTransformer
 from app.transformers.dwds.dwds_transformer import DwdsXmlTransformer
 
 OUTPUT_DATA_DIR = Path("data/lexoterm")
 OUTPUT_ERROR_DIR = Path("data/lexoterm")
+TRANSFORMER_REGISTRY: dict[str, type[BaseXmlTransformer]] = {
+    "bdo": BdoXmlTransformer,
+    "dwds": DwdsXmlTransformer,
+}
 
 
 def ensure_output_directories():
@@ -15,38 +20,25 @@ def ensure_output_directories():
     OUTPUT_ERROR_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def id_factory(source_dir: Path, namespace: str):
-    def create_id(filepath: Path | str) -> str:
-        subpath = Path(filepath).relative_to(source_dir).with_suffix("")
-        return f"{namespace}:{subpath}"
+def create_id(namespace: str, source_dir: Path, filepath: Path | str):
+    subpath = Path(filepath).relative_to(source_dir).with_suffix("")
 
-    return create_id
+    return f"{namespace}:{subpath}"
 
 
-def bdo_to_lexoterm(bdo_dir: Path) -> Iterator[dict]:
-    files = list(bdo_dir.rglob("*.xml"))
-    bdo_transformer = BdoXmlTransformer()
-    progress_bar = tqdm(files, desc="Converting BDO XML to LexoTerm format")
-    create_bdo_id = id_factory(bdo_dir, "bdo")
+def transform(xml_dir: Path, resource_name: str) -> Iterator[dict]:
+    transformer = TRANSFORMER_REGISTRY[resource_name]()
+    files = list(xml_dir.rglob("*.xml"))
+    progress_bar = tqdm(files, desc="Converting XML to LexoTerm format")
 
-    for path in progress_bar:
-        progress_bar.set_description(f"Processing {path.parent.parent.name}")
+    for filepath in progress_bar:
+        progress_bar.set_description(f"Processing {filepath.parent.parent.name}")
 
-        result = bdo_transformer.transform(path)
-        result["lexId"] = create_bdo_id(path)
-        yield result
+        result = transformer.transform(filepath)
+        result["lexId"] = create_id(
+            namespace=resource_name, source_dir=xml_dir, filepath=filepath
+        )
 
-
-def dwds_to_lexoterm(dwds_dir: Path) -> Iterator[dict]:
-    files = list(dwds_dir.rglob("*.xml"))
-    dwds_transformer = DwdsXmlTransformer()
-    progress_bar = tqdm(files, desc="Converting DWDS XML to LexoTerm format")
-    create_dwds_id = id_factory(dwds_dir, "dwds")
-
-    for path in progress_bar:
-        progress_bar.set_description(f"Processing {path.name}")
-        result = dwds_transformer.transform(path)
-        result["lexId"] = create_dwds_id(path)
         yield result
 
 
@@ -57,7 +49,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Convert lexical resources to LexoTerm JSON"
     )
-    parser.add_argument("resource", help="Resource name", choices=["bdo", "dwds"])
+    parser.add_argument(
+        "resource", help="Resource name", choices=list(TRANSFORMER_REGISTRY)
+    )
     parser.add_argument(
         "-p", "--path", help="Path to source folder", required=True, type=Path
     )
@@ -67,12 +61,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    dispatch = {
-        "bdo": bdo_to_lexoterm,
-        "dwds": dwds_to_lexoterm,
-    }
-
-    result = dispatch[args.resource](args.path)
+    result = transform(args.path, args.resource)
 
     ensure_output_directories()
 
