@@ -1,5 +1,6 @@
+from datetime import date
 from enum import Enum
-from typing import Literal, Optional
+from typing import Optional
 
 from pydantic import Field
 
@@ -101,6 +102,8 @@ class Headword(BaseModel):
 class Entry(BaseModel, GrammaticalFeatures):
     headword: Headword
     lex_id: str = Field(alias="lexId")
+    retrieved_at: Optional[date] | None = Field(alias="retrievedAt", default=None)
+    uploaded_at: Optional[date] | None = Field(alias="uploadedAt", default=None)
     source_id: Optional[str] = Field(alias="sourceId", default=None)
     source: Resource
     original_source: Optional[str] = Field(alias="originalSource", default=None)
