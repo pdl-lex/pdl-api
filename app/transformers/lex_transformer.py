@@ -28,7 +28,7 @@ def create_id(namespace: str, source_dir: Path, filepath: Path | str):
 
 
 def transform(
-    xml_dir: Path, resource_name: str, *, retrieved_at: Optional[str] = None
+    xml_dir: Path, resource_name: str, *, retrieved_at: date | None = None
 ) -> Iterator[dict]:
     transformer = TRANSFORMER_REGISTRY[resource_name]()
     files = list(xml_dir.rglob("*.xml"))
@@ -43,7 +43,7 @@ def transform(
         )
 
         if retrieved_at is not None:
-            result["retrievedAt"] = date.fromisoformat(retrieved_at)
+            result["retrievedAt"] = retrieved_at.isoformat()
 
         yield result
 
@@ -64,10 +64,15 @@ if __name__ == "__main__":
     parser.add_argument(
         "-o", "--out", help="Path to output file (jsonl-format)", type=Path
     )
+    parser.add_argument(
+        "--retrieved-at",
+        help="Retrieval data (iso format, e.g. '2026-04-23')",
+        type=date.fromisoformat,
+    )
 
     args = parser.parse_args()
 
-    result = transform(args.path, args.resource)
+    result = transform(args.path, args.resource, retrieved_at=args.retrieved_at)
 
     ensure_output_directories()
 
