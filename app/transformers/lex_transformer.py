@@ -1,5 +1,6 @@
+from datetime import date
 from pathlib import Path
-from typing import Iterator
+from typing import Iterator, Optional
 
 from tqdm import tqdm
 
@@ -26,7 +27,9 @@ def create_id(namespace: str, source_dir: Path, filepath: Path | str):
     return f"{namespace}:{subpath}"
 
 
-def transform(xml_dir: Path, resource_name: str) -> Iterator[dict]:
+def transform(
+    xml_dir: Path, resource_name: str, *, retrieved_at: Optional[str] = None
+) -> Iterator[dict]:
     transformer = TRANSFORMER_REGISTRY[resource_name]()
     files = list(xml_dir.rglob("*.xml"))
     progress_bar = tqdm(files, desc="Converting XML to LexoTerm format")
@@ -38,6 +41,9 @@ def transform(xml_dir: Path, resource_name: str) -> Iterator[dict]:
         result["lexId"] = create_id(
             namespace=resource_name, source_dir=xml_dir, filepath=filepath
         )
+
+        if retrieved_at is not None:
+            result["retrievedAt"] = date.fromisoformat(retrieved_at)
 
         yield result
 
