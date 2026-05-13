@@ -37,12 +37,20 @@ class CrossRefAnnotationSpan(LinkAnnotationSpan):
     missing: Optional[bool] = False
 
 
+class XmlAttributeSpan(BaseAnnotationSpan):
+    type: Literal["xmlattribute"]
+    from_tag: str = Field(alias="fromTag")
+    from_attribute: str = Field(alias="fromAttribute")
+    value: str
+
+
 AnnotationSpan = Annotated[
     Union[
         TextAnnotationSpan,
         BibRefAnnotationSpan,
         CrossRefAnnotationSpan,
         LinkAnnotationSpan,
+        XmlAttributeSpan,
     ],
     Field(discriminator="type"),
 ]

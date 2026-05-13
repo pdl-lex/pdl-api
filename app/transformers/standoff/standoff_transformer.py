@@ -2,6 +2,7 @@ from typing import Any, Callable
 
 import pandas as pd
 
+from app.models.annotated_text import XmlAttributeSpan
 from app.transformers.standoff.annotation_frame import AnnotationFrame
 from app.transformers.standoff.xml_standoff_converter import (
     xml_to_standoff,
@@ -30,6 +31,10 @@ def register(tag: str):
         return func
 
     return decorator
+
+
+def basedata(span, type_: str) -> dict:
+    return {"type": type_, **span[["start", "end", "text"]].to_dict()}
 
 
 class StandoffTransformer:
@@ -113,3 +118,21 @@ class StandoffTransformer:
     def serialize(self) -> dict:
         result = {"text": self.aframe._roottext, "annotations": self._serialize_spans()}
         return result
+
+    def _register_plucked_attribute(self, tag: str, attribute: str):
+        def serialize_attribute(_, span) -> XmlAttributeSpan:
+            return XmlAttributeSpan(
+                **basedata(span, "xmlattribute"),
+                fromTag=tag,
+                fromAttribute=attribute,
+                value=span.value,
+            )
+
+        self._tag_handlers[f"*{tag}/@{attribute}"] = serialize_attribute
+
+    def pluck_attribute(
+        self, aframe: AnnotationFrame, tag: str, attribute: str, padding="right"
+    ) -> AnnotationFrame:
+        """Pull an xml attribute value into the base text and register serialization method"""
+        self._register_plucked_attribute(tag, attribute)
+        return aframe.pluck_attribute(tag, attribute, padding)

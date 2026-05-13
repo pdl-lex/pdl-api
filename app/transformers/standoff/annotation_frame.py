@@ -25,6 +25,17 @@ def _insert_text(row, position, text):
 Padding = Literal["both", "left", "right"]
 
 
+def add_padding(text: str, padding: Padding | None):
+    match padding:
+        case "both":
+            return f" {text} "
+        case "left":
+            return f" {text}"
+        case "right":
+            return f"{text} "
+    return text
+
+
 class AnnotationFrame(pd.DataFrame):
     _metadata = ["_deleted_spans"]
 
@@ -196,26 +207,22 @@ class AnnotationFrame(pd.DataFrame):
         for tag_id in spans:
             span = new_frame.get_span(tag_id)
             value = span[attribute]
+            insertion = add_padding(value, padding)
 
-            match padding:
-                case "both":
-                    value = f" {value} "
-                case "left":
-                    value = f" {value}"
-                case "right":
-                    value = f"{value} "
-
-            new_frame = new_frame.insert_text(span.start, value)
+            new_frame = new_frame.insert_text(span.start, insertion)
 
             new_frame = new_frame.annotate_span(
                 span.start,
-                span.start + len(value),
+                span.start + len(insertion),
                 f"*{tag}/@{attribute}",
+                value=value,
             )
 
         return new_frame
 
-    def annotate_span(self, start: int, end: int, tag: str) -> "AnnotationFrame":
+    def annotate_span(
+        self, start: int, end: int, tag: str, **kwargs
+    ) -> "AnnotationFrame":
         text = self.get_root().text[start:end]
         max_id = (
             self.get_spans(tag).index.str.rsplit("_", n=1).str[-1].astype(int).max()
@@ -226,6 +233,7 @@ class AnnotationFrame(pd.DataFrame):
             "depth": 1,
             "tag": tag,
             "text": text,
+            **kwargs,
         }
 
         new_annotation = pd.DataFrame.from_dict(
