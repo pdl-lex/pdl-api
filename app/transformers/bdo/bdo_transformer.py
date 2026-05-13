@@ -59,7 +59,7 @@ class BdoXmlTransformer(BaseXmlTransformer):
     @xpath(".//lemma", default="")
     def headword(self, lemma_node):
         return {
-            "lemma": lemma_node.text,
+            "lemma": lemma_node.text or "",
             "index": int(getattr(lemma_node.find("hoch"), "text", "0")),
         }
 
