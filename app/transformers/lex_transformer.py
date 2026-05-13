@@ -30,14 +30,15 @@ def create_id(namespace: str, source_dir: Path, filepath: Path | str):
 def transform(
     xml_dir: Path, resource_name: str, *, retrieved_at: date | None = None
 ) -> Iterator[dict]:
-    transformer = TRANSFORMER_REGISTRY[resource_name]()
+    Transformer = TRANSFORMER_REGISTRY[resource_name]()  # noqa: N806
+
     files = list(xml_dir.rglob("*.xml"))
     progress_bar = tqdm(files, desc="Converting XML to LexoTerm format")
 
     for filepath in progress_bar:
         progress_bar.set_description(f"Processing {filepath.parent.parent.name}")
 
-        result = transformer.transform(filepath)
+        result = Transformer.transform(filepath)
         result["lexId"] = create_id(
             namespace=resource_name, source_dir=xml_dir, filepath=filepath
         )
