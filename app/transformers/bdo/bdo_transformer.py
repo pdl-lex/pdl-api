@@ -102,7 +102,7 @@ class BdoXmlTransformer(BaseXmlTransformer):
 
     @xpath(".//lemma-position/wortfamilie/verweis", multiple=True)
     def family(self, nodes):
-        return [extract_text(node).strip() for node in nodes]
+        return [(extract_text(node) or "").strip() for node in nodes]
 
     @xpath(".//ableitung-position/verweis", multiple=True)
     def derivations(self, nodes):
