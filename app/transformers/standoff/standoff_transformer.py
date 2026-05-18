@@ -3,7 +3,7 @@ from typing import Any, Callable
 import pandas as pd
 
 from app.models.annotated_text import XmlAttributeSpan
-from app.transformers.standoff.annotation_frame import AnnotationFrame
+from app.transformers.standoff.annotation_frame import AnnotationFrame, Padding
 from app.transformers.standoff.xml_standoff_converter import (
     xml_to_standoff,
 )
@@ -97,7 +97,7 @@ class StandoffTransformer:
 
         return handlers
 
-    def _serialize_spans(self) -> dict[str, Any]:
+    def _serialize_spans(self) -> list[dict]:
         """Transform spans by dispatching to registered tag handlers"""
         serialized_spans = []
         for span in self.aframe.iter_spans():
@@ -131,7 +131,11 @@ class StandoffTransformer:
         self._tag_handlers[f"*{tag}/@{attribute}"] = serialize_attribute
 
     def pluck_attribute(
-        self, aframe: AnnotationFrame, tag: str, attribute: str, padding="right"
+        self,
+        aframe: AnnotationFrame,
+        tag: str,
+        attribute: str,
+        padding: Padding = "right",
     ) -> AnnotationFrame:
         """Pull an xml attribute value into the base text and register serialization method"""
         self._register_plucked_attribute(tag, attribute)
