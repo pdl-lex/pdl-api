@@ -31,3 +31,10 @@ def bdo_transformer():
     from app.transformers.bdo.bdo_transformer import BdoXmlTransformer
 
     return BdoXmlTransformer()
+
+
+@pytest.fixture
+def bdo_complex_etymology(fixture_dir):
+    import lxml.etree as ET  # noqa: N812
+
+    return ET.parse(fixture_dir / "xml_data/bdo/complex_etymology.xml").getroot()
