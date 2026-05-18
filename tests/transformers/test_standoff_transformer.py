@@ -2,7 +2,12 @@ import lxml.etree as ET  # noqa: N812
 import pytest
 
 from app.models.annotated_text import TextAnnotationSpan
-from app.transformers.standoff.standoff_transformer import StandoffTransformer, register
+from app.transformers.standoff.annotation_frame import AnnotationFrame
+from app.transformers.standoff.standoff_transformer import (
+    StandoffTransformer,
+    preprocess,
+    register,
+)
 from app.transformers.standoff.xml_standoff_converter import xml_to_standoff
 
 
@@ -25,7 +30,7 @@ def complex_annotated_xml():
             <referenz ziel="eintrag-x">vgl. Eintrag x</referenz> und
             <referenz ziel="eintrag-y">Eintrag y</referenz>.
             <verbreitung>Die Art ist in mitteleuropäischen Wäldern und Parks weit
-            verbreitet <literatur id="meier96">(<autor>Meier</autor>, 
+            verbreitet (<literatur id="meier96" typ="vgl."><autor>Meier</autor>, 
             <jahr>1996</jahr>)</literatur></verbreitung>.
         </zusammenfassung>
     </text>
@@ -78,7 +83,7 @@ def complex_spans():
             {},
             "Die Art ist in mitteleuropäischen Wäldern und Parks weit verbreitet (Meier, 1996)",
         ),
-        (210, 223, 3, "literatur", {"id": "meier96"}, "(Meier, 1996)"),
+        (211, 223, 3, "literatur", {"id": "meier96", "typ": "vgl."}, "Meier, 1996)"),
         (211, 216, 4, "autor", {}, "Meier"),
         (218, 222, 4, "jahr", {}, "1996"),
     ]
@@ -89,12 +94,51 @@ def test_xml_to_standoff(complex_annotated_xml, complex_spans):
     assert spans == complex_spans
 
 
-def test_empty_standoff_transformer(basic_annotated_xml):
+@pytest.fixture
+def basic_transformer(basic_annotated_xml):
     class Transformer(StandoffTransformer):
         pass
 
-    result = Transformer.load_xml(basic_annotated_xml).serialize()
-    assert result == {"text": "Das ist ein Beispielsatz.", "annotations": []}
+    return Transformer.load_xml(basic_annotated_xml)
+
+
+def test_basic_annotation(basic_transformer):
+    expected = {
+        "start": [0, 0, 4, 8, 12],
+        "end": [25, 3, 7, 11, 24],
+        "tag": ["satz", "pronomen", "verb", "artikel", "nomen"],
+        "depth": [0, 1, 1, 1, 1],
+        "text": ["Das ist ein Beispielsatz.", "Das", "ist", "ein", "Beispielsatz"],
+    }
+    assert basic_transformer.aframe.to_dict(orient="list") == expected
+
+
+def test_basic_serialization(basic_transformer):
+    assert basic_transformer.serialize() == {
+        "text": "Das ist ein Beispielsatz.",
+        "annotations": [],
+    }
+
+
+def test_pluck_attribute(complex_annotated_xml):
+    class Transformer(StandoffTransformer):
+        @preprocess
+        def insert_literature_prefix(self, aframe: AnnotationFrame):
+            return self.pluck_attribute(aframe, "literatur", "typ", padding="right")
+
+    expected_span = {
+        "start": 211,
+        "end": 216,
+        "text": "vgl. ",
+        "type": "xmlattribute",
+        "fromTag": "literatur",
+        "fromAttribute": "typ",
+        "value": "vgl.",
+    }
+    result = Transformer.load_xml(complex_annotated_xml).serialize()
+
+    assert expected_span in result["annotations"]
+    assert "(vgl. Meier, 1996)" in result["text"]
 
 
 def test_registered_spans_are_returned(basic_annotated_xml):
