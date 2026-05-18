@@ -1,0 +1,264 @@
+{
+  "compounds": [
+    {
+      "text": "Bannwald",
+      "annotations": [
+        {
+          "start": 0,
+          "end": 8,
+          "text": "Bannwald",
+          "type": "crossref",
+          "target": "/search?lemma=bwb__Bannwald",
+          "variant": null,
+          "missing": false
+        }
+      ]
+    },
+    {
+      "text": "Woidmanndl",
+      "annotations": [
+        {
+          "start": 0,
+          "end": 10,
+          "text": "Woidmanndl",
+          "type": "crossref",
+          "target": "/search?lemma=bwb__Woidmanndl",
+          "variant": null,
+          "missing": false
+        }
+      ]
+    }
+  ],
+  "derivations": [],
+  "etym": {
+    "text": " Althochdeutsch walth. ",
+    "annotations": [
+      {
+        "start": 16,
+        "end": 21,
+        "text": "walth",
+        "type": "crossref",
+        "target": "/search?lemma=bwb__walth",
+        "variant": "arrow",
+        "missing": false
+      }
+    ]
+  },
+  "family": ["walden"],
+  "gender": "M",
+  "headword": {
+    "lemma": "Wald",
+    "index": 0
+  },
+  "number": null,
+  "pos": "Substantiv",
+  "sense": [
+    {
+      "def": "Große, mit Bäumen bewachsene Fläche",
+      "sourceId": "bwb__Wald_1",
+      "n": "1",
+      "sense": [],
+      "cit": [
+        {
+          "text": " mia genga in Woid    ",
+          "annotations": [
+            {
+              "start": 1,
+              "end": 18,
+              "text": "mia genga in Woid",
+              "type": "text",
+              "labels": ["italic"]
+            }
+          ],
+          "type": "example"
+        }
+      ]
+    },
+    {
+      "def": "Übertragene Bedeutungen und Spezialisierungen",
+      "sourceId": "bwb__Wald_2",
+      "n": "2",
+      "sense": [
+        {
+          "def": "Große Menge, Ansammlung von Gegenständen",
+          "sourceId": "bwb__Wald_2a",
+          "n": "2a",
+          "sense": [
+            {
+              "def": "Dichte Ansammlung von Masten oder Pfählen",
+              "sourceId": "bwb__Wald_2a_alpha",
+              "n": "2aα",
+              "sense": [
+                {
+                  "def": "Im Hafen (Schiffsmasten)",
+                  "sourceId": "bwb__Wald_2a_alpha_i",
+                  "n": "2aαi",
+                  "sense": [],
+                  "cit": [
+                    {
+                      "text": " A Woid vo Mastn   SZ Nr. 42    ",
+                      "annotations": [
+                        {
+                          "start": 1,
+                          "end": 16,
+                          "text": "A Woid vo Mastn",
+                          "type": "text",
+                          "labels": ["italic"]
+                        },
+                        {
+                          "start": 18,
+                          "end": 30,
+                          "text": " SZ Nr. 42  ",
+                          "type": "bibref",
+                          "bibId": "SZ",
+                          "fullReference": {
+                            "text": " Süddeutsche Zeitung ",
+                            "annotations": []
+                          },
+                          "target": null
+                        }
+                      ],
+                      "type": "example"
+                    }
+                  ]
+                },
+                {
+                  "def": "In der Stadt (Schilderwald)",
+                  "sourceId": "bwb__Wald_2a_alpha_ii",
+                  "n": "2aαii",
+                  "sense": [],
+                  "cit": []
+                }
+              ],
+              "cit": []
+            },
+            {
+              "def": "Umgangssprachlich für dichtes Kopfhaar",
+              "sourceId": "bwb__Wald_2a_beta",
+              "n": "2aβ",
+              "sense": [],
+              "cit": []
+            }
+          ],
+          "cit": []
+        },
+        {
+          "def": "Spezifisches forstwirtschaftliches Nutzgebiet",
+          "sourceId": "bwb__Wald_2b",
+          "n": "2b",
+          "sense": [],
+          "cit": []
+        }
+      ],
+      "cit": []
+    },
+    {
+      "def": "Fabelwesen, Waldgeist (Alp)",
+      "sourceId": "bwb__Wald_3",
+      "n": "3",
+      "sense": [],
+      "cit": []
+    }
+  ],
+  "source": "bwb",
+  "sourceId": "bwb__Wald",
+  "variants": ["Woid"],
+  "xml:lang": "DE",
+  "flatSenses": [
+    {
+      "def": "Große, mit Bäumen bewachsene Fläche",
+      "sourceId": "bwb__Wald_1",
+      "n": "1",
+      "cit": [
+        {
+          "text": " mia genga in Woid    ",
+          "annotations": [
+            {
+              "start": 1,
+              "end": 18,
+              "text": "mia genga in Woid",
+              "type": "text",
+              "labels": ["italic"]
+            }
+          ],
+          "type": "example"
+        }
+      ]
+    },
+    {
+      "def": "Übertragene Bedeutungen und Spezialisierungen",
+      "sourceId": "bwb__Wald_2",
+      "n": "2",
+      "cit": []
+    },
+    {
+      "def": "Große Menge, Ansammlung von Gegenständen",
+      "sourceId": "bwb__Wald_2a",
+      "n": "2a",
+      "cit": []
+    },
+    {
+      "def": "Dichte Ansammlung von Masten oder Pfählen",
+      "sourceId": "bwb__Wald_2a_alpha",
+      "n": "2aα",
+      "cit": []
+    },
+    {
+      "def": "Im Hafen (Schiffsmasten)",
+      "sourceId": "bwb__Wald_2a_alpha_i",
+      "n": "2aαi",
+      "cit": [
+        {
+          "text": " A Woid vo Mastn   SZ Nr. 42    ",
+          "annotations": [
+            {
+              "start": 1,
+              "end": 16,
+              "text": "A Woid vo Mastn",
+              "type": "text",
+              "labels": ["italic"]
+            },
+            {
+              "start": 18,
+              "end": 30,
+              "text": " SZ Nr. 42  ",
+              "type": "bibref",
+              "bibId": "SZ",
+              "fullReference": {
+                "text": " Süddeutsche Zeitung ",
+                "annotations": []
+              },
+              "target": null
+            }
+          ],
+          "type": "example"
+        }
+      ]
+    },
+    {
+      "def": "In der Stadt (Schilderwald)",
+      "sourceId": "bwb__Wald_2a_alpha_ii",
+      "n": "2aαii",
+      "cit": []
+    },
+    {
+      "def": "Umgangssprachlich für dichtes Kopfhaar",
+      "sourceId": "bwb__Wald_2a_beta",
+      "n": "2aβ",
+      "cit": []
+    },
+    {
+      "def": "Spezifisches forstwirtschaftliches Nutzgebiet",
+      "sourceId": "bwb__Wald_2b",
+      "n": "2b",
+      "cit": []
+    },
+    {
+      "def": "Fabelwesen, Waldgeist (Alp)",
+      "sourceId": "bwb__Wald_3",
+      "n": "3",
+      "cit": []
+    }
+  ],
+  "nPos": "Substantiv"
+}
