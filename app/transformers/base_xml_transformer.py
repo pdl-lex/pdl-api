@@ -102,9 +102,9 @@ def xpath(
                 value = results[0] if len(results) > 0 else default
                 return func(self, value)
 
-        wrapper._xpath = path
-        wrapper._alias = alias
-        wrapper._is_field = True
+        wrapper._xpath = path  # pyright: ignore[reportAttributeAccessIssue]
+        wrapper._alias = alias  # pyright: ignore[reportAttributeAccessIssue]
+        wrapper._is_field = True  # pyright: ignore[reportAttributeAccessIssue]
 
         return wrapper
 
