@@ -20,12 +20,18 @@ def build_lemma_query(lemma: str) -> dict:
         }
 
 
+def build_senses_query(args):
+    escaped = re.escape(args["senses"])
+    return {"flatSenses.def": {"$regex": escaped, "$options": "i"}}
+
+
 dispatcher = {
     "term": lambda args: {"$text": {"$search": args["term"]}},
     "lemma": lambda args: build_lemma_query(args["lemma"]),
     "resources": lambda args: {"source": {"$in": [s.value for s in args["resources"]]}},
     "pos": lambda args: {"pos": args["pos"]},
     "npos": lambda args: {"nPos": args["npos"]},
+    "senses": build_senses_query,
 }
 
 
@@ -33,7 +39,7 @@ def build_query(**kwargs) -> dict:
     query = {}
 
     for key, func in dispatcher.items():
-        if key in kwargs and kwargs[key] is not None:
+        if kwargs.get(key) is not None:
             query = {**query, **func(kwargs)}
 
     return query
@@ -66,7 +72,7 @@ class QueryService:
         self.db = self.client["lex"]
         self.entries = self.db.get_collection("entries")
 
-    def free_text_search(
+    def complex_search(
         self,
         term: Optional[str],
         page: int,

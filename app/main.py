@@ -57,18 +57,19 @@ def fetch_lemma_display_entry(lemma_id: str = "bwb__Datschi") -> Entry:
 
 
 @app.get("/search", tags=["Search"])
-def free_text_search(
+def complex_search(
     q: Optional[str] = None,
     lemma: Optional[str] = Query(default=None),
     pos: Optional[str] = Query(default=None),
     npos: Optional[str] = Query(default=None),
     resources: Optional[list[Resource]] = Query(default=None),
+    senses: Optional[str] = None,
     page: int = 1,
     results_per_page: int = 10,
 ) -> EntryList:
     query_service: QueryService = app.state.query_service
 
-    return query_service.free_text_search(
+    return query_service.complex_search(
         term=q,
         lemma=lemma,
         page=page,
@@ -76,6 +77,7 @@ def free_text_search(
         resources=resources,
         pos=pos,
         npos=npos,
+        senses=senses,
     )
 
 
