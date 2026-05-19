@@ -66,7 +66,7 @@ class QueryService:
         self.db = self.client["lex"]
         self.entries = self.db.get_collection("entries")
 
-    def free_text_search(
+    def complex_search(
         self,
         term: Optional[str],
         page: int,
