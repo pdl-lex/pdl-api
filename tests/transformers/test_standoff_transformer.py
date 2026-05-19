@@ -23,7 +23,7 @@ def basic_annotated_xml():
 
 
 @pytest.fixture
-def complex_annotated_xml():
+def complex_whitespace_xml():
     xml = """
     <satz>
         <pronomen>Das</pronomen>
@@ -188,7 +188,7 @@ def test_registered_spans_are_returned(basic_annotated_xml):
     ]
 
 
-def test_normalize_whitespace(complex_annotated_xml):
+def test_normalize_whitespace(complex_whitespace_xml):
     expected = (
         "<satz> <pronomen>Das</pronomen> <verb>ist</verb> <artikel>ein</artikel> "
         '<adjektiv>komplexer</adjektiv> <nomen> <kompositum vollform="Beispielsatz">'
@@ -198,7 +198,7 @@ def test_normalize_whitespace(complex_annotated_xml):
 
     assert (
         ET.tostring(
-            normalize_whitespace(complex_annotated_xml), encoding="utf-8"
+            normalize_whitespace(complex_whitespace_xml), encoding="utf-8"
         ).decode("utf-8")
         == expected
     )
