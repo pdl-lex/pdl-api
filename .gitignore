@@ -34,3 +34,4 @@ claude/
 # Coverage
 htmlcov/
 .coverage
+coverage.xml
