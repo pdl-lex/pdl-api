@@ -3,6 +3,7 @@ from typing import Union
 import pandas as pd
 
 from app.models.annotated_text import (
+    AnnotatedTextData,
     BibRefAnnotationSpan,
     CrossRefAnnotationSpan,
     LinkAnnotationSpan,
@@ -136,7 +137,7 @@ class BdoLiteratureTransformer(StandoffTransformer):
         return BibRefAnnotationSpan(
             **basedata(span, "bibref"),
             bibId=span.fillna("").get("literatur", ""),
-            fullReference=details_transformer.serialize(),
+            fullReference=AnnotatedTextData(**details_transformer.serialize()),
         )
 
 

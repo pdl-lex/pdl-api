@@ -30,3 +30,11 @@ app/transformers/dwds/output/*
 # Claude
 claude/
 .claude
+
+# Coverage
+htmlcov/
+.coverage
+coverage.xml
+
+# Profiling
+output.prof

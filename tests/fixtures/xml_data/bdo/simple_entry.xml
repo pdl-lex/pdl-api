@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<bdo>
+    <artikel wb="bwb" handverlesen="ja" id="bwb__Wald" extrahiert="nein" dummy="nein" band="5"
+        heft="1" lizenz="CC-BY-SA" datum="20260518">
+
+        <lemma-position>
+            <wortfamilie>
+                <verweis ziel-typ="Lemma" verweis-typ="ohne" ziel="bwb__walden" src="abl">walden</verweis>
+            </wortfamilie>
+            <such-lemma>Wald</such-lemma>
+            <such-lemma>Woid</such-lemma>
+            <lemma>Wald</lemma>
+            <lemma-variante vollform="Woid">-oi-</lemma-variante>
+            <grammatik wortart="Substantiv" genus="M" />
+            <verweis frei="ja" ziel-extern="https://publikationen.badw.de/de/bwb/index">Band 5,
+                Spalte 100f.</verweis>
+        </lemma-position>
+
+        <bedeutung-position nr="1" id="bwb__Wald_1">
+            <bedeutung>Große, mit Bäumen bewachsene Fläche</bedeutung>
+            <verbreitung-position>
+                <verbreitung-angabe bezirk="OB" häufigkeit="vielfach" belegt="nach1958" />
+            </verbreitung-position>
+            <beleg-position>
+                <beleg-angabe belegt="nach1958">
+                    <beleg-text>mia genga in Woid</beleg-text>
+                    <beleg-quelle>
+                        <beleg-region ort="Garching an der Alz" landkreis="AÖ" bezirk="OB"
+                            ags="09171117" gps="48.127925, 12.595942" />
+                    </beleg-quelle>
+                </beleg-angabe>
+            </beleg-position>
+        </bedeutung-position>
+
+        <bedeutung-position nr="2" id="bwb__Wald_2">
+            <bedeutung>Übertragene Bedeutungen und Spezialisierungen</bedeutung>
+
+            <bedeutung-position nr="2a" id="bwb__Wald_2a">
+                <bedeutung>Große Menge, Ansammlung von Gegenständen</bedeutung>
+
+                <bedeutung-position nr="2aα" id="bwb__Wald_2a_alpha">
+                    <bedeutung>Dichte Ansammlung von Masten oder Pfählen</bedeutung>
+
+                    <bedeutung-position nr="2aαi" id="bwb__Wald_2a_alpha_i">
+                        <bedeutung>Im Hafen (Schiffsmasten)</bedeutung>
+                        <beleg-position>
+                            <beleg-angabe>
+                                <beleg-text>A Woid vo Mastn</beleg-text>
+                                <beleg-quelle>
+                                    <literatur-quelle literatur="SZ">
+                                        <werk>SZ</werk>
+                                        <angabe>Nr. 42</angabe>
+                                        <details>
+                                            <titel>Süddeutsche Zeitung</titel>
+                                        </details>
+                                    </literatur-quelle>
+                                </beleg-quelle>
+                            </beleg-angabe>
+                        </beleg-position>
+                    </bedeutung-position>
+
+                    <bedeutung-position nr="2aαii" id="bwb__Wald_2a_alpha_ii">
+                        <bedeutung>In der Stadt (Schilderwald)</bedeutung>
+                    </bedeutung-position>
+
+                </bedeutung-position>
+
+                <bedeutung-position nr="2aβ" id="bwb__Wald_2a_beta">
+                    <bedeutung>Umgangssprachlich für dichtes Kopfhaar</bedeutung>
+                </bedeutung-position>
+
+            </bedeutung-position>
+
+            <bedeutung-position nr="2b" id="bwb__Wald_2b">
+                <bedeutung>Spezifisches forstwirtschaftliches Nutzgebiet</bedeutung>
+            </bedeutung-position>
+
+        </bedeutung-position>
+
+        <bedeutung-position nr="3" id="bwb__Wald_3">
+            <bedeutung>Fabelwesen, Waldgeist (Alp)</bedeutung>
+        </bedeutung-position>
+
+        <etymologie-position> Althochdeutsch <verweis verweis-typ="Pfeil" ziel-typ="Lemma"
+                ziel="bwb__walth">walth</verweis>. </etymologie-position>
+
+        <literatur-position>
+            <literatur-gruppe>
+                <literatur-quelle literatur="DELLING">
+                    <autor>Delling</autor>
+                    <angabe>I,116</angabe>
+                </literatur-quelle>
+            </literatur-gruppe>
+        </literatur-position>
+
+        <komposita-position>
+            <kompositum ziel-typ="Lemma" ziel="bwb__Bannwald">Bannwald</kompositum>
+            <kompositum ziel-typ="Lemma" ziel="bwb__Woidmanndl">Woidmanndl</kompositum>
+        </komposita-position>
+
+        <verfasser kuerzel="M.S." />
+    </artikel>
+</bdo>
