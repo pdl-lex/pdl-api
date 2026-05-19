@@ -33,7 +33,7 @@ def build_query(**kwargs) -> dict:
     query = {}
 
     for key, func in dispatcher.items():
-        if key in kwargs and kwargs[key] is not None:
+        if kwargs.get(key) is not None:
             query = {**query, **func(kwargs)}
 
     return query
