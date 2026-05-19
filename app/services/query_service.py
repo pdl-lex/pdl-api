@@ -20,12 +20,18 @@ def build_lemma_query(lemma: str) -> dict:
         }
 
 
+def build_senses_query(args):
+    escaped = re.escape(args["senses"])
+    return {"flatSenses.def": {"$regex": escaped, "$options": "i"}}
+
+
 dispatcher = {
     "term": lambda args: {"$text": {"$search": args["term"]}},
     "lemma": lambda args: build_lemma_query(args["lemma"]),
     "resources": lambda args: {"source": {"$in": [s.value for s in args["resources"]]}},
     "pos": lambda args: {"pos": args["pos"]},
     "npos": lambda args: {"nPos": args["npos"]},
+    "senses": build_senses_query,
 }
 
 

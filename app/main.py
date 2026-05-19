@@ -63,6 +63,7 @@ def complex_search(
     pos: Optional[str] = Query(default=None),
     npos: Optional[str] = Query(default=None),
     resources: Optional[list[Resource]] = Query(default=None),
+    senses: Optional[str] = None,
     page: int = 1,
     results_per_page: int = 10,
 ) -> EntryList:
@@ -76,6 +77,7 @@ def complex_search(
         resources=resources,
         pos=pos,
         npos=npos,
+        senses=senses,
     )
 
 
