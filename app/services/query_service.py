@@ -20,9 +20,12 @@ def build_lemma_query(lemma: str) -> dict:
         }
 
 
-def build_senses_query(args):
-    escaped = re.escape(args["senses"])
-    return {"flatSenses.def": {"$regex": escaped, "$options": "i"}}
+def simple_containment_query(arg_name, db_field_name):
+    def containment(args):
+        escaped = re.escape(args[arg_name])
+        return {db_field_name: {"$regex": escaped, "$options": "i"}}
+
+    return containment
 
 
 dispatcher = {
@@ -31,7 +34,8 @@ dispatcher = {
     "resources": lambda args: {"source": {"$in": [s.value for s in args["resources"]]}},
     "pos": lambda args: {"pos": args["pos"]},
     "npos": lambda args: {"nPos": args["npos"]},
-    "senses": build_senses_query,
+    "senses": simple_containment_query("senses", "flatSenses.def"),
+    "etymology": simple_containment_query("etymology", "etym.text"),
 }
 
 
