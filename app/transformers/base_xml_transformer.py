@@ -21,29 +21,6 @@ def extract_text(node) -> str | None:
 
 
 class BaseXmlTransformer:
-    def __init__(self):
-        self._lex_ids = Counter()
-
-    def _add_lex_id(self, entry: dict) -> dict:
-        pos_abbreviations = {"Substantiv": "n", "Verb": "v", "Adjektiv": "a"}
-        lemma_index = entry["headword"]["index"]
-        lemma = unidecode(entry["headword"]["lemma"].lower())
-
-        lex_id = "__".join(
-            [
-                "lex",
-                entry["source"] or "",
-                f"{lemma}{'' if lemma_index == 0 else lemma_index}",
-                pos_abbreviations.get(entry.get("nPos"), "o"),  # o = other
-            ]
-        )
-        self._lex_ids[lex_id] += 1
-
-        if (count := self._lex_ids[lex_id]) > 1:
-            lex_id += f"__{count}"
-
-        return {**entry, "lexId": lex_id}
-
     def _prepare_tree(self, root):
         """Hook for subclasses to modify the parsed tree before extraction.
 
@@ -81,7 +58,7 @@ class BaseXmlTransformer:
 
         result = self.postprocess(result, element)
 
-        return self._add_lex_id(result)
+        return result
 
     def postprocess(self, data: dict, element: ET._Element) -> dict:
         """Hook for modifying transformed data.
@@ -125,9 +102,9 @@ def xpath(
                 value = results[0] if len(results) > 0 else default
                 return func(self, value)
 
-        wrapper._xpath = path
-        wrapper._alias = alias
-        wrapper._is_field = True
+        wrapper._xpath = path  # pyright: ignore[reportAttributeAccessIssue]
+        wrapper._alias = alias  # pyright: ignore[reportAttributeAccessIssue]
+        wrapper._is_field = True  # pyright: ignore[reportAttributeAccessIssue]
 
         return wrapper
 

@@ -19,6 +19,9 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-asyncio>=0.23.0",
     "poethepoet>=0.38.0",
     "ruff>=0.14.6",
     "snakeviz>=2.2.2",
@@ -57,6 +60,7 @@ test = "pytest"
 dev = "uv run fastapi dev"
 upload = "python -m app.services.import_service"
 transform = "python -m app.transformers.lex_transformer"
+validate = "python -m app.transformers.lex_validator"
 
 [tool.poe.tasks.check]
 sequence = [

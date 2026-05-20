@@ -51,24 +51,25 @@ app.add_middleware(
 )
 
 
-@app.get("/lemma/{lemma_id}", tags=["Search"])
+@app.get("/lemma/{lemma_id:path}", tags=["Search"])
 def fetch_lemma_display_entry(lemma_id: str = "bwb__Datschi") -> Entry:
     return app.state.query_service.fetch_lemma_display(lemma_id)
 
 
 @app.get("/search", tags=["Search"])
-def free_text_search(
+def complex_search(
     q: Optional[str] = None,
     lemma: Optional[str] = Query(default=None),
     pos: Optional[str] = Query(default=None),
     npos: Optional[str] = Query(default=None),
     resources: Optional[list[Resource]] = Query(default=None),
+    senses: Optional[str] = None,
     page: int = 1,
     results_per_page: int = 10,
 ) -> EntryList:
     query_service: QueryService = app.state.query_service
 
-    return query_service.free_text_search(
+    return query_service.complex_search(
         term=q,
         lemma=lemma,
         page=page,
@@ -76,6 +77,7 @@ def free_text_search(
         resources=resources,
         pos=pos,
         npos=npos,
+        senses=senses,
     )
 
 
@@ -86,6 +88,7 @@ def query_summary(
     pos: Optional[str] = Query(default=None),
     npos: Optional[str] = Query(default=None),
     resources: Optional[list[Resource]] = Query(default=None),
+    senses: Optional[str] = None,
     page: int = 1,
     results_per_page: int = 10,
 ) -> QuerySummary:
@@ -99,6 +102,7 @@ def query_summary(
         resources=resources,
         pos=pos,
         npos=npos,
+        senses=senses,
     )
 
 

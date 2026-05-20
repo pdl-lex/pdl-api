@@ -10,14 +10,7 @@ Requires [uv][uv].
 - Clone the project
 - Navigate to the project directory
 - Run `uv sync`
-- Create a `.env` file in the project root and set the following variables:
-
-```env
-MONGODB_URI="..."
-API_UPLOAD_KEY="..."  # optional: only for uploading data (see below)
-LEXOTERM_API_URL="..."
-ALLOWED_ORIGINS="..."  # use semicolon ";" to separate multiple URLs
-```
+- Copy `.env.example` to `.env` and fill in the values.
 
 To start the development server, run `uv run poe dev`. The command loads the .env variables and
 starts the fastapi app.

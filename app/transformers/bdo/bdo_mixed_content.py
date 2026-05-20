@@ -3,6 +3,7 @@ from typing import Union
 import pandas as pd
 
 from app.models.annotated_text import (
+    AnnotatedTextData,
     BibRefAnnotationSpan,
     CrossRefAnnotationSpan,
     LinkAnnotationSpan,
@@ -58,7 +59,7 @@ class BdoBaseTransformer(StandoffTransformer):
 
         return (
             aframe.assign(ref_type=mapped_ref_types)
-            .insert_attribute("verweis", "ref_type")
+            .pluck_attribute("verweis", "ref_type")
             .drop("ref_type", axis=1)
         )
 
@@ -96,7 +97,9 @@ class BdoBaseTransformer(StandoffTransformer):
 class BdoLiteratureTransformer(StandoffTransformer):
     @preprocess(order=1)
     def insert_literature_prefixes(self, aframe: AnnotationFrame) -> AnnotationFrame:
-        return aframe.insert_attribute("literatur-quelle", "quelle-art")
+        return self.pluck_attribute(
+            aframe, "literatur-quelle", "quelle-art", padding="right"
+        )
 
     @preprocess(order=3)
     def add_bib_id_column(self, aframe: AnnotationFrame) -> AnnotationFrame:
@@ -134,7 +137,7 @@ class BdoLiteratureTransformer(StandoffTransformer):
         return BibRefAnnotationSpan(
             **basedata(span, "bibref"),
             bibId=span.fillna("").get("literatur", ""),
-            fullReference=details_transformer.serialize(),
+            fullReference=AnnotatedTextData(**details_transformer.serialize()),
         )
 
 
