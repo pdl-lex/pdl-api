@@ -47,8 +47,75 @@ def flatten_senses(senses: list):
     return flat_senses
 
 
-def parse_fundstelle(beleg_node, text_length: int = 0):
-    """Parse <Fundstelle> into a BibRefAnnotationSpan dict to be added to annotations."""
+def _build_collapse_map(text):
+    """Return (new_text, old_to_new) where old_to_new[i] is the position of old index i in new_text."""
+    new_chars = []
+    old_to_new = []
+    new_pos = 0
+    i = 0
+    while i < len(text):
+        if text[i] == " ":
+            j = i
+            while j < len(text) and text[j] == " ":
+                j += 1
+            new_chars.append(" ")
+            for _ in range(i, j):
+                old_to_new.append(new_pos)
+            new_pos += 1
+            i = j
+        else:
+            new_chars.append(text[i])
+            old_to_new.append(new_pos)
+            new_pos += 1
+            i += 1
+    old_to_new.append(new_pos)  # sentinel for end-of-string position
+    return "".join(new_chars), old_to_new
+
+
+def normalize_standoff_whitespace(data, *, strip="both", collapse=True):
+    """Normalize whitespace in a str or standoff dict {"text": str, "annotations": [...]}.
+
+    strip:    "none" | "leading" | "trailing" | "both"
+    collapse: True → collapse runs of spaces to a single space (annotation-safe)
+    """
+    is_str = isinstance(data, str)
+    text = data if is_str else data["text"]
+    annotations = [] if is_str else data["annotations"]
+
+    if collapse:
+        text, old_to_new = _build_collapse_map(text)
+        annotations = [
+            {**ann, "start": old_to_new[ann["start"]], "end": old_to_new[ann["end"]]}
+            for ann in annotations
+            if old_to_new[ann["start"]] != old_to_new[ann["end"]]
+        ]
+
+    lstrip_len = len(text) - len(text.lstrip()) if strip in ("leading", "both") else 0
+
+    if strip == "leading":
+        text = text.lstrip()
+    elif strip == "trailing":
+        text = text.rstrip()
+    elif strip == "both":
+        text = text.strip()
+
+    if lstrip_len:
+        new_len = len(text)
+        annotations = [
+            {**ann, "start": ann["start"] - lstrip_len, "end": ann["end"] - lstrip_len}
+            for ann in annotations
+            if ann["end"] - lstrip_len > 0
+            and ann["start"] - lstrip_len < new_len
+            and ann["start"] - lstrip_len != ann["end"] - lstrip_len
+        ]
+
+    if is_str:
+        return text
+    return {**data, "text": text, "annotations": annotations}
+
+
+def parse_fundstelle(beleg_node):
+    """Parse <Fundstelle> into a BibRefAnnotationSpan dict (start/end/text are placeholders, set by the caller)."""
     fundstelle = beleg_node.find("Fundstelle")
     if fundstelle is None:
         return None
@@ -58,36 +125,39 @@ def parse_fundstelle(beleg_node, text_length: int = 0):
 
     has_children = any(child.text for child in fundstelle if isinstance(child.tag, str))
 
+    full_reference = {"text": (fundstelle.text or "").strip(), "annotations": []}
     if has_children:
-        full_reference = DwdsMixedContentTransformer.load_xml(fundstelle).serialize()
-        # Strip leading/trailing whitespace from XML indentation and adjust offsets
-        text = full_reference["text"]
-        lstrip_len = len(text) - len(text.lstrip())
-        full_reference["text"] = text.strip()
-        full_reference["annotations"] = [
-            {**ann, "start": ann["start"] - lstrip_len, "end": ann["end"] - lstrip_len}
-            for ann in full_reference["annotations"]
-            if ann["start"]
-            != ann["end"]  # filter out zero-width spans (empty elements)
-        ]
-    else:
-        full_reference = {"text": (fundstelle.text or "").strip(), "annotations": []}
+        full_reference = normalize_standoff_whitespace(
+            DwdsMixedContentTransformer.load_xml(fundstelle).serialize()
+        )
+
+    bibliography_url = (
+        f"https://www.dwds.de/wb/{fundort.lower()}/bibl#{sigle}"
+        if fundort and sigle
+        else None
+    )
 
     return {
         "type": "bibref",
-        "start": text_length,
-        "end": text_length,
-        "text": "",
         "bibId": sigle or fundort or "",
         "fullReference": full_reference,
+        "bibliographyUrl": bibliography_url,
     }
 
 
-def _serialize_beleg(node, type_: str):
-    """Serialize a <Beleg> or <Kompetenzbeispiel> node into a citation dict with annotations and bibliographic reference."""
+def parse_beleg(node, type_: str):
+    """Serialize a <Beleg> or <Kompetenzbeispiel> node into a citation dict, appending the bibliographic reference text so the bibref annotation spans real characters."""
     data = DwdsMixedContentTransformer.load_xml(node.find("Belegtext")).serialize()
-    fundstelle = parse_fundstelle(node, text_length=len(data["text"]))
+    fundstelle = parse_fundstelle(node)
     if fundstelle is not None:
+        ref_text = fundstelle["fullReference"]["text"]
+        data["text"] = data["text"].rstrip()
+        separator = " " if ref_text else ""
+        start = len(data["text"]) + len(separator)
+        data["text"] += separator + ref_text
+        fundstelle["text"] = ref_text
+        fundstelle["start"] = start
+        fundstelle["end"] = start + len(ref_text)
         data["annotations"].append(fundstelle)
     return {**data, "type": type_}
 
@@ -106,7 +176,7 @@ def extract_constructed_examples(sense):
 def extract_attested_examples(sense):
     """Extract attested (corpus-based) usage examples from a sense node."""
     return [
-        _serialize_beleg(node, "attested")
+        parse_beleg(node, "attested")
         for node in sense.findall("Verwendungsbeispiele/Beleg")
     ]
 
@@ -116,11 +186,40 @@ def extract_examples(sense):
     return extract_constructed_examples(sense) + extract_attested_examples(sense)
 
 
+def _fallback_definition(node) -> str:
+    """Build a plain-text definition from <Formangabe>/<Grammatik> or <Verweise> for senses without a <Definition>."""
+    grammatik = node.find("Formangabe/Grammatik")
+    if grammatik is not None:
+        gram_text = extract_text(grammatik).strip()
+        if gram_text:
+            return f"Grammatik: {gram_text}"
+
+    refs = []
+    for verweis in node.findall("Verweise/Verweis"):
+        ziellemma = (verweis.findtext("Ziellemma") or "").strip()
+        if not ziellemma:
+            continue
+        ziellesart = (verweis.findtext("Ziellesart") or "").strip()
+        refs.append(f"{ziellemma} ({ziellesart})" if ziellesart else ziellemma)
+    if refs:
+        return "siehe auch " + ", ".join(refs)
+
+    return ""
+
+
 def transform_sense(node):
     """Transform a <Lesart> node into a sense dict with definition, examples, and recursively nested sub-senses."""
-    text = "" if (sense := node.find("Definition")) is None else extract_text(sense)
+    definition = node.find("Definition")
+    text = extract_text(definition).strip() if definition is not None else ""
+    if not text:
+        text = _fallback_definition(node)
 
-    number = node.attrib.get("n")
+    diasystematik = node.find("Diasystematik")
+    dia_text = extract_text(diasystematik).strip() if diasystematik is not None else ""
+    if dia_text:
+        text = f"[{dia_text}] {text}".strip()
+
+    number = (node.attrib.get("n") or "").rstrip(".") or None
     id_ = node.attrib.get("xml:id", unique_id("sense_"))
 
     return {
@@ -147,17 +246,12 @@ class DwdsXmlTransformer(BaseXmlTransformer):
         Remove namespaces and processing instructions from the XML tree to simplify XPath queries and clean up editor artifacts.
         """
 
-        # As a { can only appear in a namespace declaration, we can safely split on it and take the second part as the tag name.
-        # Thus works for all namespaces.
+        # As a { can only appear in a namespace declaration, we can safely split on it and take the second part as the tag name. Thus works for all namespaces.
         for el in root.iter():
             if isinstance(el.tag, str) and "{" in el.tag:
                 el.tag = el.tag.split("}", 1)[1]
 
         # removes all pi nodes from their parents
-        # for DWDS, specifically removes the processing instructions that contain editor comments
-        # Before removing, preserve any tail text by appending it to the previous sibling's tail
-        # or the parent's text, so that e.g. <Schreibung><?oxy_comment_end?>du</Schreibung>
-        # correctly retains "du" after the PI is removed.
         for pi in root.xpath("//processing-instruction()"):
             parent = pi.getparent()
             prev = pi.getprevious()
@@ -262,7 +356,7 @@ class DwdsXmlTransformer(BaseXmlTransformer):
     def _extract_corpus_examples(self) -> list[dict]:
         """Extract corpus examples from the <Rohdaten> section at article level."""
         return [
-            _serialize_beleg(node, "corpus_example")
+            parse_beleg(node, "corpus_example")
             for node in self.root.findall(".//Rohdaten/Verwendungsbeispiele/Beleg")
         ]
 

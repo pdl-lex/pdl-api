@@ -115,7 +115,7 @@
                             "text": " Süddeutsche Zeitung ",
                             "annotations": []
                           },
-                          "target": null
+                          "bibliographyUrl": null
                         }
                       ],
                       "type": "example"
@@ -228,7 +228,7 @@
                 "text": " Süddeutsche Zeitung ",
                 "annotations": []
               },
-              "target": null
+              "bibliographyUrl": null
             }
           ],
           "type": "example"
