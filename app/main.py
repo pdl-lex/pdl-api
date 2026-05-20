@@ -64,6 +64,7 @@ def complex_search(
     npos: Optional[str] = Query(default=None),
     resources: Optional[list[Resource]] = Query(default=None),
     senses: Optional[str] = None,
+    etymology: Optional[str] = None,
     page: int = 1,
     results_per_page: int = 10,
 ) -> EntryList:
@@ -78,6 +79,7 @@ def complex_search(
         pos=pos,
         npos=npos,
         senses=senses,
+        etymology=etymology,
     )
 
 
@@ -89,6 +91,7 @@ def query_summary(
     npos: Optional[str] = Query(default=None),
     resources: Optional[list[Resource]] = Query(default=None),
     senses: Optional[str] = None,
+    etymology: Optional[str] = None,
     page: int = 1,
     results_per_page: int = 10,
 ) -> QuerySummary:
@@ -103,6 +106,7 @@ def query_summary(
         pos=pos,
         npos=npos,
         senses=senses,
+        etymology=etymology,
     )
 
 
