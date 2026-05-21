@@ -101,9 +101,9 @@ class Variant(SQLModel, table=True):
 
 
 class Entry(SQLModel, GrammaticalFeatures, table=True):
+    lex_id: str = Field(alias="lexId", primary_key=True, index=True)
     headword: str
     headword_subscript: int = Field(alias="headwordSubscript")
-    lex_id: str = Field(alias="lexId")
     retrieved_at: Optional[date] | None = Field(alias="retrievedAt", default=None)
     uploaded_at: Optional[date] | None = Field(alias="uploadedAt", default=None)
     source_id: Optional[str] = Field(alias="sourceId", default=None)
