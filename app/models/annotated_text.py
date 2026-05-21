@@ -1,12 +1,11 @@
 from typing import Annotated, Optional, Union
 
 from pydantic import Field
+from sqlmodel import SQLModel
 from typing_extensions import Literal
 
-from app.models.base import BaseModel
 
-
-class BaseAnnotationSpan(BaseModel):
+class BaseAnnotationSpan(SQLModel):
     start: int
     end: int
     text: str
@@ -56,6 +55,6 @@ AnnotationSpan = Annotated[
 ]
 
 
-class AnnotatedTextData(BaseModel):
+class AnnotatedTextData(SQLModel):
     text: str
     annotations: list[AnnotationSpan]

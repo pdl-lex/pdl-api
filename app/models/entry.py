@@ -3,9 +3,9 @@ from enum import Enum
 from typing import Optional
 
 from pydantic import Field
+from sqlmodel import SQLModel
 
 from app.models.annotated_text import AnnotatedTextData
-from app.models.base import BaseModel
 from app.models.rich_text import RichTextField
 
 
@@ -20,7 +20,7 @@ class Resource(Enum):
 BDO_RESOURCES = [Resource.BWB, Resource.DIBS, Resource.WBF]
 
 
-class Form(BaseModel):
+class Form(SQLModel):
     orth: Optional[str] = ""
     n: Optional[str] = None
     type_: str = Field(alias="type")
@@ -31,7 +31,7 @@ class Citation(AnnotatedTextData):
     type_: str = Field(alias="type")
 
 
-class Sense(BaseModel):
+class Sense(SQLModel):
     n: Optional[str] = None
     def_: Optional[str] = Field(alias="def", default="")
     sense: list["Sense"] = []
@@ -41,46 +41,46 @@ class Sense(BaseModel):
     entry: Optional[list[dict]] = []
 
 
-class EtymologySegment(BaseModel):
+class EtymologySegment(SQLModel):
     type_: str = Field(alias="type")
     content: RichTextField
 
 
-class Etymology(BaseModel):
+class Etymology(SQLModel):
     content: Optional[list[EtymologySegment]] = []
     ref: Optional[list[dict]] = []
     note: Optional[list[dict]] = []
 
 
-class GrammarFeature(BaseModel):
+class GrammarFeature(SQLModel):
     text: str
     type_: str = Field(alias="type")
 
 
-class GrammarGroup(BaseModel):
+class GrammarGroup(SQLModel):
     gram: list[GrammarFeature]
 
 
-class BiblItem(BaseModel):
+class BiblItem(SQLModel):
     note: Optional[list[dict]] = []
     title: dict
     bibl_scope: dict = Field(alias="biblScope")
 
 
-class ListBibl(BaseModel):
+class ListBibl(SQLModel):
     bibl: Optional[list] = []
     head: str
     type_: str = Field(alias="type")
 
 
-class MediaFile(BaseModel):
+class MediaFile(SQLModel):
     url: str
     author: str
     title: str
     license: str
 
 
-class CrossReference(BaseModel):
+class CrossReference(SQLModel):
     ref: Optional[list] = []
     type_: Optional[str] = Field(alias="type")
     subtype: Optional[str] = None
@@ -94,12 +94,12 @@ class GrammaticalFeatures:
     normalized_gender: Optional[str] = Field(alias="nGender", default=None)
 
 
-class Headword(BaseModel):
+class Headword(SQLModel):
     lemma: str
     index: int
 
 
-class Entry(BaseModel, GrammaticalFeatures):
+class Entry(SQLModel, GrammaticalFeatures):
     headword: Headword
     lex_id: str = Field(alias="lexId")
     retrieved_at: Optional[date] | None = Field(alias="retrievedAt", default=None)
@@ -128,18 +128,18 @@ class Entry(BaseModel, GrammaticalFeatures):
     media_files: Optional[list[MediaFile]] = Field(alias="mediaFiles", default=[])
 
 
-class EntryList(BaseModel):
+class EntryList(SQLModel):
     items: list[Entry]
     total: int
     page: int
     items_per_page: int = Field(alias="itemsPerPage")
 
 
-class KeywordListItem(BaseModel):
+class KeywordListItem(SQLModel):
     lemma: str
 
 
-class KeywordList(BaseModel):
+class KeywordList(SQLModel):
     items: list[KeywordListItem]
     total: int
     page: int

@@ -1,11 +1,10 @@
 from typing import Annotated, Literal, Union
 
 from pydantic import Field
+from sqlmodel import SQLModel
 
-from app.models.base import BaseModel
 
-
-class RichTextSegment(BaseModel):
+class RichTextSegment(SQLModel):
     type: str
 
 
