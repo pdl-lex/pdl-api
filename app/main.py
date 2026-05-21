@@ -8,7 +8,9 @@ from typing import Optional
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from sqlmodel import Field, Session, SQLModel, select
 
+from app.database import engine, get_session
 from app.models.entry import Entry, EntryList, KeywordList, Resource
 from app.models.query_summary import QuerySummary
 from app.services.import_service import ImportService
@@ -36,6 +38,7 @@ async def lifespan(app: FastAPI):
 
     import_service = ImportService()
     app.state.import_service = import_service
+    SQLModel.metadata.create_all(engine)
 
     yield
 
@@ -152,3 +155,25 @@ def get_by_letter(
     return query_service.fetch_keywords(
         letter, page=page, results_per_page=results_per_page
     )
+
+
+class User(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str
+    email: str
+
+
+@app.post("/users/", response_model=User)
+def create_user(user: User, session: Session = Depends(get_session)):
+    """Create a new user"""
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user
+
+
+@app.get("/users/", response_model=list[User])
+def list_users(session: Session = Depends(get_session)):
+    """List all users"""
+    users = session.exec(select(User)).all()
+    return users
