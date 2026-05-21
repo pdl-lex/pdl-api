@@ -2,8 +2,7 @@ from datetime import date
 from enum import Enum
 from typing import Optional
 
-from pydantic import Field
-from sqlmodel import SQLModel
+from sqlmodel import Field, Relationship, SQLModel
 
 from app.models.annotated_text import AnnotatedTextData
 from app.models.rich_text import RichTextField
@@ -94,7 +93,14 @@ class GrammaticalFeatures:
     normalized_gender: Optional[str] = Field(alias="nGender", default=None)
 
 
-class Entry(SQLModel, GrammaticalFeatures):
+class Variant(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    entry_id: int = Field(foreign_key="entry.id", index=True)
+    position: int = Field(default=0)
+    value: str = Field(index=True)
+
+
+class Entry(SQLModel, GrammaticalFeatures, table=True):
     headword: str
     headword_subscript: int = Field(alias="headwordSubscript")
     lex_id: str = Field(alias="lexId")
@@ -107,7 +113,7 @@ class Entry(SQLModel, GrammaticalFeatures):
     index_letter: str = Field(
         alias="indexLetter", min_length=1, max_length=1, default="#"
     )
-    variants: list[str]
+    variants: list["Variant"] = Relationship(back_populates="entry")
     flat_senses: Optional[list[Sense]] = Field(alias="flatSenses", default=[])
     etym: Optional[AnnotatedTextData] = None
     sense: Optional[list[Sense]] = []
