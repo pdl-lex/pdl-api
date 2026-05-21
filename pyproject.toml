@@ -5,14 +5,17 @@ description = "Dictionary API for the ADL platform"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "alembic>=1.18.4",
     "fastapi[standard]>=0.122.0",
     "ipykernel>=7.1.0",
     "lxml>=6.0.2",
     "pandas>=2.3.3",
+    "psycopg2>=2.9.12",
     "pydash>=8.0.6",
     "pymongo>=4.15.4",
     "python-dotenv>=1.2.1",
     "requests>=2.32.5",
+    "sqlmodel>=0.0.38",
     "tqdm>=4.67.1",
     "unidecode>=1.4.0",
 ]
