@@ -94,14 +94,9 @@ class GrammaticalFeatures:
     normalized_gender: Optional[str] = Field(alias="nGender", default=None)
 
 
-class Headword(SQLModel):
-    lemma: str
-    index: int
-
-
 class Entry(SQLModel, GrammaticalFeatures):
     headword: str
-    headword_subscript: int
+    headword_subscript: int = Field(alias="headwordSubscript")
     lex_id: str = Field(alias="lexId")
     retrieved_at: Optional[date] | None = Field(alias="retrievedAt", default=None)
     uploaded_at: Optional[date] | None = Field(alias="uploadedAt", default=None)
