@@ -30,16 +30,6 @@ class Citation(AnnotatedTextData):
     type_: str = Field(alias="type")
 
 
-class Sense(SQLModel):
-    n: Optional[str] = None
-    def_: Optional[str] = Field(alias="def", default="")
-    sense: list["Sense"] = []
-    cit: Optional[list[Citation]] = []
-    usg: Optional[list[dict]] = []
-    source_id: Optional[str] = Field(alias="sourceId", default=None)
-    entry: Optional[list[dict]] = []
-
-
 class EtymologySegment(SQLModel):
     type_: str = Field(alias="type")
     content: RichTextField
@@ -114,9 +104,8 @@ class Entry(SQLModel, GrammaticalFeatures, table=True):
         alias="indexLetter", min_length=1, max_length=1, default="#"
     )
     variants: list["Variant"] = Relationship(back_populates="entry")
-    flat_senses: Optional[list[Sense]] = Field(alias="flatSenses", default=[])
     etym: Optional[AnnotatedTextData] = None
-    sense: Optional[list[Sense]] = []
+    senses: list["Sense"] = Relationship(back_populates="entry")
     xml_lang: str = Field(alias="xml:lang")
     list_bibl: Optional[ListBibl] = Field(alias="listBibl", default=None)
     xr: Optional[list[CrossReference]] = []
@@ -128,6 +117,28 @@ class Entry(SQLModel, GrammaticalFeatures, table=True):
     )
     cit: Optional[list[Citation]] = []
     media_files: Optional[list[MediaFile]] = Field(alias="mediaFiles", default=[])
+
+
+class Sense(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    entry_id: int = Field(foreign_key="entry.id", index=True)
+    parent_id: Optional[int] = Field(default=None, foreign_key="sense.id", index=True)
+    def_: str = Field(alias="def")
+    n: Optional[str] = None
+    entry: Optional[Entry] = Relationship(back_populates="senses")
+    parent: Optional["Sense"] = Relationship(
+        back_populates="children",
+        sa_relationship_kwargs={"remote_side": "Sense.id"},
+    )
+    children: list["Sense"] = Relationship(back_populates="parent")
+    citations: list["SenseCitation"] = Relationship(back_populates="sense")
+
+
+class SenseCitation(AnnotatedTextData, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    sense_id: int = Field(foreign_key="sense.id", index=True)
+    position: int = Field(default=0)
+    sense: Optional[Sense] = Relationship(back_populates="citations")
 
 
 class EntryList(SQLModel):
