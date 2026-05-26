@@ -29,6 +29,8 @@ class EntryModel(BaseModel, table=True):
     resource: Resource
     resource_url: str | None = None
     original_resource: str | None = None
+    language: str | None = None
+    family: str | None = None
 
     original_gender: str | None = None
     original_pos: str | None = None
