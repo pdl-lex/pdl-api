@@ -1,5 +1,6 @@
 from datetime import date
 from enum import Enum
+from uuid import uuid4
 
 from pydantic import ConfigDict
 from pydantic.alias_generators import to_camel
@@ -19,7 +20,7 @@ class BaseModel(SQLModel):
 
 
 class EntryModel(BaseModel, table=True):
-    id: str | None = None
+    id: str = Field(primary_key=True)
     original_id: str | None = None
     lemma: str
     lemma_index: int | None = Field(default=None)
