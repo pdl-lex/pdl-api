@@ -9,6 +9,7 @@ dependencies = [
     "ipykernel>=7.1.0",
     "lxml>=6.0.2",
     "pandas>=2.3.3",
+    "psycopg2-binary>=2.9.12",
     "pydash>=8.0.6",
     "pymongo>=4.15.4",
     "python-dotenv>=1.2.1",
