@@ -37,8 +37,8 @@ def extract_examples(sense):
 
 
 def transform_sense(node):
-    text = (
-        ""
+    definition = (
+        None
         if (sense := node.find("bedeutung")) is None
         else BdoMixedContentTransformer.load_xml(sense).serialize()
     )
@@ -47,7 +47,7 @@ def transform_sense(node):
     id_ = node.attrib.get("id", unique_id("sense_"))
 
     return {
-        "def": text,
+        "def": definition,
         "sourceId": id_,
         "n": number,
         "sense": [
