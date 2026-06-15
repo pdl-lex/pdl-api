@@ -23,6 +23,7 @@ wheels/
 # import and test data
 data/
 app/transformers/dwds/output/*
+validation_errors.tsv
 
 # jupyter notebooks
 *.ipynb
