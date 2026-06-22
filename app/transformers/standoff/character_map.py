@@ -145,11 +145,45 @@ class CharacterMap:
         return start, end + 1
 
     def spans(self, tag=None):
-        unique = self.df.filter(like="depth_").stack().unique()
+        unique = pd.Series(self.df.filter(like="depth_").stack().unique())
         if tag is None:
             return unique
 
-        return unique[pd.Series(unique).str.rsplit("_", n=1).str[0].eq(tag)]
+        return unique[unique.str.rsplit("_", n=1).str[0].eq(tag)]
+
+    def add_span(self, tag, start, end, attributes=None):
+        # determine next available id
+        in_use = self.spans(tag).str.rsplit("_", n=1).str[-1].astype(int).values
+        i = 1
+
+        while i in in_use:
+            i += 1
+
+        span_id = f"{tag}_{i}"
+
+        self.span_attributes[span_id] = {} if attributes is None else attributes
+
+        target_range = self.df.iloc[start:end]
+
+        # find target depth
+        free_layers = target_range.isna().all()
+
+        if free_layers.any():
+            target_layer = free_layers.idxmax()
+        else:
+            d = (
+                self.df.filter(like="depth")
+                .columns.str.split("_", n=1)
+                .str[-1]
+                .astype(int)
+                .max()
+                + 1
+            )
+            target_layer = f"depth_{d}"
+
+        self.df.loc[target_range.index, target_layer] = span_id
+
+        return self
 
     def __str__(self):
         return str(self.df)
