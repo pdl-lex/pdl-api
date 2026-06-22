@@ -190,3 +190,36 @@ class CharacterMap:
 
     def __repr__(self):
         return repr(str(self))
+
+    def to_spans(self):
+        df = self.df
+
+        # stack annotation layers
+        stacked = pd.concat([df[col] for col in df.columns], keys=df.columns).rename(
+            "tag_id"
+        )
+        stacked = stacked.rename_axis(["depth", "index"]).reset_index()
+
+        # extract start and end indexes
+        spans = stacked.groupby("tag_id")["index"].agg(start="min", end="max")
+        spans["end"] += 1
+
+        # set tags
+        spans["tag"] = spans.index.str.rsplit("_", n=1).str[0]
+
+        # set depths
+        depths = (
+            stacked.drop_duplicates(subset="tag_id")
+            .set_index("tag_id")
+            .depth.str.removeprefix("depth_")
+            .astype(int)
+        )
+        spans = spans.join(depths, how="left")
+
+        # set meta data
+        spans["text"] = spans.apply(lambda row: text[row.start : row.end], axis=1)
+        spans["attributes"] = pd.Series(cmap.span_attributes)
+
+        return spans.sort_values(["depth", "start"])
+
+
