@@ -2,12 +2,7 @@ import lxml.etree as ET  # noqa: N812
 import pytest
 
 from app.models.annotated_text import TextAnnotationSpan
-from app.transformers.standoff.annotation_frame import AnnotationFrame
-from app.transformers.standoff.standoff_transformer import (
-    StandoffTransformer,
-    preprocess,
-    register,
-)
+from app.transformers.standoff.standoff_transformer import StandoffTransformer, register
 from app.transformers.standoff.xml_standoff_converter import (
     normalize_whitespace,
     xml_to_standoff,
