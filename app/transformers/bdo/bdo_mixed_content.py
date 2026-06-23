@@ -98,6 +98,12 @@ class BdoBaseTransformer(StandoffTransformer):
 
 
 class BdoLiteratureTransformer(StandoffTransformer):
+    def set_bibliography_details(self, submap: CharacterMap) -> None:
+        self._bibliography = submap.reset_index()
+
+    def get_bibliography_details(self) -> CharacterMap | None:
+        return getattr(self, "_bibliography", None)
+
     @preprocess(order=1)
     def insert_literature_prefixes(
         self, aframe: AnnotationFrame, cmap: CharacterMap
@@ -126,26 +132,19 @@ class BdoLiteratureTransformer(StandoffTransformer):
     def extract_embedded_bibliography(
         self, aframe: AnnotationFrame, cmap: CharacterMap
     ) -> AnnotationFrame:
-        try:
-            return aframe.remove_all_spans(
-                "details", remove_subspans=True, remove_text=True
-            ), cmap
-        except Exception as err:
-            print("Could not handle")
-            print(aframe)
-            print()
-            raise err
+        for span_id in cmap.spans("details"):
+            self.set_bibliography_details(cmap.pop_span(span_id))
+
+        return aframe, cmap
 
     @register("literatur-quelle")
     def serialize_bibref(self, span) -> Union[BibRefAnnotationSpan, None]:
-        details = self.aframe._deleted_spans
+        details = self.get_bibliography_details()
 
         if details is None:
             return None
 
-        details_transformer = BdoBaseTransformer(
-            details[details.bib_id == span.name].normalize_offsets()
-        )
+        details_transformer = BdoBaseTransformer.from_cmap(details)
 
         return BibRefAnnotationSpan(
             **basedata(span, "bibref"),
