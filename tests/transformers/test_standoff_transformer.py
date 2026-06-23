@@ -142,27 +142,6 @@ def test_basic_serialization(basic_transformer):
     }
 
 
-def test_pluck_attribute(complex_annotated_xml):
-    class Transformer(StandoffTransformer):
-        @preprocess
-        def insert_literature_prefix(self, aframe: AnnotationFrame):
-            return self.pluck_attribute(aframe, "literatur", "typ", padding="right")
-
-    expected_span = {
-        "start": 211,
-        "end": 216,
-        "text": "vgl. ",
-        "type": "xmlattribute",
-        "fromTag": "literatur",
-        "fromAttribute": "typ",
-        "value": "vgl.",
-    }
-    result = Transformer.load_xml(complex_annotated_xml).serialize()
-
-    assert expected_span in result["annotations"]
-    assert "(vgl. Meier, 1996)" in result["text"]
-
-
 def test_registered_spans_are_returned(basic_annotated_xml):
     class Transformer(StandoffTransformer):
         @register("nomen")

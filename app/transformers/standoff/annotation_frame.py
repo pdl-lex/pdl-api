@@ -190,36 +190,6 @@ class AnnotationFrame(pd.DataFrame):
 
         return new_frame
 
-    def pluck_attribute(
-        self, tag: str, attribute: str, padding: Padding | None = None
-    ) -> "AnnotationFrame":
-        """
-        Take the values of an annotation layer and insert them into the base text.
-        Mark inserted spans with special starred (*) annotations.
-        """
-        if attribute not in self.columns:
-            return self
-
-        spans = self.get_spans(tag).dropna(subset=[attribute]).index
-
-        new_frame: AnnotationFrame = self.copy()
-
-        for span_id in spans:
-            span = new_frame.get_span(span_id)
-            value = span[attribute]
-            insertion = add_padding(value, padding)
-
-            new_frame = new_frame.insert_text(span.start, insertion)
-
-            new_frame = new_frame.annotate_span(
-                span.start,
-                span.start + len(insertion),
-                f"*{tag}/@{attribute}",
-                value=value,
-            )
-
-        return new_frame
-
     def annotate_span(
         self, start: int, end: int, tag: str, **kwargs
     ) -> "AnnotationFrame":
