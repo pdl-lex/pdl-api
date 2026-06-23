@@ -102,7 +102,9 @@ class StandoffTransformer:
     def _serialize_spans(self) -> list[dict]:
         """Transform spans by dispatching to registered tag handlers"""
         serialized_spans = []
-        for span in self.aframe.iter_spans():
+        spans = self.cmap.to_spans()
+
+        for _, span in spans.iterrows():
             tag = span.tag
             if tag in self._tag_handlers:
                 handler = self._tag_handlers[tag]
