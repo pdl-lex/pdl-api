@@ -31,11 +31,11 @@
   ],
   "derivations": [],
   "etym": {
-    "text": " Althochdeutsch walth. ",
+    "text": "Althochdeutsch walth.",
     "annotations": [
       {
-        "start": 16,
-        "end": 21,
+        "start": 15,
+        "end": 20,
         "text": "walth",
         "type": "crossref",
         "target": "/search?lemma=bwb__walth",
@@ -60,11 +60,11 @@
       "sense": [],
       "cit": [
         {
-          "text": " mia genga in Woid    ",
+          "text": "mia genga in Woid",
           "annotations": [
             {
-              "start": 1,
-              "end": 18,
+              "start": 0,
+              "end": 17,
               "text": "mia genga in Woid",
               "type": "text",
               "labels": ["italic"]
@@ -96,23 +96,23 @@
                   "sense": [],
                   "cit": [
                     {
-                      "text": " A Woid vo Mastn   SZ Nr. 42    ",
+                      "text": "A Woid vo Mastn SZ Nr. 42",
                       "annotations": [
                         {
-                          "start": 1,
-                          "end": 16,
+                          "start": 0,
+                          "end": 15,
                           "text": "A Woid vo Mastn",
                           "type": "text",
                           "labels": ["italic"]
                         },
                         {
-                          "start": 18,
-                          "end": 30,
-                          "text": " SZ Nr. 42  ",
+                          "start": 16,
+                          "end": 25,
+                          "text": "SZ Nr. 42",
                           "type": "bibref",
                           "bibId": "SZ",
                           "fullReference": {
-                            "text": " Süddeutsche Zeitung ",
+                            "text": "Süddeutsche Zeitung",
                             "annotations": []
                           },
                           "bibliographyUrl": null
@@ -171,11 +171,11 @@
       "n": "1",
       "cit": [
         {
-          "text": " mia genga in Woid    ",
+          "text": "mia genga in Woid",
           "annotations": [
             {
-              "start": 1,
-              "end": 18,
+              "start": 0,
+              "end": 17,
               "text": "mia genga in Woid",
               "type": "text",
               "labels": ["italic"]
@@ -209,23 +209,23 @@
       "n": "2aαi",
       "cit": [
         {
-          "text": " A Woid vo Mastn   SZ Nr. 42    ",
+          "text": "A Woid vo Mastn SZ Nr. 42",
           "annotations": [
             {
-              "start": 1,
-              "end": 16,
+              "start": 0,
+              "end": 15,
               "text": "A Woid vo Mastn",
               "type": "text",
               "labels": ["italic"]
             },
             {
-              "start": 18,
-              "end": 30,
-              "text": " SZ Nr. 42  ",
+              "start": 16,
+              "end": 25,
+              "text": "SZ Nr. 42",
               "type": "bibref",
               "bibId": "SZ",
               "fullReference": {
-                "text": " Süddeutsche Zeitung ",
+                "text": "Süddeutsche Zeitung",
                 "annotations": []
               },
               "bibliographyUrl": null
