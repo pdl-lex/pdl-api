@@ -204,19 +204,13 @@ class CharacterMap:
         spans = stacked.groupby("tag_id")["index"].agg(start="min", end="max")
         spans["end"] += 1
 
-        # set tags
         spans["tag"] = spans.index.str.rsplit("_", n=1).str[0]
-
-        # set depths
-        depths = (
+        spans["depth"] = (
             stacked.drop_duplicates(subset="tag_id")
             .set_index("tag_id")
             .depth.str.removeprefix("depth_")
             .astype(int)
         )
-        spans = spans.join(depths, how="left")
-
-        # set meta data
         spans["text"] = spans.apply(lambda row: text[row.start : row.end], axis=1)
         spans["attributes"] = pd.Series(cmap.span_attributes)
 
