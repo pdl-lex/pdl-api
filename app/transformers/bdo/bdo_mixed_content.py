@@ -30,9 +30,9 @@ REF_TYPE_PREFIXES = {
     None: "",
     "Pfeil": "",
     "ohne": "",
-    "siehe": "siehe",
-    "siehe-auch": "siehe auch",
-    "vgl.": "vgl.",
+    "siehe": "siehe ",
+    "siehe-auch": "siehe auch ",
+    "vgl.": "vgl. ",
 }
 
 
