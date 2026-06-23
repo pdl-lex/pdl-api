@@ -270,3 +270,34 @@ def test_insert_recovers_interrupted_spans(character_map_with_adjacent_spans):
     assert cmap.text == "aaaa abbbbb"
     assert cmap.df.loc[4, "depth_0"] == "ROOT_1"
     assert cmap.df.loc[4, "depth_1"] == "A_1"
+
+
+def test_spans(simple_character_map):
+    assert sorted(simple_character_map.spans()) == [
+        "nounphrase_1",
+        "paragraph_1",
+        "sent_1",
+        "tok_1",
+        "tok_2",
+        "tok_3",
+        "tok_4",
+    ]
+    assert sorted(simple_character_map.spans("tok")) == [
+        "tok_1",
+        "tok_2",
+        "tok_3",
+        "tok_4",
+    ]
+
+
+def test_add_span(simple_character_map):
+    simple_character_map.add_span("foobar", 4, 7, attributes={"baz": 42})
+    spans = simple_character_map.to_spans()
+
+    assert spans.loc[
+        spans.tag == "foobar", ["start", "end", "attributes"]
+    ].squeeze().to_list() == [
+        4,
+        7,
+        {"baz": 42},
+    ]
