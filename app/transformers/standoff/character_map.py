@@ -219,5 +219,3 @@ class CharacterMap:
         spans["attributes"] = pd.Series(cmap.span_attributes)
 
         return spans.sort_values(["depth", "start"])
-
-
