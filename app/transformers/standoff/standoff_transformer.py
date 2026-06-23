@@ -132,5 +132,6 @@ class StandoffTransformer:
         return serialized_spans
 
     def serialize(self) -> dict:
-        result = {"text": self.aframe._roottext, "annotations": self._serialize_spans()}
+        self.cmap = self.cmap.tighten_spans()
+        result = {"text": self.cmap.text, "annotations": self._serialize_spans()}
         return result

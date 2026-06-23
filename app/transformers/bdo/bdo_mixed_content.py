@@ -135,7 +135,7 @@ class BdoLiteratureTransformer(StandoffTransformer):
         for span_id in cmap.spans("details"):
             self.set_bibliography_details(cmap.pop_span(span_id))
 
-        return aframe, cmap
+        return aframe, cmap.reset_index()
 
     @register("literatur-quelle")
     def serialize_bibref(self, span) -> Union[BibRefAnnotationSpan, None]:
