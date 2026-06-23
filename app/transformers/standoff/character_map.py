@@ -197,6 +197,7 @@ class CharacterMap:
 
     def to_spans(self):
         df = self.df
+        text = "".join(df.char)
 
         # stack annotation layers
         stacked = pd.concat([df[col] for col in df.columns], keys=df.columns).rename(
@@ -215,7 +216,8 @@ class CharacterMap:
             .depth.str.removeprefix("depth_")
             .astype(int)
         )
+
         spans["text"] = spans.apply(lambda row: text[row.start : row.end], axis=1)
-        spans["attributes"] = pd.Series(cmap.span_attributes)
+        spans["attributes"] = pd.Series(self.span_attributes)
 
         return spans.sort_values(["depth", "start"])
