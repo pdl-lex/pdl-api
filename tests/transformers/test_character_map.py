@@ -291,13 +291,17 @@ def test_spans(simple_character_map):
 
 
 def test_add_span(simple_character_map):
-    simple_character_map.add_span("foobar", 4, 7, attributes={"baz": 42})
+    start = 4
+    end = 7
+    attributes = {"baz": 42}
+
+    simple_character_map.add_span("foobar", start, end, attributes)
     spans = simple_character_map.to_spans()
 
     assert spans.loc[
         spans.tag == "foobar", ["start", "end", "attributes"]
     ].squeeze().to_list() == [
-        4,
-        7,
-        {"baz": 42},
+        start,
+        end,
+        attributes,
     ]
