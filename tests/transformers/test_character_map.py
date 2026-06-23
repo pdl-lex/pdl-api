@@ -26,7 +26,7 @@ def simple_spans():
             "ein",
             "Beispielsatz ",
         ],
-        "tag_id": [
+        "span_id": [
             "paragraph_1",
             "sent_1",
             "tok_1",
@@ -184,7 +184,7 @@ def character_map_with_adjacent_spans():
             "end": [10, 5, 10],
             "depth": [0, 1, 1],
             "tag": ["ROOT", "A", "B"],
-            "tag_id": ["ROOT_1", "A_1", "B_1"],
+            "span_id": ["ROOT_1", "A_1", "B_1"],
             "text": ["aaaaabbbbb", "aaaaa", "bbbbb"],
             "attributes": [{}, {}, {}],
         }
@@ -299,7 +299,7 @@ def test_add_span(simple_character_map):
     spans = simple_character_map.to_spans()
 
     assert spans.loc[
-        spans.tag_id == "foobar_1", ["start", "end", "attributes"]
+        spans.span_id == "foobar_1", ["start", "end", "attributes"]
     ].squeeze().to_list() == [
         start,
         end,

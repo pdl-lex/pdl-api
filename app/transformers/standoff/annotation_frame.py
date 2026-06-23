@@ -71,8 +71,8 @@ class AnnotationFrame(pd.DataFrame):
     def get_root(self) -> pd.Series:
         return self.get_span(self.get_root_id())
 
-    def get_span(self, tag_id: str) -> pd.Series:
-        return self.loc[tag_id]
+    def get_span(self, span_id: str) -> pd.Series:
+        return self.loc[span_id]
 
     def get_spans(self, tag: str) -> "AnnotationFrame":
         return self.loc[self.tag == tag]
@@ -80,29 +80,29 @@ class AnnotationFrame(pd.DataFrame):
     def get_first(self, tag: str) -> pd.Series:
         return self.get_spans(tag).iloc[0]
 
-    def get_subspans(self, tag_id: str, with_root=True) -> "AnnotationFrame":
-        start, end, depth = self.loc[tag_id, ["start", "end", "depth"]]
+    def get_subspans(self, span_id: str, with_root=True) -> "AnnotationFrame":
+        start, end, depth = self.loc[span_id, ["start", "end", "depth"]]
         mask = self.start.ge(start) & self.end.le(end) & self.depth.ge(depth)
 
-        return self[mask] if with_root else self[mask].drop(tag_id)
+        return self[mask] if with_root else self[mask].drop(span_id)
 
-    def get_superspans(self, tag_id: str, with_root=False) -> "AnnotationFrame":
-        start, end, depth = self.loc[tag_id, ["start", "end", "depth"]]
+    def get_superspans(self, span_id: str, with_root=False) -> "AnnotationFrame":
+        start, end, depth = self.loc[span_id, ["start", "end", "depth"]]
         mask = self.start.le(start) & self.end.ge(end) & self.depth.le(depth)
 
-        return self[mask] if with_root else self[mask].drop(tag_id)
+        return self[mask] if with_root else self[mask].drop(span_id)
 
     def remove_span(
-        self, tag_id: str, remove_subspans=False, remove_text=False
+        self, span_id: str, remove_subspans=False, remove_text=False
     ) -> "AnnotationFrame":
         to_delete = (
-            self.get_subspans(tag_id, with_root=True) if remove_subspans else [tag_id]
+            self.get_subspans(span_id, with_root=True) if remove_subspans else [span_id]
         )
         new_frame = self.copy().drop(to_delete.index)
 
         if remove_text:
-            start, end = self.get_span(tag_id)[["start", "end"]]
-            superspans = self.get_superspans(tag_id)
+            start, end = self.get_span(span_id)[["start", "end"]]
+            superspans = self.get_superspans(span_id)
 
             new_frame.loc[superspans.index, "text"] = superspans.apply(
                 extract_text,
@@ -128,9 +128,9 @@ class AnnotationFrame(pd.DataFrame):
         new_frame = self.copy()
         tags = self[self.tag == tag].index
 
-        for tag_id in tags:
+        for span_id in tags:
             new_frame = new_frame.remove_span(
-                tag_id, remove_subspans=remove_subspans, remove_text=remove_text
+                span_id, remove_subspans=remove_subspans, remove_text=remove_text
             )
 
         return new_frame
@@ -204,8 +204,8 @@ class AnnotationFrame(pd.DataFrame):
 
         new_frame: AnnotationFrame = self.copy()
 
-        for tag_id in spans:
-            span = new_frame.get_span(tag_id)
+        for span_id in spans:
+            span = new_frame.get_span(span_id)
             value = span[attribute]
             insertion = add_padding(value, padding)
 

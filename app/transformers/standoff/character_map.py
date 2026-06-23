@@ -24,9 +24,9 @@ class CharacterMap:
 
         for depth, subgroup in span_frame.groupby("depth"):
             for _, row in subgroup.iterrows():
-                df.loc[row.start : row.end - 1, f"depth_{depth}"] = row.tag_id
+                df.loc[row.start : row.end - 1, f"depth_{depth}"] = row.span_id
 
-        span_attributes = span_frame.set_index("tag_id").attributes.to_dict()
+        span_attributes = span_frame.set_index("span_id").attributes.to_dict()
 
         return cls(df, span_attributes=span_attributes)
 
@@ -202,19 +202,19 @@ class CharacterMap:
         # stack annotation layers
         stacked = (
             pd.concat([df[col] for col in df.columns], keys=df.columns)
-            .rename("tag_id")
+            .rename("span_id")
             .drop("char")
         )
         stacked = stacked.rename_axis(["depth", "index"]).reset_index()
 
         # extract start and end indexes
-        spans = stacked.groupby("tag_id")["index"].agg(start="min", end="max")
+        spans = stacked.groupby("span_id")["index"].agg(start="min", end="max")
         spans["end"] += 1
 
         spans["tag"] = spans.index.str.rsplit("_", n=1).str[0]
         spans["depth"] = (
-            stacked.drop_duplicates(subset="tag_id")
-            .set_index("tag_id")
+            stacked.drop_duplicates(subset="span_id")
+            .set_index("span_id")
             .depth.str.removeprefix("depth_")
             .astype(int)
         )
