@@ -30,6 +30,10 @@ class CharacterMap:
 
         return cls(df, span_attributes=span_attributes)
 
+    @property
+    def text(self):
+        return "".join(self.df.char)
+
     def normalize_ws(self):
         """Merge consecutive whitespace into single spaces"""
         df = self.df.assign(char=self.df.char.str.replace(r"\s", " ", regex=True))
@@ -193,7 +197,7 @@ class CharacterMap:
 
     def to_spans(self):
         df = self.df
-        text = "".join(df.char)
+        text = self.text
 
         # stack annotation layers
         stacked = (
