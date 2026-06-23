@@ -102,9 +102,13 @@ class BdoLiteratureTransformer(StandoffTransformer):
     def insert_literature_prefixes(
         self, aframe: AnnotationFrame, cmap: CharacterMap
     ) -> AnnotationFrame:
-        return self.pluck_attribute(
-            aframe, "literatur-quelle", "quelle-art", padding="right"
-        ), cmap
+        for span_id in cmap.spans("literatur-quelle"):
+            start, _ = cmap.get_span_range(span_id)
+            attributes = cmap.span_attributes[span_id]
+
+            cmap = cmap.insert(start, attributes.get("quelle-art", "") + " ")
+
+        return aframe, cmap.reset_index()
 
     @preprocess(order=3)
     def add_bib_id_column(
