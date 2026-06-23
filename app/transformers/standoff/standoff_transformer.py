@@ -71,6 +71,11 @@ class StandoffTransformer:
 
         return frame
 
+    @classmethod
+    def from_cmap(cls, cmap: CharacterMap):
+        aframe = AnnotationFrame(cmap.to_spans())
+        return cls(aframe, cmap)
+
     @staticmethod
     def _add_unique_ids(frame: pd.DataFrame) -> pd.DataFrame:
         tag_counters = frame.groupby("tag").cumcount() + 1
