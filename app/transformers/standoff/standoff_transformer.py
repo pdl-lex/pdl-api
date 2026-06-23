@@ -4,6 +4,7 @@ import pandas as pd
 
 from app.models.annotated_text import XmlAttributeSpan
 from app.transformers.standoff.annotation_frame import AnnotationFrame, Padding
+from app.transformers.standoff.character_map import CharacterMap
 from app.transformers.standoff.xml_standoff_converter import (
     xml_to_standoff,
 )
@@ -38,8 +39,9 @@ def basedata(span, type_: str) -> dict:
 
 
 class StandoffTransformer:
-    def __init__(self, aframe: AnnotationFrame):
+    def __init__(self, aframe: AnnotationFrame, cmap: CharacterMap):
         self.aframe = aframe
+        self.cmap = cmap
         self._tag_handlers = self._collect_tag_handlers()
         self._apply_preprocessing()
         self.errors = []
@@ -48,7 +50,8 @@ class StandoffTransformer:
     def load_xml(cls, xml_node) -> "StandoffTransformer":
         span_data = xml_to_standoff(xml_node)
         aframe = AnnotationFrame(cls._init_dataframe(span_data))
-        return cls(aframe)
+        cmap = CharacterMap.from_spans(aframe)
+        return cls(aframe, cmap)
 
     @classmethod
     def _init_dataframe(cls, span_data: list[dict]) -> pd.DataFrame:
