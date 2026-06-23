@@ -48,7 +48,7 @@ class CharacterMap:
 
         `<outer> <inner>foobar</inner> </outer>`.
         """
-        df = self.df.copy()
+        df = self.normalize_ws().df.copy()
         is_ws = df.char.str.strip() == ""
 
         columns = df.filter(like="depth").columns
@@ -63,7 +63,7 @@ class CharacterMap:
 
         self.df = df[~is_empty_span]
 
-        return self
+        return self.reset_index()
 
     def pop_span(self, span_id):
         is_target_span = self.df.eq(span_id).any(axis=1)
@@ -78,7 +78,7 @@ class CharacterMap:
 
     def minify(self):
         """Remove superfluous whitespace and compress spans"""
-        return self.normalize_ws().tighten_spans().reset_index()
+        return self.tighten_spans().reset_index()
 
     def _fill_interrupted_spans(self, df):
         """Recover spans interrupted by inserted text"""
@@ -222,4 +222,4 @@ class CharacterMap:
         spans["text"] = spans.apply(lambda row: text[row.start : row.end], axis=1)
         spans["attributes"] = pd.Series(self.span_attributes)
 
-        return spans.sort_values(["depth", "start"])
+        return spans.sort_values(["depth", "start"]).reset_index()
