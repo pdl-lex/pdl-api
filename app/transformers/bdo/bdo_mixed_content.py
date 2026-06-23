@@ -55,16 +55,14 @@ class BdoBaseTransformer(StandoffTransformer):
     def insert_crossref_prefixes(
         self, aframe: AnnotationFrame, cmap: CharacterMap
     ) -> AnnotationFrame:
-        if "verweis-typ" not in aframe.columns:
-            return aframe
+        for span_id in cmap.spans("verweis"):
+            start, _ = cmap.get_span_range(span_id)
+            attributes = cmap.span_attributes[span_id]
 
-        mapped_ref_types = aframe["verweis-typ"].map(REF_TYPE_PREFIXES)
+            insertion = REF_TYPE_PREFIXES[attributes.get("verweis-typ")]
+            cmap = cmap.insert(start, insertion)
 
-        return (
-            aframe.assign(ref_type=mapped_ref_types)
-            .pluck_attribute("verweis", "ref_type")
-            .drop("ref_type", axis=1)
-        ), cmap
+        return aframe, cmap.reset_index()
 
     @preprocess
     def rename_compounds(
