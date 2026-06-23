@@ -84,7 +84,7 @@ class StandoffTransformer:
         preprocess_methods.sort(key=lambda m: (m[0], m[1]))
 
         for *_, method in preprocess_methods:
-            self.aframe = method(self, self.aframe)
+            self.aframe, self.cmap = method(self, self.aframe, self.cmap)
 
     def _collect_tag_handlers(self) -> dict[str, Callable]:
         """Collect all methods decorated with @register"""

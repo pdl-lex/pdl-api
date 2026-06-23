@@ -10,6 +10,7 @@ from app.models.annotated_text import (
     TextAnnotationSpan,
 )
 from app.transformers.standoff.annotation_frame import AnnotationFrame
+from app.transformers.standoff.character_map import CharacterMap
 from app.transformers.standoff.standoff_transformer import (
     StandoffTransformer,
     preprocess,
@@ -51,7 +52,9 @@ def get_target_link(span):
 
 class BdoBaseTransformer(StandoffTransformer):
     @preprocess(order=1)
-    def insert_crossref_prefixes(self, aframe: AnnotationFrame) -> AnnotationFrame:
+    def insert_crossref_prefixes(
+        self, aframe: AnnotationFrame, cmap: CharacterMap
+    ) -> AnnotationFrame:
         if "verweis-typ" not in aframe.columns:
             return aframe
 
@@ -61,11 +64,13 @@ class BdoBaseTransformer(StandoffTransformer):
             aframe.assign(ref_type=mapped_ref_types)
             .pluck_attribute("verweis", "ref_type")
             .drop("ref_type", axis=1)
-        )
+        ), cmap
 
     @preprocess
-    def rename_compounds(self, aframe: AnnotationFrame) -> AnnotationFrame:
-        return aframe.assign(tag=aframe.tag.replace("kompositum", "verweis"))
+    def rename_compounds(
+        self, aframe: AnnotationFrame, cmap: CharacterMap
+    ) -> AnnotationFrame:
+        return aframe.assign(tag=aframe.tag.replace("kompositum", "verweis")), cmap
 
     @register("lemma-form")
     def serialize_mention(self, span: pd.Series) -> TextAnnotationSpan:
@@ -96,27 +101,33 @@ class BdoBaseTransformer(StandoffTransformer):
 
 class BdoLiteratureTransformer(StandoffTransformer):
     @preprocess(order=1)
-    def insert_literature_prefixes(self, aframe: AnnotationFrame) -> AnnotationFrame:
+    def insert_literature_prefixes(
+        self, aframe: AnnotationFrame, cmap: CharacterMap
+    ) -> AnnotationFrame:
         return self.pluck_attribute(
             aframe, "literatur-quelle", "quelle-art", padding="right"
-        )
+        ), cmap
 
     @preprocess(order=3)
-    def add_bib_id_column(self, aframe: AnnotationFrame) -> AnnotationFrame:
+    def add_bib_id_column(
+        self, aframe: AnnotationFrame, cmap: CharacterMap
+    ) -> AnnotationFrame:
         bib_spans = aframe.get_spans("literatur-quelle").index
 
         for span_id in bib_spans:
             subspans = aframe.get_subspans(span_id).index
             aframe.loc[subspans, "bib_id"] = span_id
 
-        return aframe
+        return aframe, cmap
 
     @preprocess(order=4)
-    def extract_embedded_bibliography(self, aframe: AnnotationFrame) -> AnnotationFrame:
+    def extract_embedded_bibliography(
+        self, aframe: AnnotationFrame, cmap: CharacterMap
+    ) -> AnnotationFrame:
         try:
             return aframe.remove_all_spans(
                 "details", remove_subspans=True, remove_text=True
-            )
+            ), cmap
         except Exception as err:
             print("Could not handle")
             print(aframe)
