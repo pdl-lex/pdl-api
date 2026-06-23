@@ -191,6 +191,10 @@ class CharacterMap:
     def __repr__(self):
         return repr(str(self))
 
+    def _repr_html_(self):
+        """Return HTML representation for Jupyter notebooks"""
+        return self.df._repr_html_()
+
     def to_spans(self):
         df = self.df
 
