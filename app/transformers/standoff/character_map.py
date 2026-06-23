@@ -224,3 +224,12 @@ class CharacterMap:
         spans["attributes"] = pd.Series(self.span_attributes)
 
         return spans.sort_values(["depth", "start"]).reset_index()
+
+    def rename_tag(self, tag, value):
+        def rename(col):
+            col = col.str.rsplit("_", n=1)
+            return col.str[0].replace(tag, value) + "_" + col.str[1]
+
+        self.df.loc[:, "depth_0":] = self.df.loc[:, "depth_0":].transform(rename)
+
+        return self
