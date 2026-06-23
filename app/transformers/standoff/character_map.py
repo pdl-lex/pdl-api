@@ -200,8 +200,10 @@ class CharacterMap:
         text = "".join(df.char)
 
         # stack annotation layers
-        stacked = pd.concat([df[col] for col in df.columns], keys=df.columns).rename(
-            "tag_id"
+        stacked = (
+            pd.concat([df[col] for col in df.columns], keys=df.columns)
+            .rename("tag_id")
+            .drop("char")
         )
         stacked = stacked.rename_axis(["depth", "index"]).reset_index()
 
