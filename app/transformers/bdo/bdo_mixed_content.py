@@ -57,7 +57,7 @@ class BdoBaseTransformer(StandoffTransformer):
     ) -> AnnotationFrame:
         for span_id in cmap.spans("verweis"):
             start, _ = cmap.get_span_range(span_id)
-            attributes = cmap.span_attributes[span_id]
+            attributes = cmap.span_attributes.get(span_id, {})
 
             insertion = REF_TYPE_PREFIXES[attributes.get("verweis-typ")]
             cmap = cmap.insert(start, insertion)
