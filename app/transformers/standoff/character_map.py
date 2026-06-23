@@ -144,8 +144,9 @@ class CharacterMap:
 
         return start, end + 1
 
-    def spans(self, tag=None):
+    def spans(self, tag: str | None = None):
         unique = pd.Series(self.df.filter(like="depth_").stack().unique())
+
         if tag is None:
             return unique
 
