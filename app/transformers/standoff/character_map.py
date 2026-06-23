@@ -76,10 +76,6 @@ class CharacterMap:
         self.df = self.df.reset_index(drop=True)
         return self
 
-    def minify(self):
-        """Remove superfluous whitespace and compress spans"""
-        return self.tighten_spans().reset_index()
-
     def _fill_interrupted_spans(self, df):
         """Recover spans interrupted by inserted text"""
 
