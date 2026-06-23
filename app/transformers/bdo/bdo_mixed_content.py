@@ -70,7 +70,7 @@ class BdoBaseTransformer(StandoffTransformer):
     def rename_compounds(
         self, aframe: AnnotationFrame, cmap: CharacterMap
     ) -> AnnotationFrame:
-        return aframe.assign(tag=aframe.tag.replace("kompositum", "verweis")), cmap
+        return aframe, cmap.rename_tag("kompositum", "verweis")
 
     @register("lemma-form")
     def serialize_mention(self, span: pd.Series) -> TextAnnotationSpan:
