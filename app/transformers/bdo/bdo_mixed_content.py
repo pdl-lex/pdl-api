@@ -120,11 +120,11 @@ class BdoLiteratureTransformer(StandoffTransformer):
     def add_bib_id_column(
         self, aframe: AnnotationFrame, cmap: CharacterMap
     ) -> AnnotationFrame:
-        bib_spans = aframe.get_spans("literatur-quelle").index
-
-        for span_id in bib_spans:
-            subspans = aframe.get_subspans(span_id).index
-            aframe.loc[subspans, "bib_id"] = span_id
+        for span_id in cmap.spans("literatur-quelle"):
+            for subspan in cmap.get_subspans(span_id):
+                if subspan not in cmap.span_attributes:
+                    cmap.span_attributes[subspan] = {}
+                cmap.span_attributes[subspan]["bib_id"] = span_id
 
         return aframe, cmap
 
