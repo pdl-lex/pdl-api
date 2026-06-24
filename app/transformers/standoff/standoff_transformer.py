@@ -49,13 +49,15 @@ class StandoffTransformer:
     def load_xml(cls, xml_node) -> "StandoffTransformer":
         span_data = xml_to_standoff(xml_node)
         aframe = AnnotationFrame(cls._init_dataframe(span_data))
+
+        frame = pd.DataFrame(
+            span_data,
+            columns=["start", "end", "depth", "tag", "attributes", "text"],
+        )
+        extra_attributes = pd.DataFrame.from_records(frame.pop("attributes"))
+        frame = pd.concat([frame, extra_attributes], axis=1)
         cmap = CharacterMap.from_spans(
-            cls._add_unique_ids(
-                pd.DataFrame(
-                    span_data,
-                    columns=["start", "end", "depth", "tag", "attributes", "text"],
-                )
-            ).reset_index()
+            cls._add_unique_ids(frame).reset_index()
         ).tighten_spans()
         return cls(aframe, cmap)
 
