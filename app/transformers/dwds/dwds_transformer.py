@@ -35,73 +35,6 @@ with open(gender_map_path, newline="") as csvfile:
 # --- Sense extraction chain (module-level, matches BDO pattern) ---
 
 
-def _build_collapse_map(text):
-    """Return (new_text, old_to_new) where old_to_new[i] is the position of old index i in new_text."""
-    new_chars = []
-    old_to_new = []
-    new_pos = 0
-    i = 0
-    while i < len(text):
-        if text[i] == " ":
-            j = i
-            while j < len(text) and text[j] == " ":
-                j += 1
-            new_chars.append(" ")
-            for _ in range(i, j):
-                old_to_new.append(new_pos)
-            new_pos += 1
-            i = j
-        else:
-            new_chars.append(text[i])
-            old_to_new.append(new_pos)
-            new_pos += 1
-            i += 1
-    old_to_new.append(new_pos)  # sentinel for end-of-string position
-    return "".join(new_chars), old_to_new
-
-
-def normalize_standoff_whitespace(data, *, strip="both", collapse=True):
-    """Normalize whitespace in a str or standoff dict {"text": str, "annotations": [...]}.
-
-    strip:    "none" | "leading" | "trailing" | "both"
-    collapse: True → collapse runs of spaces to a single space (annotation-safe)
-    """
-    is_str = isinstance(data, str)
-    text = data if is_str else data["text"]
-    annotations = [] if is_str else data["annotations"]
-
-    if collapse:
-        text, old_to_new = _build_collapse_map(text)
-        annotations = [
-            {**ann, "start": old_to_new[ann["start"]], "end": old_to_new[ann["end"]]}
-            for ann in annotations
-            if old_to_new[ann["start"]] != old_to_new[ann["end"]]
-        ]
-
-    lstrip_len = len(text) - len(text.lstrip()) if strip in ("leading", "both") else 0
-
-    if strip == "leading":
-        text = text.lstrip()
-    elif strip == "trailing":
-        text = text.rstrip()
-    elif strip == "both":
-        text = text.strip()
-
-    if lstrip_len:
-        new_len = len(text)
-        annotations = [
-            {**ann, "start": ann["start"] - lstrip_len, "end": ann["end"] - lstrip_len}
-            for ann in annotations
-            if ann["end"] - lstrip_len > 0
-            and ann["start"] - lstrip_len < new_len
-            and ann["start"] - lstrip_len != ann["end"] - lstrip_len
-        ]
-
-    if is_str:
-        return text
-    return {**data, "text": text, "annotations": annotations}
-
-
 def parse_fundstelle(beleg_node):
     """Parse <Fundstelle> into a BibRefAnnotationSpan dict (start/end/text are placeholders, set by the caller)."""
     fundstelle = beleg_node.find("Fundstelle")
@@ -115,9 +48,7 @@ def parse_fundstelle(beleg_node):
 
     full_reference = {"text": (fundstelle.text or "").strip(), "annotations": []}
     if has_children:
-        full_reference = normalize_standoff_whitespace(
-            DwdsMixedContentTransformer.load_xml(fundstelle).serialize()
-        )
+        full_reference = DwdsMixedContentTransformer.load_xml(fundstelle).serialize()
 
     bibliography_url = (
         f"https://www.dwds.de/wb/{fundort.lower()}/bibl#{sigle}"
