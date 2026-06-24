@@ -299,9 +299,9 @@ def test_add_span(simple_character_map):
     spans = simple_character_map.to_spans()
 
     assert spans.loc[
-        spans.span_id == "foobar_1", ["start", "end", "attributes"]
+        spans.span_id == "foobar_1", ["start", "end", "baz"]
     ].squeeze().to_list() == [
         start,
         end,
-        attributes,
+        42,
     ]
