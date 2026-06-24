@@ -26,9 +26,14 @@ class CharacterMap:
             for _, row in subgroup.iterrows():
                 df.loc[row.start : row.end - 1, f"depth_{depth}"] = row.span_id
 
-        span_attributes = span_frame.set_index("span_id").attributes.to_dict()
+        # set attributes
+        internal_columns = ["start", "end", "depth", "tag", "text"]
+        attributes = span_frame.set_index("span_id").drop(internal_columns, axis=1)
+        attributes = attributes.apply(
+            lambda row: row.dropna().to_dict(), axis=1
+        ).to_dict()
 
-        return cls(df, span_attributes=span_attributes)
+        return cls(df, span_attributes=attributes)
 
     @property
     def text(self):
