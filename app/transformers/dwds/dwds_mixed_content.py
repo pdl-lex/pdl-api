@@ -4,15 +4,8 @@ from app.models.annotated_text import TextAnnotationSpan
 from app.transformers.standoff.standoff_transformer import (
     StandoffTransformer,
     register,
+    textspan,
 )
-
-
-def basedata(span, type_: str) -> dict:
-    return {"type": type_, **span[["start", "end", "text"]].to_dict()}
-
-
-def textspan(span):
-    return basedata(span, "text")
 
 
 class DwdsBaseTransformer(StandoffTransformer):

@@ -36,6 +36,10 @@ def basedata(span, type_: str) -> dict:
     return {"type": type_, **span[["start", "end", "text"]].to_dict()}
 
 
+def textspan(span):
+    return basedata(span, "text")
+
+
 class StandoffTransformer:
     def __init__(self, cmap: CharacterMap):
         self.cmap = cmap

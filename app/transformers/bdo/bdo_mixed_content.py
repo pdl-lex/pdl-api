@@ -12,18 +12,11 @@ from app.models.annotated_text import (
 from app.transformers.standoff.character_map import CharacterMap
 from app.transformers.standoff.standoff_transformer import (
     StandoffTransformer,
+    basedata,
     preprocess,
     register,
+    textspan,
 )
-
-
-def basedata(span, type_: str) -> dict:
-    return {"type": type_, **span[["start", "end", "text"]].to_dict()}
-
-
-def textspan(span):
-    return basedata(span, "text")
-
 
 REF_TYPE_PREFIXES = {
     None: "",
