@@ -221,7 +221,12 @@ class CharacterMap:
         )
 
         spans["text"] = spans.apply(lambda row: text[row.start : row.end], axis=1)
+
+        # populate attribute columns
         spans["attributes"] = pd.Series(self.span_attributes)
+        spans = spans.join(
+            pd.DataFrame(spans.pop("attributes").to_list(), index=spans.index)
+        )
 
         return spans.sort_values(["depth", "start"]).reset_index()
 
