@@ -9,7 +9,6 @@ from app.models.annotated_text import (
     LinkAnnotationSpan,
     TextAnnotationSpan,
 )
-from app.transformers.standoff.annotation_frame import AnnotationFrame
 from app.transformers.standoff.character_map import CharacterMap
 from app.transformers.standoff.standoff_transformer import (
     StandoffTransformer,
@@ -52,7 +51,7 @@ def get_target_link(span):
 
 class BdoBaseTransformer(StandoffTransformer):
     @preprocess(order=1)
-    def insert_crossref_prefixes(self, cmap: CharacterMap) -> AnnotationFrame:
+    def insert_crossref_prefixes(self, cmap: CharacterMap) -> CharacterMap:
         for span_id in cmap.spans("verweis"):
             start, _ = cmap.get_span_range(span_id)
             attributes = cmap.span_attributes.get(span_id, {})
@@ -63,7 +62,7 @@ class BdoBaseTransformer(StandoffTransformer):
         return cmap.reset_index()
 
     @preprocess
-    def rename_compounds(self, cmap: CharacterMap) -> AnnotationFrame:
+    def rename_compounds(self, cmap: CharacterMap) -> CharacterMap:
         return cmap.rename_tag("kompositum", "verweis")
 
     @register("lemma-form")
@@ -101,7 +100,7 @@ class BdoLiteratureTransformer(StandoffTransformer):
         return getattr(self, "_bibliography", None)
 
     @preprocess(order=1)
-    def insert_literature_prefixes(self, cmap: CharacterMap) -> AnnotationFrame:
+    def insert_literature_prefixes(self, cmap: CharacterMap) -> CharacterMap:
         for span_id in cmap.spans("literatur-quelle"):
             start, _ = cmap.get_span_range(span_id)
             attributes = cmap.span_attributes[span_id]
@@ -111,7 +110,7 @@ class BdoLiteratureTransformer(StandoffTransformer):
         return cmap.reset_index()
 
     @preprocess(order=3)
-    def add_bib_id_column(self, cmap: CharacterMap) -> AnnotationFrame:
+    def add_bib_id_column(self, cmap: CharacterMap) -> CharacterMap:
         for span_id in cmap.spans("literatur-quelle"):
             for subspan in cmap.get_subspans(span_id):
                 if subspan not in cmap.span_attributes:
@@ -121,7 +120,7 @@ class BdoLiteratureTransformer(StandoffTransformer):
         return cmap
 
     @preprocess(order=4)
-    def extract_embedded_bibliography(self, cmap: CharacterMap) -> AnnotationFrame:
+    def extract_embedded_bibliography(self, cmap: CharacterMap) -> CharacterMap:
         for span_id in cmap.spans("details"):
             self.set_bibliography_details(cmap.pop_span(span_id))
 
