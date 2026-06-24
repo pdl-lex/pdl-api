@@ -233,3 +233,18 @@ class CharacterMap:
         self.df.loc[:, "depth_0":] = self.df.loc[:, "depth_0":].transform(rename)
 
         return self
+
+    def get_subspans(self, span_id):
+        df = self.df.filter(like="depth")
+
+        is_superspan = df.eq(span_id)
+        start_column = [*df.columns[is_superspan.any()], None][0]
+
+        if start_column is None:
+            return []
+
+        return [
+            tag
+            for tag in df.loc[is_superspan.any(axis=1), start_column:].stack().unique()
+            if tag != span_id
+        ]
