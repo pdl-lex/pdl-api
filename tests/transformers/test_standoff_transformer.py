@@ -121,13 +121,14 @@ def basic_transformer(basic_annotated_xml):
 
 def test_basic_annotation(basic_transformer):
     expected = {
+        "span_id": ["satz_1", "pronomen_1", "verb_1", "artikel_1", "nomen_1"],
         "start": [0, 0, 4, 8, 12],
         "end": [25, 3, 7, 11, 24],
         "tag": ["satz", "pronomen", "verb", "artikel", "nomen"],
         "depth": [0, 1, 1, 1, 1],
         "text": ["Das ist ein Beispielsatz.", "Das", "ist", "ein", "Beispielsatz"],
     }
-    assert basic_transformer.aframe.to_dict(orient="list") == expected
+    assert basic_transformer.cmap.to_spans().to_dict(orient="list") == expected
 
 
 def test_basic_serialization(basic_transformer):
