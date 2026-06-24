@@ -201,7 +201,7 @@ class CharacterMap:
         """Return HTML representation for Jupyter notebooks"""
         return self.df._repr_html_()
 
-    def to_spans(self):
+    def to_spans(self) -> pd.DataFrame:
         df = self.df
         text = self.text
 
@@ -228,10 +228,14 @@ class CharacterMap:
         spans["text"] = spans.apply(lambda row: text[row.start : row.end], axis=1)
 
         # populate attribute columns
-        spans["attributes"] = pd.Series(self.span_attributes)
-        spans = spans.join(
-            pd.DataFrame(spans.pop("attributes").to_list(), index=spans.index)
-        )
+        if (attributes := pd.Series(self.span_attributes)).notna().any():
+            # align attributes by id
+            spans["attributes"] = attributes
+
+            # expand attributes into columns
+            spans = spans.join(
+                pd.DataFrame(spans.pop("attributes").to_list(), index=spans.index)
+            )
 
         return spans.sort_values(["depth", "start"]).reset_index()
 
