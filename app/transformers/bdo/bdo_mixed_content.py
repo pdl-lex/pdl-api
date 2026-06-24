@@ -52,9 +52,7 @@ def get_target_link(span):
 
 class BdoBaseTransformer(StandoffTransformer):
     @preprocess(order=1)
-    def insert_crossref_prefixes(
-        self, aframe: AnnotationFrame, cmap: CharacterMap
-    ) -> AnnotationFrame:
+    def insert_crossref_prefixes(self, cmap: CharacterMap) -> AnnotationFrame:
         for span_id in cmap.spans("verweis"):
             start, _ = cmap.get_span_range(span_id)
             attributes = cmap.span_attributes.get(span_id, {})
@@ -62,13 +60,11 @@ class BdoBaseTransformer(StandoffTransformer):
             insertion = REF_TYPE_PREFIXES[attributes.get("verweis-typ")]
             cmap = cmap.insert(start, insertion)
 
-        return aframe, cmap.reset_index()
+        return cmap.reset_index()
 
     @preprocess
-    def rename_compounds(
-        self, aframe: AnnotationFrame, cmap: CharacterMap
-    ) -> AnnotationFrame:
-        return aframe, cmap.rename_tag("kompositum", "verweis")
+    def rename_compounds(self, cmap: CharacterMap) -> AnnotationFrame:
+        return cmap.rename_tag("kompositum", "verweis")
 
     @register("lemma-form")
     def serialize_mention(self, span: pd.Series) -> TextAnnotationSpan:
@@ -105,37 +101,31 @@ class BdoLiteratureTransformer(StandoffTransformer):
         return getattr(self, "_bibliography", None)
 
     @preprocess(order=1)
-    def insert_literature_prefixes(
-        self, aframe: AnnotationFrame, cmap: CharacterMap
-    ) -> AnnotationFrame:
+    def insert_literature_prefixes(self, cmap: CharacterMap) -> AnnotationFrame:
         for span_id in cmap.spans("literatur-quelle"):
             start, _ = cmap.get_span_range(span_id)
             attributes = cmap.span_attributes[span_id]
 
             cmap = cmap.insert(start, attributes.get("quelle-art", "") + " ")
 
-        return aframe, cmap.reset_index()
+        return cmap.reset_index()
 
     @preprocess(order=3)
-    def add_bib_id_column(
-        self, aframe: AnnotationFrame, cmap: CharacterMap
-    ) -> AnnotationFrame:
+    def add_bib_id_column(self, cmap: CharacterMap) -> AnnotationFrame:
         for span_id in cmap.spans("literatur-quelle"):
             for subspan in cmap.get_subspans(span_id):
                 if subspan not in cmap.span_attributes:
                     cmap.span_attributes[subspan] = {}
                 cmap.span_attributes[subspan]["bib_id"] = span_id
 
-        return aframe, cmap
+        return cmap
 
     @preprocess(order=4)
-    def extract_embedded_bibliography(
-        self, aframe: AnnotationFrame, cmap: CharacterMap
-    ) -> AnnotationFrame:
+    def extract_embedded_bibliography(self, cmap: CharacterMap) -> AnnotationFrame:
         for span_id in cmap.spans("details"):
             self.set_bibliography_details(cmap.pop_span(span_id))
 
-        return aframe, cmap.reset_index()
+        return cmap.reset_index()
 
     @register("literatur-quelle")
     def serialize_bibref(self, span) -> Union[BibRefAnnotationSpan, None]:
