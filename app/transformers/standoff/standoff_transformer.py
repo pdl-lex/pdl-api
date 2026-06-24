@@ -38,8 +38,7 @@ def basedata(span, type_: str) -> dict:
 
 
 class StandoffTransformer:
-    def __init__(self, aframe: AnnotationFrame, cmap: CharacterMap):
-        self.aframe = aframe
+    def __init__(self, cmap: CharacterMap):
         self.cmap = cmap
         self._tag_handlers = self._collect_tag_handlers()
         self._apply_preprocessing()
@@ -48,7 +47,6 @@ class StandoffTransformer:
     @classmethod
     def load_xml(cls, xml_node) -> "StandoffTransformer":
         span_data = xml_to_standoff(xml_node)
-        aframe = AnnotationFrame(cls._init_dataframe(span_data))
 
         frame = pd.DataFrame(
             span_data,
@@ -59,7 +57,7 @@ class StandoffTransformer:
         cmap = CharacterMap.from_spans(
             cls._add_unique_ids(frame).reset_index()
         ).tighten_spans()
-        return cls(aframe, cmap)
+        return cls(cmap)
 
     @classmethod
     def _init_dataframe(cls, span_data: list[dict]) -> pd.DataFrame:
@@ -75,8 +73,7 @@ class StandoffTransformer:
 
     @classmethod
     def from_cmap(cls, cmap: CharacterMap):
-        aframe = AnnotationFrame(cmap.to_spans())
-        return cls(aframe, cmap)
+        return cls(cmap)
 
     @staticmethod
     def _add_unique_ids(frame: pd.DataFrame) -> pd.DataFrame:
