@@ -5,8 +5,8 @@ import pytest
 from app.transformers.standoff.character_map import CharacterMap
 
 
-def is_equal(this: pd.DataFrame, other: pd.DataFrame) -> bool:
-    return this.to_dict() == other.to_dict()
+def assert_equal(this: pd.DataFrame, other: pd.DataFrame) -> bool:
+    assert this.to_dict() == other.to_dict()
 
 
 @pytest.fixture
@@ -16,7 +16,6 @@ def simple_spans():
         "end": [37, 36, 6, 12, 35, 20, 34],
         "depth": [0, 1, 2, 2, 2, 3, 3],
         "tag": ["paragraph", "sent", "tok", "tok", "nounphrase", "tok", "tok"],
-        "attributes": [{}, {}, {}, {}, {}, {}, {}],
         "text": [
             "   Das  ist      ein Beispielsatz  . ",
             "  Das  ist      ein Beispielsatz  .",
@@ -194,11 +193,11 @@ def character_map_with_adjacent_spans():
 
 def test_from_spans(simple_spans, simple_character_map):
     cmap = CharacterMap.from_spans(simple_spans)
-    assert is_equal(cmap.df, simple_character_map.df)
+    assert_equal(cmap.df, simple_character_map.df)
 
 
 def test_to_spans(simple_spans, simple_character_map):
-    assert is_equal(simple_character_map.to_spans(), simple_spans)
+    assert_equal(simple_character_map.to_spans(), simple_spans)
 
 
 def test_normalize_whitespace(simple_character_map):
