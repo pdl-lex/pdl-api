@@ -1,8 +1,7 @@
-from typing import Any, Callable
+from typing import Callable
 
 import pandas as pd
 
-from app.transformers.standoff.annotation_frame import AnnotationFrame, Padding
 from app.transformers.standoff.character_map import CharacterMap
 from app.transformers.standoff.xml_standoff_converter import (
     xml_to_standoff,
