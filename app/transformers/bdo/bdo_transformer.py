@@ -1,11 +1,12 @@
 import csv
 from pathlib import Path
 
-from pydash import omit, unique_id
+from pydash import unique_id
 
 from app.transformers.base_xml_transformer import (
     BaseXmlTransformer,
     extract_text,
+    flatten_senses,
     xpath,
 )
 from app.transformers.bdo.bdo_mixed_content import BdoMixedContentTransformer
@@ -15,18 +16,6 @@ pos_map_path = Path(__file__).parent / "pos_mapping.csv"
 with open(pos_map_path, newline="") as csvfile:
     reader = csv.DictReader(csvfile)
     POS_MAPPING = {row["bdo_tag"]: row["normalized"] for row in reader}
-
-
-def flatten_senses(senses: list):
-    flat_senses = []
-
-    for sense in senses:
-        flat_senses.append(omit(sense, "sense"))
-        flat_senses.extend(
-            [] if sense is None else flatten_senses(sense.get("sense", []))
-        )
-
-    return flat_senses
 
 
 def extract_examples(sense):

@@ -9,6 +9,7 @@ from pydash import omit, unique_id
 from app.transformers.base_xml_transformer import (
     BaseXmlTransformer,
     extract_text,
+    flatten_senses,
     xpath,
 )
 from app.transformers.dwds.dwds_mixed_content import DwdsMixedContentTransformer
@@ -32,19 +33,6 @@ with open(gender_map_path, newline="") as csvfile:
 
 
 # --- Sense extraction chain (module-level, matches BDO pattern) ---
-
-
-def flatten_senses(senses: list):
-    """Recursively flatten a nested sense tree into a flat list, preserving all senses including parents."""
-    flat_senses = []
-
-    for sense in senses:
-        flat_senses.append(omit(sense, "sense"))
-        flat_senses.extend(
-            [] if sense is None else flatten_senses(sense.get("sense", []))
-        )
-
-    return flat_senses
 
 
 def _build_collapse_map(text):
