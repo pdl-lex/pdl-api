@@ -86,7 +86,7 @@ class StandoffTransformer:
         return frame.assign(span_id=ids).set_index("span_id")
 
     def _apply_preprocessing(self):
-        """Apply all methods decorated with @preprocess to self.aframe"""
+        """Apply all methods decorated with @preprocess to self.cmap"""
         preprocess_methods = []
 
         for cls in type(self).__mro__:
