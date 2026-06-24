@@ -231,11 +231,16 @@ class CharacterMap:
         return spans.sort_values(["depth", "start"]).reset_index()
 
     def rename_tag(self, tag, value):
-        def rename(col):
+        def rename_series(col):
             col = col.str.rsplit("_", n=1)
             return col.str[0].replace(tag, value) + "_" + col.str[1]
 
-        self.df.loc[:, "depth_0":] = self.df.loc[:, "depth_0":].transform(rename)
+        def rename(old_tag):
+            old_tag, index = old_tag.rsplit("_", maxsplit=1)
+            return f"{value if old_tag == tag else old_tag}_{index}"
+
+        self.df.loc[:, "depth_0":] = self.df.loc[:, "depth_0":].transform(rename_series)
+        self.span_attributes = {rename(k): v for k, v in self.span_attributes.items()}
 
         return self
 
