@@ -13,7 +13,7 @@ def xml_to_standoff(node, offset=0, depth=0, spans=None, basetext=None):
     basetext = full_text if basetext is None else basetext
     end = offset + len(full_text)
 
-    markable = (offset, end, depth, node.tag, node.attrib, basetext[offset:end])
+    markable = [offset, end, depth, node.tag, dict(node.attrib), basetext[offset:end]]
     spans.append(markable)
 
     offset += len(node.text or "")
