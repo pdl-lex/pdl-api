@@ -76,7 +76,7 @@ class CharacterMap:
 
         self.df = df[~is_empty_span]
 
-        return self.reset_index().normalize_ws()
+        return self.reset_index()
 
     def pop_span(self, span_id):
         is_target_span = self.df.eq(span_id).any(axis=1)
