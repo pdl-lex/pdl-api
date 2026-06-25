@@ -78,7 +78,7 @@ class StandoffTransformer:
         frame = pd.concat([frame, extra_attributes], axis=1)
         cmap = CharacterMap.from_spans(
             cls._add_unique_ids(frame).reset_index()
-        ).tighten_spans()
+        ).minify()
         return cls(cmap)
 
     @classmethod
@@ -153,6 +153,6 @@ class StandoffTransformer:
         return serialized_spans
 
     def serialize(self) -> dict:
-        self.cmap = self.cmap.tighten_spans()
+        self.cmap = self.cmap.minify()
         result = {"text": self.cmap.text, "annotations": self._serialize_spans()}
         return result

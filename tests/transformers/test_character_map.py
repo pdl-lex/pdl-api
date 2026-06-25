@@ -206,15 +206,15 @@ def test_normalize_whitespace(simple_character_map):
     assert cmap.text == " Das ist ein Beispielsatz . "
 
 
-def test_tighten_spans(simple_character_map):
-    cmap = simple_character_map.tighten_spans()
+def test_minify(simple_character_map):
+    cmap = simple_character_map.minify()
     texts = cmap.to_spans().text
 
     assert not texts.str.match(r"^\s+|\s+$").any()
 
 
 def test_pop_span(simple_character_map):
-    cmap = simple_character_map.tighten_spans()
+    cmap = simple_character_map.minify()
     popped = cmap.pop_span("nounphrase_1")
 
     assert simple_character_map.text == "Das ist  ."
@@ -234,7 +234,7 @@ def test_pop_span(simple_character_map):
     ],
 )
 def test_basic_insert(simple_character_map, index, text, expected):
-    cmap = simple_character_map.tighten_spans()
+    cmap = simple_character_map.minify()
     assert cmap.insert(index, text).text == expected
 
 

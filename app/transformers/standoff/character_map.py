@@ -45,34 +45,35 @@ class CharacterMap:
         is_ws = self.df.char.str.strip() == ""
         self.df = df[~(is_ws & is_ws.shift())]
 
-        return self
+        return self.reset_index()
 
-    def tighten_spans(self):
+    def minify(self):
         """
-        Move leading and trailing whitespace within spans into parent span. E.g., transforms
+        Move leading and trailing whitespace within spans into parent spans and normalize
+        whitespace. E.g., transforms
 
-        `<outer><inner> foobar </inner></outer>`
+        `<outer>  <inner> foo </inner>  <inner>  bar  </inner>  </outer>`
 
         into
 
-        `<outer> <inner>foobar</inner> </outer>`.
+        `<outer><inner>foo</inner> <inner>bar</inner></outer>`.
         """
         df = self.normalize_ws().df.copy()
         is_ws = df.char.str.strip() == ""
 
         columns = df.filter(like="depth").columns
 
-        tightened = df[columns].transform(
+        stripped_spans = df[columns].transform(
             lambda col: col[~(is_ws & mark_span_edges(col))]
         )
 
-        df[columns] = tightened
+        df[columns] = stripped_spans
 
         is_empty_span = is_ws & df[columns].isna().all(axis=1)
 
         self.df = df[~is_empty_span]
 
-        return self.reset_index()
+        return self.reset_index().normalize_ws()
 
     def pop_span(self, span_id):
         is_target_span = self.df.eq(span_id).any(axis=1)
