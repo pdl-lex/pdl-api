@@ -32,6 +32,7 @@ class CharacterMap:
         attributes = attributes.apply(
             lambda row: row.dropna().to_dict(), axis=1
         ).to_dict()
+        attributes = {k: {} if pd.isna(v) else v for k, v in attributes.items()}
 
         return cls(df, span_attributes=attributes)
 
