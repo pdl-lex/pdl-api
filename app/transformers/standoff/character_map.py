@@ -146,7 +146,8 @@ class CharacterMap:
 
         assert is_span_id.any(), f"Span {span_id!r} not found"
 
-        start, *_, end = self.df[is_span_id].index
+        range_ = self.df[is_span_id].index
+        start, end = range_[0], range_[-1]
 
         return start, end + 1
 
