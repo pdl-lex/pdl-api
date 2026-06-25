@@ -59,6 +59,20 @@ def textspan(span):
     return basedata(span, "text")
 
 
+def parse_attributes(frame: pd.DataFrame) -> pd.DataFrame:
+    attributes = pd.DataFrame.from_records(frame["attributes"])
+    frame = frame.drop("attributes", axis=1)
+
+    return pd.concat([frame, attributes], axis=1)
+
+
+def add_span_ids(frame: pd.DataFrame) -> pd.DataFrame:
+    tag_counters = frame.groupby("tag").cumcount() + 1
+    ids = frame.tag + "_" + tag_counters.astype(str)
+
+    return frame.assign(span_id=ids)
+
+
 class StandoffTransformer:
     def __init__(self, cmap: CharacterMap):
         self.cmap = cmap
@@ -74,23 +88,15 @@ class StandoffTransformer:
             span_data,
             columns=["start", "end", "depth", "tag", "attributes", "text"],
         )
-        extra_attributes = pd.DataFrame.from_records(frame.pop("attributes"))
-        frame = pd.concat([frame, extra_attributes], axis=1)
-        cmap = CharacterMap.from_spans(
-            cls._add_unique_ids(frame).reset_index()
-        ).minify()
+        frame = parse_attributes(frame)
+        frame = add_span_ids(frame)
+        cmap = CharacterMap.from_spans(frame).minify()
+
         return cls(cmap)
 
     @classmethod
     def from_cmap(cls, cmap: CharacterMap):
         return cls(cmap)
-
-    @staticmethod
-    def _add_unique_ids(frame: pd.DataFrame) -> pd.DataFrame:
-        tag_counters = frame.groupby("tag").cumcount() + 1
-        ids = frame.tag + "_" + tag_counters.astype(str)
-
-        return frame.assign(span_id=ids).set_index("span_id")
 
     def _apply_preprocessing(self):
         """Apply all methods decorated with @preprocess to self.cmap"""
