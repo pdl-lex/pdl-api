@@ -59,50 +59,52 @@ def complex_annotated_xml():
 @pytest.fixture
 def complex_spans():
     return [
-        (
+        [
             0,
-            226,
+            343,
             0,
             "text",
             {},
-            "  Ahorn, lat. Acer, Bezeichnung für einen Laubbaum mit charakteristischen, meist "
-            "handförmig gelappten Blättern; vgl. Eintrag x und Eintrag y. Die Art ist in "
-            "mitteleuropäischen Wäldern und Parks weit verbreitet (Meier, 1996).  ",
-        ),
-        (
-            1,
-            225,
+            "\n        \n            Ahorn, lat. Acer,\n            Bezeichnung für einen Laubbaum mit charakteristischen, meist handförmig\n            gelappten Blättern;\n            vgl. Eintrag x und\n            Eintrag y.\n            Die Art ist in mitteleuropäischen Wäldern und Parks weit\n            verbreitet (Meier, \n            1996).\n        \n    ",
+        ],
+        [
+            9,
+            338,
             1,
             "zusammenfassung",
             {"lemmaId": "ahorn_n"},
-            " Ahorn, lat. Acer, Bezeichnung für einen Laubbaum mit charakteristischen, meist "
-            "handförmig gelappten Blättern; vgl. Eintrag x und Eintrag y. Die Art ist in "
-            "mitteleuropäischen Wäldern und Parks weit verbreitet (Meier, 1996). ",
-        ),
-        (2, 7, 2, "lemma", {}, "Ahorn"),
-        (9, 18, 2, "fremdsprache", {"sprache": "latein"}, "lat. Acer"),
-        (
-            20,
-            111,
+            "\n            Ahorn, lat. Acer,\n            Bezeichnung für einen Laubbaum mit charakteristischen, meist handförmig\n            gelappten Blättern;\n            vgl. Eintrag x und\n            Eintrag y.\n            Die Art ist in mitteleuropäischen Wäldern und Parks weit\n            verbreitet (Meier, \n            1996).\n        ",
+        ],
+        [22, 27, 2, "lemma", {}, "Ahorn"],
+        [29, 38, 2, "fremdsprache", {"sprache": "latein"}, "lat. Acer"],
+        [
+            52,
+            155,
             2,
             "bedeutung",
             {},
-            "Bezeichnung für einen Laubbaum mit charakteristischen, meist handförmig gelappten "
-            "Blättern;",
-        ),
-        (112, 126, 2, "referenz", {"ziel": "eintrag-x"}, "vgl. Eintrag x"),
-        (131, 140, 2, "referenz", {"ziel": "eintrag-y"}, "Eintrag y"),
-        (
-            142,
-            223,
+            "Bezeichnung für einen Laubbaum mit charakteristischen, meist handförmig\n            gelappten Blättern;",
+        ],
+        [168, 182, 2, "referenz", {"ziel": "eintrag-x"}, "vgl. Eintrag x"],
+        [199, 208, 2, "referenz", {"ziel": "eintrag-y"}, "Eintrag y"],
+        [
+            222,
+            328,
             2,
             "verbreitung",
             {},
-            "Die Art ist in mitteleuropäischen Wäldern und Parks weit verbreitet (Meier, 1996)",
-        ),
-        (211, 223, 3, "literatur", {"id": "meier96", "typ": "vgl."}, "Meier, 1996)"),
-        (211, 216, 4, "autor", {}, "Meier"),
-        (218, 222, 4, "jahr", {}, "1996"),
+            "Die Art ist in mitteleuropäischen Wäldern und Parks weit\n            verbreitet (Meier, \n            1996)",
+        ],
+        [
+            303,
+            328,
+            3,
+            "literatur",
+            {"id": "meier96", "typ": "vgl."},
+            "Meier, \n            1996)",
+        ],
+        [303, 308, 4, "autor", {}, "Meier"],
+        [323, 327, 4, "jahr", {}, "1996"],
     ]
 
 
