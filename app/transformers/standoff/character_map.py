@@ -10,6 +10,9 @@ def mark_span_edges(col):
     return is_annotated & (is_span_start | is_span_end)
 
 
+internal_columns = ["start", "end", "depth", "tag", "text"]
+
+
 class CharacterMap:
     def __init__(self, charmap: pd.DataFrame, span_attributes=None):
         if "char" not in charmap.columns:
@@ -27,7 +30,6 @@ class CharacterMap:
                 df.loc[row.start : row.end - 1, f"depth_{depth}"] = row.span_id
 
         # set attributes
-        internal_columns = ["start", "end", "depth", "tag", "text"]
         attributes = span_frame.set_index("span_id").drop(internal_columns, axis=1)
         attributes = attributes.apply(
             lambda row: row.dropna().to_dict(), axis=1
@@ -207,6 +209,9 @@ class CharacterMap:
     def to_spans(self) -> pd.DataFrame:
         df = self.df
         text = self.text
+
+        if len(df) == 0:
+            return pd.DataFrame(columns=internal_columns)
 
         # stack annotation layers
         stacked = (
