@@ -232,7 +232,9 @@ class CharacterMap:
             .astype(int)
         )
 
-        spans["text"] = spans.apply(lambda row: text[row.start : row.end], axis=1)
+        starts = spans["start"].to_numpy()
+        ends = spans["end"].to_numpy()
+        spans["text"] = [text[s:e] for s, e in zip(starts, ends, strict=True)]
 
         # populate attribute columns
         if (attributes := pd.Series(self.span_attributes)).notna().any():
