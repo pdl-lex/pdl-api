@@ -65,7 +65,7 @@ class CharacterMap:
         columns = df.filter(like="depth").columns
 
         stripped_spans = df[columns].transform(
-            lambda col: col[~(is_ws & mark_span_edges(col))]
+            lambda col: col.where(~(is_ws & mark_span_edges(col)))
         )
 
         df[columns] = stripped_spans
