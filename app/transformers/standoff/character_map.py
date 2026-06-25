@@ -214,11 +214,10 @@ class CharacterMap:
             return pd.DataFrame(columns=internal_columns)
 
         # stack annotation layers
-        stacked = (
-            pd.concat([df[col] for col in df.columns], keys=df.columns)
-            .rename("span_id")
-            .drop("char")
-        )
+        depth_columns = df.filter(like="depth").columns
+        stacked = pd.concat(
+            [df[col] for col in depth_columns], keys=depth_columns
+        ).rename("span_id")
         stacked = stacked.rename_axis(["depth", "index"]).reset_index()
 
         # extract start and end indexes
