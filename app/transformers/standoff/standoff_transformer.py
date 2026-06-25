@@ -3,9 +3,28 @@ from typing import Callable
 import pandas as pd
 
 from app.transformers.standoff.character_map import CharacterMap
-from app.transformers.standoff.xml_standoff_converter import (
-    xml_to_standoff,
-)
+
+
+def xml_to_standoff(node, offset=0, depth=0, spans=None, basetext=None):
+    if spans is None:
+        spans = []
+
+    full_text = "".join(node.itertext())
+    basetext = full_text if basetext is None else basetext
+    end = offset + len(full_text)
+
+    markable = (offset, end, depth, node.tag, node.attrib, basetext[offset:end])
+    spans.append(markable)
+
+    offset += len(node.text or "")
+
+    for subnode in node:
+        if not isinstance(subnode.tag, str):
+            continue
+        xml_to_standoff(subnode, offset, depth + 1, spans, basetext)
+        offset += len("".join(subnode.itertext())) + len(subnode.tail or "")
+
+    return spans
 
 
 def preprocess(func_or_priority=None, *, order: int = 0):

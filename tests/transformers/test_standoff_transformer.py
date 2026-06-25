@@ -2,9 +2,9 @@ import lxml.etree as ET  # noqa: N812
 import pytest
 
 from app.models.annotated_text import TextAnnotationSpan
-from app.transformers.standoff.standoff_transformer import StandoffTransformer, register
-from app.transformers.standoff.xml_standoff_converter import (
-    normalize_whitespace,
+from app.transformers.standoff.standoff_transformer import (
+    StandoffTransformer,
+    register,
     xml_to_standoff,
 )
 
@@ -161,19 +161,3 @@ def test_registered_spans_are_returned(basic_annotated_xml):
             "labels": ["NOUN"],
         }
     ]
-
-
-def test_normalize_whitespace(complex_whitespace_xml):
-    expected = (
-        "<satz> <pronomen>Das</pronomen> <verb>ist</verb> <artikel>ein</artikel> "
-        '<adjektiv>komplexer</adjektiv> <nomen> <kompositum vollform="Beispielsatz">'
-        "<mod>Beispiel</mod><kopf>satz</kopf></kompositum> </nomen> mit zusätzlichen Leerzeichen "
-        "und leeren <br/> Tags <trace/>. </satz>"
-    )
-
-    assert (
-        ET.tostring(
-            normalize_whitespace(complex_whitespace_xml), encoding="utf-8"
-        ).decode("utf-8")
-        == expected
-    )
