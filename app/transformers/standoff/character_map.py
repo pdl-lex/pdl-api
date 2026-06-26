@@ -23,6 +23,9 @@ class CharacterMap:
 
     @classmethod
     def from_spans(cls, span_frame):
+        # remove 0-length spans
+        span_frame = span_frame[span_frame.start < span_frame.end]
+
         root_text = span_frame.loc[span_frame.depth.eq(0), "text"].squeeze()
         df = pd.DataFrame({"char": list(root_text)})
 
