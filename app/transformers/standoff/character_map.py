@@ -26,9 +26,8 @@ class CharacterMap:
         root_text = span_frame.loc[span_frame.depth.eq(0), "text"].squeeze()
         df = pd.DataFrame({"char": list(root_text)})
 
-        for depth, subgroup in span_frame.groupby("depth"):
-            for _, row in subgroup.iterrows():
-                df.loc[row.start : row.end - 1, f"depth_{depth}"] = row.span_id
+        for _, row in span_frame.iterrows():
+            df.loc[row.start : row.end - 1, f"depth_{row.depth}"] = row.span_id
 
         # set attributes
         attributes = span_frame.set_index("span_id").drop(internal_columns, axis=1)
