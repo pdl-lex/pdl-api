@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 
@@ -249,15 +250,22 @@ class CharacterMap:
         return spans.sort_values(["depth", "start"]).reset_index()
 
     def rename_tag(self, tag, value):
-        def rename_series(col):
-            col = col.str.rsplit("_", n=1)
-            return col.str[0].replace(tag, value) + "_" + col.str[1]
+        depth_columns = self.df.filter(like="depth").columns
+
+        split_tags = self.df[depth_columns].map(
+            lambda cell: cell.split("_"), na_action="ignore"
+        )
+        tags = split_tags.map(lambda cell: cell[0], na_action="ignore")
+        subscripts = split_tags.map(lambda cell: cell[1], na_action="ignore")
+        tags = tags.replace(tag, value)
+
+        new_tags = tags.astype(object) + "_" + subscripts.astype(object)
+        self.df.loc[:, depth_columns] = new_tags
 
         def rename(old_tag):
             old_tag, index = old_tag.rsplit("_", maxsplit=1)
             return f"{value if old_tag == tag else old_tag}_{index}"
 
-        self.df.loc[:, "depth_0":] = self.df.loc[:, "depth_0":].transform(rename_series)
         self.span_attributes = {rename(k): v for k, v in self.span_attributes.items()}
 
         return self
