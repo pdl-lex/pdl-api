@@ -235,9 +235,12 @@ class CharacterMap:
             .astype(int)
         )
 
-        starts = spans["start"].to_numpy()
-        ends = spans["end"].to_numpy()
-        spans["text"] = [text[s:e] for s, e in zip(starts, ends, strict=True)]
+        spans["text"] = [
+            text[s:e] for s, e in zip(spans["start"], spans["end"], strict=True)
+        ]
+
+        # rearrange columns
+        spans = spans[internal_columns]
 
         # populate attribute columns
         if (attributes := pd.Series(self.span_attributes)).notna().any():
@@ -249,7 +252,10 @@ class CharacterMap:
                 pd.DataFrame(spans.pop("attributes").to_list(), index=spans.index)
             )
 
-        return spans.sort_values(["depth", "start"]).reset_index()
+        # sort into canonical order
+        spans = spans.sort_values(["depth", "start"]).reset_index()
+
+        return spans
 
     def rename_tag(self, tag, value):
         depth_columns = self.df.filter(like="depth").columns
