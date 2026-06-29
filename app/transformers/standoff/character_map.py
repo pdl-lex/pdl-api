@@ -14,6 +14,10 @@ def mark_span_edges(col):
 internal_columns = ["start", "end", "depth", "tag", "text"]
 
 
+class SpanNotFoundError(Exception):
+    pass
+
+
 class CharacterMap:
     def __init__(self, charmap: pd.DataFrame, span_attributes=None):
         if "char" not in charmap.columns:
@@ -133,6 +137,10 @@ class CharacterMap:
         Insert text at index into root text. Optionally include the inserted text into the specified
         host span.
         """
+
+        if len(text) == 0:
+            return self
+
         df = pd.concat(
             [
                 self.df.iloc[:index],
@@ -150,7 +158,8 @@ class CharacterMap:
     def get_span_range(self, span_id):
         is_span_id = self.df.eq(span_id).any(axis=1)
 
-        assert is_span_id.any(), f"Span {span_id!r} not found"
+        if not is_span_id.any():
+            raise SpanNotFoundError(f"Span {span_id!r} not found")
 
         range_ = self.df[is_span_id].index
         start, end = range_[0], range_[-1]
