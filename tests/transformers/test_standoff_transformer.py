@@ -140,7 +140,7 @@ def test_basic_annotation(basic_transformer):
         "depth": [0, 1, 1, 1, 1],
         "text": ["Das ist ein Beispielsatz.", "Das", "ist", "ein", "Beispielsatz"],
     }
-    assert basic_transformer.cmap.to_spans().to_dict(orient="list") == expected
+    assert basic_transformer.cmap.minify().to_spans().to_dict(orient="list") == expected
 
 
 def test_basic_serialization(basic_transformer):

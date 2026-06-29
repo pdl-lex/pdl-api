@@ -90,7 +90,7 @@ class StandoffTransformer:
         )
         frame = parse_attributes(frame)
         frame = add_span_ids(frame)
-        cmap = CharacterMap.from_spans(frame).minify()
+        cmap = CharacterMap.from_spans(frame)
 
         return cls(cmap)
 
