@@ -134,6 +134,35 @@ class CharacterMap:
 
         return df
 
+    def set_text(self, span_id, text):
+        """
+        Replace the text of a span by text. If any subspans exist, they are discarded.
+        """
+        if len(text) == 0:
+            return self
+
+        df = self.df.filter(like="depth").reset_index(drop=True)
+
+        m = df.eq(span_id).any(axis=1)
+
+        if not m.any():
+            return self
+
+        old_span = df[m]
+
+        new_span = pd.DataFrame(
+            {"char": list(text), **old_span.iloc[0].dropna().to_dict()}
+        )
+        self.df = pd.concat(
+            [
+                self.df.iloc[: old_span.index[0]],
+                new_span,
+                self.df.iloc[old_span.index[-1] + 1 :],
+            ]
+        ).reset_index(drop=True)
+
+        return self
+
     def insert(self, index, text, host_span=None):
         """
         Insert text at index into root text. Optionally include the inserted text into the specified
