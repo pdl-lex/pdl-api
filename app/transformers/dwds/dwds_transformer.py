@@ -142,7 +142,7 @@ def transform_sense(node):
     id_ = node.attrib.get("xml:id", unique_id("sense_"))
 
     return {
-        "def": text,
+        "def": {"text": text, "annotations": []},  # annotations are not handled yet
         "sourceId": id_,
         "n": number,
         "sense": [

@@ -33,7 +33,7 @@ class Citation(AnnotatedTextData):
 
 class Sense(BaseModel):
     n: Optional[str] = None
-    def_: Optional[str] = Field(alias="def", default="")
+    def_: Optional[AnnotatedTextData] = Field(alias="def", default=None)
     sense: list["Sense"] = []
     cit: Optional[list[Citation]] = []
     usg: Optional[list[dict]] = []
