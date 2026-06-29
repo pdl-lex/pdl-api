@@ -51,6 +51,8 @@ class CharacterMap:
 
     def normalize_ws(self):
         """Merge consecutive whitespace into single spaces"""
+        if self.df.empty:
+            return self.reset_index()
         df = self.df.assign(char=self.df.char.str.replace(r"\s", " ", regex=True))
         is_ws = df.char == " "
         self.df = df[~(is_ws & is_ws.shift())]
@@ -169,7 +171,7 @@ class CharacterMap:
     def spans(self, tag: str | None = None):
         unique = pd.Series(self.df.filter(like="depth_").stack().unique())
 
-        if tag is None:
+        if len(unique) == 0 or tag is None:
             return unique
 
         return unique[unique.str.rsplit("_", n=1).str[0].eq(tag)]
