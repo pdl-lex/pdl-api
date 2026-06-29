@@ -54,10 +54,6 @@ class BdoBaseTransformer(StandoffTransformer):
 
         return cmap.reset_index()
 
-    @preprocess
-    def rename_compounds(self, cmap: CharacterMap) -> CharacterMap:
-        return cmap.rename_tag("kompositum", "verweis")
-
     @register("lemma-form")
     def serialize_mention(self, span: pd.Series) -> TextAnnotationSpan:
         return TextAnnotationSpan(**textspan(span), labels=["italic"])
@@ -83,6 +79,13 @@ class BdoBaseTransformer(StandoffTransformer):
             target=get_target_link(span),
             missing=span.get("fehlt") == "ja",
         )
+
+    @register("kompositum")
+    def serialize_compound(
+        self, span: pd.Series
+    ) -> Union[CrossRefAnnotationSpan, LinkAnnotationSpan]:
+        """Kompositum-nodes share the structure of verweis-nodes"""
+        return self.serialize_reference(span)
 
 
 class BdoLiteratureTransformer(StandoffTransformer):
