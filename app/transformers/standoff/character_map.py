@@ -52,7 +52,7 @@ class CharacterMap:
     def normalize_ws(self):
         """Merge consecutive whitespace into single spaces"""
         df = self.df.assign(char=self.df.char.str.replace(r"\s", " ", regex=True))
-        is_ws = self.df.char.str.strip() == ""
+        is_ws = df.char == " "
         self.df = df[~(is_ws & is_ws.shift())]
 
         return self.reset_index()
@@ -68,8 +68,8 @@ class CharacterMap:
 
         `<outer><inner>foo</inner> <inner>bar</inner></outer>`.
         """
-        df = self.normalize_ws().df.copy()
-        is_ws = df.char.str.strip() == ""
+        df = self.normalize_ws().df
+        is_ws = df.char == " "
 
         columns = df.filter(like="depth").columns
 
