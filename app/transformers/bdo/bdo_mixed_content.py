@@ -45,12 +45,38 @@ def get_target_link(span):
 class BdoBaseTransformer(StandoffTransformer):
     @preprocess(order=1)
     def insert_crossref_prefixes(self, cmap: CharacterMap) -> CharacterMap:
-        for span_id in cmap.spans("verweis"):
-            start, _ = cmap.get_span_range(span_id)
-            attributes = cmap.span_attributes.get(span_id, {})
+        spans = cmap.to_spans()
 
-            insertion = REF_TYPE_PREFIXES[attributes.get("verweis-typ")]
-            cmap = cmap.insert(start, insertion)
+        for _, span in spans[spans.tag == "verweis"].iterrows():
+            # insert the verweis-typ into the base text
+            insertion = REF_TYPE_PREFIXES.get(span.get("verweis-typ"), "")
+            cmap = cmap.insert(span.start, insertion)
+
+            if span.get("ziel-typ") == "Bedeutung":
+                # get nested lemma-referenz
+                lemma_refs = spans[
+                    spans.tag.eq("lemma-referenz")
+                    & spans.start.ge(span.start)
+                    & spans.end.le(span.end)
+                ]
+                if len(lemma_refs) == 0:
+                    continue
+
+                lemma_ref_span = lemma_refs.iloc[0]
+
+                if "vollform" not in lemma_ref_span:
+                    continue
+
+                # expand full lemma
+                full_lemma = lemma_ref_span["vollform"] + ", "
+                cmap.set_text(lemma_ref_span.span_id, full_lemma)
+
+                # insert "Bed. " text
+                cmap = cmap.insert(
+                    cmap.get_span_range(lemma_ref_span.span_id)[1],
+                    "Bed. ",
+                    span.span_id,
+                )
 
         return cmap.reset_index()
 
