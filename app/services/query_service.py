@@ -34,7 +34,7 @@ dispatcher = {
     "resources": lambda args: {"source": {"$in": [s.value for s in args["resources"]]}},
     "pos": lambda args: {"pos": args["pos"]},
     "npos": lambda args: {"nPos": args["npos"]},
-    "senses": simple_containment_query("senses", "flatSenses.def"),
+    "senses": simple_containment_query("senses", "flatSenses.def.text"),
     "etymology": simple_containment_query("etymology", "etym.text"),
 }
 
