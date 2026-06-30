@@ -19,7 +19,7 @@ ALPHABET = set(ascii_uppercase) | {"-"}
 
 fulltext_search_fields = [
     {"key": "headword.lemma", "weight": 10},
-    {"key": "flatSenses.def", "weight": 1},
+    {"key": "flatSenses.def.text", "weight": 1},
     {"key": "flatSenses.cit.quote", "weight": 1},
     {"key": "etym.text", "weight": 1},
     {"key": "family", "weight": 1},
