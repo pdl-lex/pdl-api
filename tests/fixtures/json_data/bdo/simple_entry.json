@@ -54,7 +54,10 @@
   "pos": "Substantiv",
   "sense": [
     {
-      "def": "Große, mit Bäumen bewachsene Fläche",
+      "def": {
+        "text": "Große, mit Bäumen bewachsene Fläche",
+        "annotations": []
+      },
       "sourceId": "bwb__Wald_1",
       "n": "1",
       "sense": [],
@@ -75,22 +78,34 @@
       ]
     },
     {
-      "def": "Übertragene Bedeutungen und Spezialisierungen",
+      "def": {
+        "text": "Übertragene Bedeutungen und Spezialisierungen",
+        "annotations": []
+      },
       "sourceId": "bwb__Wald_2",
       "n": "2",
       "sense": [
         {
-          "def": "Große Menge, Ansammlung von Gegenständen",
+          "def": {
+            "text": "Große Menge, Ansammlung von Gegenständen",
+            "annotations": []
+          },
           "sourceId": "bwb__Wald_2a",
           "n": "2a",
           "sense": [
             {
-              "def": "Dichte Ansammlung von Masten oder Pfählen",
+              "def": {
+                "text": "Dichte Ansammlung von Masten oder Pfählen",
+                "annotations": []
+              },
               "sourceId": "bwb__Wald_2a_alpha",
               "n": "2aα",
               "sense": [
                 {
-                  "def": "Im Hafen (Schiffsmasten)",
+                  "def": {
+                    "text": "Im Hafen (Schiffsmasten)",
+                    "annotations": []
+                  },
                   "sourceId": "bwb__Wald_2a_alpha_i",
                   "n": "2aαi",
                   "sense": [],
@@ -123,7 +138,10 @@
                   ]
                 },
                 {
-                  "def": "In der Stadt (Schilderwald)",
+                  "def": {
+                    "text": "In der Stadt (Schilderwald)",
+                    "annotations": []
+                  },
                   "sourceId": "bwb__Wald_2a_alpha_ii",
                   "n": "2aαii",
                   "sense": [],
@@ -133,7 +151,10 @@
               "cit": []
             },
             {
-              "def": "Umgangssprachlich für dichtes Kopfhaar",
+              "def": {
+                "text": "Umgangssprachlich für dichtes Kopfhaar",
+                "annotations": []
+              },
               "sourceId": "bwb__Wald_2a_beta",
               "n": "2aβ",
               "sense": [],
@@ -143,7 +164,10 @@
           "cit": []
         },
         {
-          "def": "Spezifisches forstwirtschaftliches Nutzgebiet",
+          "def": {
+            "text": "Spezifisches forstwirtschaftliches Nutzgebiet",
+            "annotations": []
+          },
           "sourceId": "bwb__Wald_2b",
           "n": "2b",
           "sense": [],
@@ -153,7 +177,7 @@
       "cit": []
     },
     {
-      "def": "Fabelwesen, Waldgeist (Alp)",
+      "def": { "text": "Fabelwesen, Waldgeist (Alp)", "annotations": [] },
       "sourceId": "bwb__Wald_3",
       "n": "3",
       "sense": [],
@@ -166,7 +190,10 @@
   "xml:lang": "DE",
   "flatSenses": [
     {
-      "def": "Große, mit Bäumen bewachsene Fläche",
+      "def": {
+        "text": "Große, mit Bäumen bewachsene Fläche",
+        "annotations": []
+      },
       "sourceId": "bwb__Wald_1",
       "n": "1",
       "cit": [
@@ -186,25 +213,34 @@
       ]
     },
     {
-      "def": "Übertragene Bedeutungen und Spezialisierungen",
+      "def": {
+        "text": "Übertragene Bedeutungen und Spezialisierungen",
+        "annotations": []
+      },
       "sourceId": "bwb__Wald_2",
       "n": "2",
       "cit": []
     },
     {
-      "def": "Große Menge, Ansammlung von Gegenständen",
+      "def": {
+        "text": "Große Menge, Ansammlung von Gegenständen",
+        "annotations": []
+      },
       "sourceId": "bwb__Wald_2a",
       "n": "2a",
       "cit": []
     },
     {
-      "def": "Dichte Ansammlung von Masten oder Pfählen",
+      "def": {
+        "text": "Dichte Ansammlung von Masten oder Pfählen",
+        "annotations": []
+      },
       "sourceId": "bwb__Wald_2a_alpha",
       "n": "2aα",
       "cit": []
     },
     {
-      "def": "Im Hafen (Schiffsmasten)",
+      "def": { "text": "Im Hafen (Schiffsmasten)", "annotations": [] },
       "sourceId": "bwb__Wald_2a_alpha_i",
       "n": "2aαi",
       "cit": [
@@ -236,25 +272,31 @@
       ]
     },
     {
-      "def": "In der Stadt (Schilderwald)",
+      "def": { "text": "In der Stadt (Schilderwald)", "annotations": [] },
       "sourceId": "bwb__Wald_2a_alpha_ii",
       "n": "2aαii",
       "cit": []
     },
     {
-      "def": "Umgangssprachlich für dichtes Kopfhaar",
+      "def": {
+        "text": "Umgangssprachlich für dichtes Kopfhaar",
+        "annotations": []
+      },
       "sourceId": "bwb__Wald_2a_beta",
       "n": "2aβ",
       "cit": []
     },
     {
-      "def": "Spezifisches forstwirtschaftliches Nutzgebiet",
+      "def": {
+        "text": "Spezifisches forstwirtschaftliches Nutzgebiet",
+        "annotations": []
+      },
       "sourceId": "bwb__Wald_2b",
       "n": "2b",
       "cit": []
     },
     {
-      "def": "Fabelwesen, Waldgeist (Alp)",
+      "def": { "text": "Fabelwesen, Waldgeist (Alp)", "annotations": [] },
       "sourceId": "bwb__Wald_3",
       "n": "3",
       "cit": []
