@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any, Callable, Optional
 
 import lxml.etree as ET  # noqa: N812
+from pydash import omit
 from unidecode import unidecode
 
 
@@ -18,6 +19,18 @@ def extract_text(node) -> str | None:
 
     raw_text = "".join(node.itertext())
     return " ".join(re.split(r"\s+", raw_text))
+
+
+def flatten_senses(senses: list):
+    flat_senses = []
+
+    for sense in senses:
+        flat_senses.append(omit(sense, "sense"))
+        flat_senses.extend(
+            [] if sense is None else flatten_senses(sense.get("sense", []))
+        )
+
+    return flat_senses
 
 
 class BaseXmlTransformer:

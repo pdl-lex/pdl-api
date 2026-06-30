@@ -1,11 +1,12 @@
 import csv
 from pathlib import Path
 
-from pydash import omit, unique_id
+from pydash import unique_id
 
 from app.transformers.base_xml_transformer import (
     BaseXmlTransformer,
     extract_text,
+    flatten_senses,
     xpath,
 )
 from app.transformers.bdo.bdo_mixed_content import BdoMixedContentTransformer
@@ -17,18 +18,6 @@ with open(pos_map_path, newline="") as csvfile:
     POS_MAPPING = {row["bdo_tag"]: row["normalized"] for row in reader}
 
 
-def flatten_senses(senses: list):
-    flat_senses = []
-
-    for sense in senses:
-        flat_senses.append(omit(sense, "sense"))
-        flat_senses.extend(
-            [] if sense is None else flatten_senses(sense.get("sense", []))
-        )
-
-    return flat_senses
-
-
 def extract_examples(sense):
     return [
         {**BdoMixedContentTransformer.load_xml(node).serialize(), "type": "example"}
@@ -37,13 +26,17 @@ def extract_examples(sense):
 
 
 def transform_sense(node):
-    text = "" if (sense := node.find("bedeutung")) is None else extract_text(sense)
+    definition = (
+        {"text": "", "annotations": []}
+        if (sense := node.find("bedeutung")) is None
+        else BdoMixedContentTransformer.load_xml(sense).serialize()
+    )
 
     number = node.attrib.get("nr")
     id_ = node.attrib.get("id", unique_id("sense_"))
 
     return {
-        "def": text,
+        "def": definition,
         "sourceId": id_,
         "n": number,
         "sense": [

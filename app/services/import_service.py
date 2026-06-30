@@ -1,3 +1,4 @@
+import csv
 import gzip
 import os
 from io import BytesIO
@@ -6,7 +7,7 @@ from string import ascii_uppercase
 from typing import Iterable
 
 from dotenv import load_dotenv
-from pydantic import TypeAdapter
+from pydantic import ValidationError
 from pymongo import ASCENDING, IndexModel, MongoClient
 from unidecode import unidecode
 
@@ -82,10 +83,15 @@ class ImportService:
 
     def insert_data(self, data: Iterable[dict], resource: Resource, batch_size=100):
         self._drop_entries(resource)
+        errors = []
 
         def ensure_valid(item: dict):
-            Entry.model_validate(item, by_alias=True)
-            return item
+            try:
+                Entry.model_validate(item, by_alias=True)
+            except ValidationError as err:
+                errors.append((item["lexId"], str(err)))
+                return False
+            return True
 
         inserted_count = 0
 
@@ -93,19 +99,30 @@ class ImportService:
             result = self.entries.insert_many(
                 (
                     {
-                        **ensure_valid(entry),
+                        **entry,
                         "_id": entry["lexId"],
                         "indexLetter": self._extract_index_letter(
                             entry["headword"]["lemma"]
                         ),
                     }
                     for entry in batch
+                    if ensure_valid(entry)
                 ),
                 ordered=False,
             )
             inserted_count += len(result.inserted_ids)
 
         self.create_indexes()
+
+        if (n := len(errors)) > 0:
+            errorfile = "import_errors.tsv"
+
+            with open(errorfile, "w", newline="") as f:
+                writer = csv.writer(f, delimiter="\t")
+                writer.writerow(["id", "error"])
+                writer.writerows(errors)
+
+            print(f"Found {n} errors (see {errorfile} for details)")
 
         return {
             "inserted_count": inserted_count,

@@ -1,10 +1,8 @@
-from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import date
-from os import cpu_count
+from functools import partial
 from pathlib import Path
-from typing import Iterator, Optional
 
-from tqdm import tqdm
+from tqdm.contrib.concurrent import process_map
 
 from app.transformers.base_xml_transformer import BaseXmlTransformer
 from app.transformers.bdo.bdo_transformer import BdoXmlTransformer
@@ -25,7 +23,6 @@ def ensure_output_directories():
 
 def create_id(namespace: str, source_dir: Path, filepath: Path | str):
     subpath = Path(filepath).relative_to(source_dir).with_suffix("")
-
     return f"{namespace}:{subpath}"
 
 
@@ -54,8 +51,8 @@ def transform(
     *,
     retrieved_at: date | None = None,
     num_workers: int | None = None,
-) -> Iterator[dict]:
-    """Transform XML files to LexoTerm format with optional multiprocessing.
+) -> list[dict]:
+    """Transform XML files to LexoTerm format with multiprocessing.
 
     Args:
         xml_dir: Directory containing XML files
@@ -65,39 +62,21 @@ def transform(
                     Set to 1 to disable multiprocessing.
     """
     files = list(xml_dir.rglob("*.xml"))
+    worker_fn = partial(
+        _process_single_file,
+        resource_name=resource_name,
+        xml_dir=xml_dir,
+        retrieved_at=retrieved_at,
+    )
+    chunksize = 100
 
-    if num_workers is None:
-        num_workers = cpu_count() or 4
-
-    if num_workers == 1:
-        progress_bar = tqdm(files, desc="Converting XML to LexoTerm format")
-        for filepath in progress_bar:
-            progress_bar.set_description(f"Processing {filepath.parent.parent.name}")
-            result = _process_single_file(
-                filepath, resource_name, xml_dir, retrieved_at
-            )
-            yield result
-    else:
-        with ProcessPoolExecutor(max_workers=num_workers) as executor:
-            progress_bar = tqdm(
-                total=len(files), desc="Converting XML to LexoTerm format"
-            )
-
-            futures = {
-                executor.submit(
-                    _process_single_file, filepath, resource_name, xml_dir, retrieved_at
-                ): filepath
-                for filepath in files
-            }
-
-            for future in as_completed(futures):
-                filepath = futures[future]
-                progress_bar.set_description(
-                    f"Processing {filepath.parent.parent.name}"
-                )
-                result = future.result()
-                progress_bar.update(1)
-                yield result
+    return process_map(
+        worker_fn,
+        files,
+        max_workers=num_workers,
+        chunksize=chunksize,
+        desc="Converting XML to LexoTerm format",
+    )
 
 
 if __name__ == "__main__":

@@ -118,7 +118,10 @@ class QueryService:
                                 "lexId": 1,
                                 "source": 1,
                                 "mainSenses": {
-                                    "$firstN": {"input": "$sense.def", "n": max_senses}
+                                    "$firstN": {
+                                        "input": "$sense.def.text",
+                                        "n": max_senses,
+                                    }
                                 },
                                 "nPos": 1,
                                 "gender": 1,
