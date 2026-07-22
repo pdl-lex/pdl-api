@@ -17,6 +17,10 @@ dependencies = [
     "unidecode>=1.4.0",
 ]
 
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
 [dependency-groups]
 dev = [
     "pytest>=7.0.0",
@@ -52,6 +56,9 @@ extend-immutable-calls = [
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
 
 [tool.poe.tasks]
 lint = "ruff check ."
