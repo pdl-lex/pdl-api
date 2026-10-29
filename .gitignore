@@ -23,6 +23,7 @@ wheels/
 # import and test data
 data/
 app/transformers/dwds/output/*
+app/transformers/awb/output/*
 validation_errors.tsv
 import_errors.tsv
 

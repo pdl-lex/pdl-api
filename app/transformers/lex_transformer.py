@@ -4,6 +4,7 @@ from pathlib import Path
 
 from tqdm.contrib.concurrent import process_map
 
+from app.transformers.awb.awb_transformer import AwbXmlTransformer
 from app.transformers.base_xml_transformer import BaseXmlTransformer
 from app.transformers.bdo.bdo_transformer import BdoXmlTransformer
 from app.transformers.dwds.dwds_transformer import DwdsXmlTransformer
@@ -13,6 +14,7 @@ OUTPUT_ERROR_DIR = Path("data/lexoterm")
 TRANSFORMER_REGISTRY: dict[str, type[BaseXmlTransformer]] = {
     "bdo": BdoXmlTransformer,
     "dwds": DwdsXmlTransformer,
+    "awb": AwbXmlTransformer,
 }
 
 
