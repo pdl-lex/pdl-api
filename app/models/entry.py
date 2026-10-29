@@ -15,6 +15,7 @@ class Resource(Enum):
     DIBS = "dibs"
     WBF = "wbf"
     DWDS = "dwds"
+    AWB = "awb"
 
 
 BDO_RESOURCES = [Resource.BWB, Resource.DIBS, Resource.WBF]

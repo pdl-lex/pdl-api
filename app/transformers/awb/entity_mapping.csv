@@ -1,0 +1,20 @@
+entity,codepoints,note
+lslash,U+0142,"geprüft AWB-Web: thicki, gast, bret"
+ovabove,U+006F U+036E,"geprüft AWB-Web: thankôn, hol(a)tûba"
+uoabove,U+0075 U+0366,geprüft AWB-Web: thicki
+zsabove,U+007A U+1DE4,geprüft AWB-Web: thû
+chabove,U+0063 U+036A,geprüft AWB-Web: thû
+agr,U+03B1,Gliederungsziffer α)
+bgr,U+03B2,Gliederungsziffer β)
+ggr,U+03B3,Gliederungsziffer γ)
+dgr,U+03B4,Gliederungsziffer δ)
+egr,U+03B5,Gliederungsziffer ε)
+emdash,U+2014,Variante von mdash: peh
+obreve,U+014F,Kontext: thankôn
+aeligacute,U+01FD,Kontext: âband (ae. ǽfen)
+vcirc,U+0076 U+0302,abgeleitet aus Entity-Name: thû
+udotbelow,U+1EE5,abgeleitet aus Entity-Name: thû
+pmacr,U+0070 U+0304,abgeleitet aus Entity-Name: bret
+rmacr,U+0072 U+0304,abgeleitet aus Entity-Name: thicki
+amacrbreve,U+0101 U+0306,abgeleitet aus Entity-Name: thû
+dotlessiabovemacr,U+0131 U+0304,abgeleitet aus Entity-Name: thû
