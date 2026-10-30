@@ -143,7 +143,7 @@ if __name__ == "__main__":
         description="Import dictionaries into the LexoTerm MongoDB instance"
     )
     parser.add_argument(
-        "resource", help="Target resource name", choices=["bdo", "dwds"]
+        "resource", help="Target resource name", choices=["bdo", "dwds", "awb"]
     )
     parser.add_argument(
         "--production", help="Write to production db", action="store_true"

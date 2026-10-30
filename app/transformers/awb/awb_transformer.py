@@ -16,8 +16,6 @@ ADDITIONAL_INFO_FIELDS = {
     "Kommentar": './/sense[@ana="kommentarblock"]',
 }
 
-GENDER_ABBREVIATIONS = {"m.", "f.", "n."}
-
 gender_map_path = Path(__file__).parent / "gender_mapping.csv"
 with open(gender_map_path, newline="", encoding="utf-8") as csvfile:
     reader = csv.DictReader(csvfile)
@@ -41,24 +39,25 @@ def split_sense_text(node):
     """Split a meaning block into the leading definition and the remaining citation text.
 
     The definition is the run of <hi>/<lb> elements at the start of the block, up to
-    the first plain text. The bold sense number and nested sub-senses are skipped.
+    the first plain text. The bold sense number (first child) and nested sub-senses
+    are skipped; text following a nested sense is kept.
     """
     definition = []
     rest = [node.text or ""]
     in_definition = not (node.text or "").strip()
+    is_first = in_definition
 
     for child in node:
-        if child.tag == "sense":
-            continue
-
-        is_number = child.tag == "hi" and child.get("rend") == "bold" and not definition
-        if in_definition and child.tag in ("hi", "lb"):
-            target = definition
-        else:
-            in_definition = False
-            target = rest
-        if not is_number:
-            target.append(_text_without_orig(child))
+        if child.tag != "sense":
+            is_number = is_first and child.tag == "hi" and child.get("rend") == "bold"
+            is_first = False
+            if in_definition and child.tag in ("hi", "lb"):
+                target = definition
+            else:
+                in_definition = False
+                target = rest
+            if not is_number:
+                target.append(_text_without_orig(child))
 
         tail = child.tail or ""
         if tail.strip():
@@ -114,7 +113,7 @@ class AwbXmlTransformer(BaseXmlTransformer):
 
     @xpath("sense[@ana='bedeutungsblock']", default=[], multiple=True)
     def sense(self, senses):
-        return [transform_sense(sense) for sense in senses if sense is not None]
+        return [transform_sense(sense) for sense in senses]
 
     @xpath("form[@type='headword']/form[@type='lemma']/@n")
     def pos(self, value):
@@ -124,9 +123,7 @@ class AwbXmlTransformer(BaseXmlTransformer):
     def gender(self, value):
         if value is None:
             return None
-        return next(
-            (part for part in value.split() if part in GENDER_ABBREVIATIONS), None
-        )
+        return next((part for part in value.split() if part in GENDER_MAPPING), None)
 
     # --- Static utilities ---
 

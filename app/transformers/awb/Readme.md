@@ -21,10 +21,12 @@ It is TEI-P5 (not Lex-0), created by the TCDH as the result of the retro-digitiz
 ```bash
 uv run python -m app.transformers.awb.preprocess
 
-uv run python -m app.transformers.lex_transformer awb -p app\transformers\awb\data -o app\transformers\awb\output\output.jsonl
+uv run python -m app.transformers.lex_transformer awb -p app/transformers/awb/data -o app/transformers/awb/output/output.jsonl
+
+uv run python -m app.transformers.lex_validator app/transformers/awb/output/output.jsonl
 ```
 
-There is no separate validation script yet.
+The validator checks the output against the `Entry` model and writes errors to `validation_errors.tsv` (see `--errorfile`).
 
 
 ### Preprocessing (preprocess.py)
@@ -84,9 +86,12 @@ Only `<sense ana="bedeutungsblock">` is transformed. Sub-senses are nested `<sen
 - `sourceId`: the `value` attribute (volume.column.line in the printed edition, e.g. "4.0126.31"). Senses have no xml:id; `value` is present and unique in all sample entries.
 
 The XML has no separate element for the definition. Definition and citations are one running text; the definition is only recognizable by its formatting (italic/spaced at the start of the block). `split_sense_text` therefore takes the leading `<hi>`/`<lb>` elements up to the first plain text as definition and puts the rest into `cit`. This works for most senses but not all:
-- truncated definitions where the italics are interrupted, e.g. thankôn 2 ("jmdm.")
+- truncated definitions where the italics are interrupted, e.g. thankôn 2 ("jmdm."), blint 1a ("körperlich blind, Gegensatz")
 - empty definitions, e.g. bret 2a
-- thû is structured by forms rather than meanings ("Nom. Sing.", "nach ...")
+- thû is structured by forms rather than meanings ("Nom. Sing.", "nach ..."). The case blocks ("Nom. Sing.", "Gen. Sing.", ...) are empty senses; their sub-senses 1/2 are siblings, not children, so `n` values repeat at the top level. Most of the content sits in `formblock`s nested in the senses and is therefore not part of `cit`.
+- bringan starts with three `bedeutungsblock`s that actually contain forms ("Praes.:", "Praet.:", "Part. Praet.:"), so their definition reads e.g. "Praes.: prink-: 1. sg. -u" and they inflate the sense count.
+
+Nested `formblock`/`kommentarblock` inside a meaning block are skipped (see "Enthält NICHT"), only text following them is kept.
 
 `<choice>` contains both `<orig>` (hyphenated) and `<reg>`; only `<reg>` is used.
 
