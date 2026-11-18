@@ -71,11 +71,12 @@ node in Python requires a recursive function:
 import re
 from lxml import etree
 
+
 def normalize_whitespace(node):
     # Normalize text before first child
     if node.text:
         node.text = re.sub(r" {2,}", " ", node.text)
-    
+
     # Normalize tail text and recurse for each child
     for child in node:
         if child.tail:
