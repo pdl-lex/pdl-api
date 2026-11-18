@@ -1,8 +1,7 @@
+from functools import cache
 from typing import Callable
 
-import pandas as pd
-
-from app.transformers.standoff.character_map import CharacterMap
+from app.transformers.standoff.character_map import CharacterMap, Span, SpanView
 
 
 def xml_to_standoff(node, offset=0, depth=0, spans=None, basetext=None):
@@ -51,102 +50,86 @@ def register(tag: str):
     return decorator
 
 
-def basedata(span, type_: str) -> dict:
-    return {"type": type_, **span[["start", "end", "text"]].to_dict()}
+def basedata(span: SpanView, type_: str) -> dict:
+    return {"type": type_, "start": span.start, "end": span.end, "text": span.text}
 
 
-def textspan(span):
+def textspan(span: SpanView) -> dict:
     return basedata(span, "text")
 
 
-def parse_attributes(frame: pd.DataFrame) -> pd.DataFrame:
-    attributes = pd.DataFrame.from_records(frame["attributes"])
-    frame = frame.drop("attributes", axis=1)
+def character_map_from_xml(xml_node) -> CharacterMap:
+    """Build a CharacterMap with span ids `<tag>_<n>`, numbered in document order."""
+    counters: dict[str, int] = {}
+    text, spans, attributes = "", [], {}
 
-    return pd.concat([frame, attributes], axis=1)
+    for start, end, depth, tag, attrib, span_text in xml_to_standoff(xml_node):
+        counters[tag] = counters.get(tag, 0) + 1
+        span_id = f"{tag}_{counters[tag]}"
+        if start >= end:
+            continue
+        if depth == 0:
+            text = span_text
+        spans.append(Span(span_id, tag, depth, start, end))
+        attributes[span_id] = attrib
+
+    return CharacterMap(text, spans, attributes)
 
 
-def add_span_ids(frame: pd.DataFrame) -> pd.DataFrame:
-    tag_counters = frame.groupby("tag").cumcount() + 1
-    ids = frame.tag + "_" + tag_counters.astype(str)
+@cache
+def _collect_methods(cls: type) -> tuple[dict[str, Callable], list[Callable]]:
+    """Collect @register handlers and @preprocess steps; subclasses override by name."""
+    handlers: dict[str, Callable] = {}
+    preprocessors: dict[str, tuple[int, Callable]] = {}
 
-    return frame.assign(span_id=ids)
+    for klass in reversed(cls.__mro__):
+        for name, attr in vars(klass).items():
+            if not callable(attr):
+                continue
+            if hasattr(attr, "_registered_tag"):
+                handlers[attr._registered_tag] = attr
+            if hasattr(attr, "_is_preprocess"):
+                preprocessors[name] = (attr._preprocess_priority, attr)
+
+    ordered = sorted(preprocessors.items(), key=lambda item: (item[1][0], item[0]))
+    return handlers, [method for _, (_, method) in ordered]
 
 
 class StandoffTransformer:
     def __init__(self, cmap: CharacterMap):
         self.cmap = cmap
-        self._tag_handlers = self._collect_tag_handlers()
-        self._apply_preprocessing()
         self.errors = []
+        self._tag_handlers, preprocessors = _collect_methods(type(self))
+
+        for method in preprocessors:
+            self.cmap = method(self, self.cmap)
 
     @classmethod
     def load_xml(cls, xml_node) -> "StandoffTransformer":
-        span_data = xml_to_standoff(xml_node)
-
-        frame = pd.DataFrame(
-            span_data,
-            columns=["start", "end", "depth", "tag", "attributes", "text"],
-        )
-        frame = parse_attributes(frame)
-        frame = add_span_ids(frame)
-        cmap = CharacterMap.from_spans(frame)
-
-        return cls(cmap)
+        return cls(character_map_from_xml(xml_node))
 
     @classmethod
-    def from_cmap(cls, cmap: CharacterMap):
+    def from_cmap(cls, cmap: CharacterMap) -> "StandoffTransformer":
         return cls(cmap)
-
-    def _apply_preprocessing(self):
-        """Apply all methods decorated with @preprocess to self.cmap"""
-        preprocess_methods = []
-
-        for cls in type(self).__mro__:
-            for name, method in cls.__dict__.items():
-                if callable(method) and hasattr(method, "_is_preprocess"):
-                    priority = getattr(method, "_preprocess_priority", 0)
-                    preprocess_methods.append((priority, name, method))
-
-        preprocess_methods.sort(key=lambda m: (m[0], m[1]))
-
-        for *_, method in preprocess_methods:
-            self.cmap = method(self, self.cmap)
-
-    def _collect_tag_handlers(self) -> dict[str, Callable]:
-        """Collect all methods decorated with @register"""
-        handlers = {}
-
-        for cls in type(self).__mro__:
-            for _, method in cls.__dict__.items():
-                if callable(method) and hasattr(method, "_registered_tag"):
-                    tag = method._registered_tag
-                    if tag not in handlers:
-                        handlers[tag] = method
-
-        return handlers
 
     def _serialize_spans(self) -> list[dict]:
         """Transform spans by dispatching to registered tag handlers"""
         serialized_spans = []
-        spans = self.cmap.to_spans()
 
-        for _, span in spans.iterrows():
-            tag = span.tag
-            if tag in self._tag_handlers:
-                handler = self._tag_handlers[tag]
-                try:
-                    result = handler(self, span)
-                except Exception as err:
-                    self.errors.append((span.tag, str(err)))
-                    result = None
-
-                if result is not None:
-                    serialized_spans.append(result.model_dump(by_alias=True))
+        for span in self.cmap.to_spans():
+            handler = self._tag_handlers.get(span.tag)
+            if handler is None:
+                continue
+            try:
+                result = handler(self, span)
+            except Exception as err:
+                self.errors.append((span.tag, str(err)))
+                continue
+            if result is not None:
+                serialized_spans.append(result.model_dump(by_alias=True))
 
         return serialized_spans
 
     def serialize(self) -> dict:
         self.cmap = self.cmap.minify()
-        result = {"text": self.cmap.text, "annotations": self._serialize_spans()}
-        return result
+        return {"text": self.cmap.text, "annotations": self._serialize_spans()}
