@@ -1,7 +1,5 @@
 from typing import Union
 
-import pandas as pd
-
 from app.models.annotated_text import (
     AnnotatedTextData,
     BibRefAnnotationSpan,
@@ -9,7 +7,7 @@ from app.models.annotated_text import (
     LinkAnnotationSpan,
     TextAnnotationSpan,
 )
-from app.transformers.standoff.character_map import CharacterMap
+from app.transformers.standoff.character_map import CharacterMap, SpanView
 from app.transformers.standoff.standoff_transformer import (
     StandoffTransformer,
     basedata,
@@ -46,23 +44,26 @@ class BdoBaseTransformer(StandoffTransformer):
     @preprocess(order=1)
     def insert_crossref_prefixes(self, cmap: CharacterMap) -> CharacterMap:
         spans = cmap.to_spans()
+        references = (s for s in spans if s.tag == "verweis")
 
-        for _, span in spans[spans.tag == "verweis"].iterrows():
+        for reference in references:
             # insert the verweis-typ into the base text
-            insertion = REF_TYPE_PREFIXES.get(span.get("verweis-typ"), "")
-            cmap = cmap.insert(span.start, insertion)
+            insertion = REF_TYPE_PREFIXES.get(reference.get("verweis-typ"), "")
+            cmap = cmap.insert(reference.start, insertion)
 
-            if span.get("ziel-typ") == "Bedeutung":
+            if reference.get("ziel-typ") == "Bedeutung":
                 # get nested lemma-referenz
-                lemma_refs = spans[
-                    spans.tag.eq("lemma-referenz")
-                    & spans.start.ge(span.start)
-                    & spans.end.le(span.end)
+                lemma_refs = [
+                    s
+                    for s in spans
+                    if s.tag == "lemma-referenz"
+                    and s.start >= reference.start
+                    and s.end <= reference.end
                 ]
                 if len(lemma_refs) == 0:
                     continue
 
-                lemma_ref_span = lemma_refs.iloc[0]
+                lemma_ref_span = lemma_refs[0]
 
                 if "vollform" not in lemma_ref_span:
                     continue
@@ -75,26 +76,26 @@ class BdoBaseTransformer(StandoffTransformer):
                 cmap = cmap.insert(
                     cmap.get_span_range(lemma_ref_span.span_id)[1],
                     "Bed. ",
-                    span.span_id,
+                    reference.span_id,
                 )
 
-        return cmap.reset_index()
+        return cmap
 
     @register("lemma-form")
-    def serialize_mention(self, span: pd.Series) -> TextAnnotationSpan:
+    def serialize_mention(self, span: SpanView) -> TextAnnotationSpan:
         return TextAnnotationSpan(**textspan(span), labels=["italic"])
 
     @register("hoch")
-    def serialize_superscript(self, span: pd.Series) -> TextAnnotationSpan:
+    def serialize_superscript(self, span: SpanView) -> TextAnnotationSpan:
         return TextAnnotationSpan(**textspan(span), labels=["superscript"])
 
     @register("beleg-text")
-    def serialize_example(self, span: pd.Series) -> TextAnnotationSpan:
+    def serialize_example(self, span: SpanView) -> TextAnnotationSpan:
         return TextAnnotationSpan(**textspan(span), labels=["italic"])
 
     @register("verweis")
     def serialize_reference(
-        self, span: pd.Series
+        self, span: SpanView
     ) -> Union[CrossRefAnnotationSpan, LinkAnnotationSpan]:
         if (external := span.get("ziel-extern")) is not None:
             return LinkAnnotationSpan(**basedata(span, "link"), target=external)
@@ -108,7 +109,7 @@ class BdoBaseTransformer(StandoffTransformer):
 
     @register("kompositum")
     def serialize_compound(
-        self, span: pd.Series
+        self, span: SpanView
     ) -> Union[CrossRefAnnotationSpan, LinkAnnotationSpan]:
         """Kompositum-nodes share the structure of verweis-nodes"""
         return self.serialize_reference(span)
@@ -116,7 +117,7 @@ class BdoBaseTransformer(StandoffTransformer):
 
 class BdoLiteratureTransformer(StandoffTransformer):
     def set_bibliography_details(self, submap: CharacterMap) -> None:
-        self._bibliography = submap.reset_index()
+        self._bibliography = submap
 
     def get_bibliography_details(self) -> CharacterMap | None:
         return getattr(self, "_bibliography", None)
@@ -129,7 +130,7 @@ class BdoLiteratureTransformer(StandoffTransformer):
 
             cmap = cmap.insert(start, attributes.get("quelle-art", "") + " ")
 
-        return cmap.reset_index()
+        return cmap
 
     @preprocess(order=3)
     def add_bib_id_column(self, cmap: CharacterMap) -> CharacterMap:
@@ -146,10 +147,10 @@ class BdoLiteratureTransformer(StandoffTransformer):
         for span_id in cmap.spans("details"):
             self.set_bibliography_details(cmap.pop_span(span_id))
 
-        return cmap.reset_index()
+        return cmap
 
     @register("literatur-quelle")
-    def serialize_bibref(self, span) -> Union[BibRefAnnotationSpan, None]:
+    def serialize_bibref(self, span: SpanView) -> Union[BibRefAnnotationSpan, None]:
         details = self.get_bibliography_details()
 
         if details is None:
@@ -159,7 +160,7 @@ class BdoLiteratureTransformer(StandoffTransformer):
 
         return BibRefAnnotationSpan(
             **basedata(span, "bibref"),
-            bibId=span.fillna("").get("literatur", ""),
+            bibId=span.get("literatur", ""),
             fullReference=AnnotatedTextData(**details_transformer.serialize()),
         )
 
