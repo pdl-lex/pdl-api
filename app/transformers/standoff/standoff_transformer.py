@@ -1,7 +1,10 @@
+import logging
 from functools import cache
 from typing import Callable
 
 from app.transformers.standoff.character_map import CharacterMap, Span, SpanView
+
+logger = logging.getLogger(__name__)
 
 
 def xml_to_standoff(node, offset=0, depth=0, spans=None, basetext=None):
@@ -98,7 +101,6 @@ def _collect_methods(cls: type) -> tuple[dict[str, Callable], list[Callable]]:
 class StandoffTransformer:
     def __init__(self, cmap: CharacterMap):
         self.cmap = cmap
-        self.errors = []
         self._tag_handlers, preprocessors = _collect_methods(type(self))
 
         for method in preprocessors:
@@ -123,7 +125,7 @@ class StandoffTransformer:
             try:
                 result = handler(self, span)
             except Exception as err:
-                self.errors.append((span.tag, str(err)))
+                logger.warning("Skipping span %s: %r", span.span_id, err)
                 continue
             if result is not None:
                 serialized_spans.append(result.model_dump(by_alias=True))
