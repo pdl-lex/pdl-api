@@ -1,7 +1,5 @@
 from typing import Union
 
-import pandas as pd
-
 from app.models.annotated_text import (
     AnnotatedTextData,
     BibRefAnnotationSpan,
@@ -9,7 +7,7 @@ from app.models.annotated_text import (
     LinkAnnotationSpan,
     TextAnnotationSpan,
 )
-from app.transformers.standoff.character_map import CharacterMap
+from app.transformers.standoff.character_map import CharacterMap, SpanView
 from app.transformers.standoff.standoff_transformer import (
     StandoffTransformer,
     basedata,
@@ -45,56 +43,62 @@ def get_target_link(span):
 class BdoBaseTransformer(StandoffTransformer):
     @preprocess(order=1)
     def insert_crossref_prefixes(self, cmap: CharacterMap) -> CharacterMap:
-        spans = cmap.to_spans()
+        for reference in cmap.spans("verweis"):
+            attributes = cmap.span_attributes[reference]
 
-        for _, span in spans[spans.tag == "verweis"].iterrows():
             # insert the verweis-typ into the base text
-            insertion = REF_TYPE_PREFIXES.get(span.get("verweis-typ"), "")
-            cmap = cmap.insert(span.start, insertion)
+            insertion = REF_TYPE_PREFIXES.get(attributes.get("verweis-typ"), "")
+            cmap = cmap.insert(cmap.get_span_range(reference)[0], insertion)
 
-            if span.get("ziel-typ") == "Bedeutung":
-                # get nested lemma-referenz
-                lemma_refs = spans[
-                    spans.tag.eq("lemma-referenz")
-                    & spans.start.ge(span.start)
-                    & spans.end.le(span.end)
-                ]
+            if attributes.get("ziel-typ") == "Bedeutung":
+                lemma_refs = cmap.get_subspans(reference, tag="lemma-referenz")
                 if len(lemma_refs) == 0:
                     continue
 
-                lemma_ref_span = lemma_refs.iloc[0]
+                lemma_ref = lemma_refs[0]
+                full_lemma = cmap.span_attributes[lemma_ref].get("vollform")
 
-                if "vollform" not in lemma_ref_span:
+                if full_lemma is None:
                     continue
 
-                # expand full lemma
-                full_lemma = lemma_ref_span["vollform"] + ", "
-                cmap.set_text(lemma_ref_span.span_id, full_lemma)
+                homograph_index = self._extract_homograph_index(cmap, lemma_ref)
+                cmap.set_text(lemma_ref, full_lemma + homograph_index + ", ")
+
+                if homograph_index:
+                    start = cmap.get_span_range(lemma_ref)[0] + len(full_lemma)
+                    cmap.add_span("hoch", start, start + len(homograph_index))
 
                 # insert "Bed. " text
                 cmap = cmap.insert(
-                    cmap.get_span_range(lemma_ref_span.span_id)[1],
-                    "Bed. ",
-                    span.span_id,
+                    cmap.get_span_range(lemma_ref)[1], "Bed. ", reference
                 )
 
-        return cmap.reset_index()
+        return cmap
+
+    @staticmethod
+    def _extract_homograph_index(cmap: CharacterMap, lemma_ref: str) -> str:
+        superscripts = cmap.get_subspans(lemma_ref, tag="hoch")
+        if len(superscripts) == 0:
+            return ""
+
+        start, end = cmap.get_span_range(superscripts[0])
+        return cmap.text[start:end].strip()
 
     @register("lemma-form")
-    def serialize_mention(self, span: pd.Series) -> TextAnnotationSpan:
+    def serialize_mention(self, span: SpanView) -> TextAnnotationSpan:
         return TextAnnotationSpan(**textspan(span), labels=["italic"])
 
     @register("hoch")
-    def serialize_superscript(self, span: pd.Series) -> TextAnnotationSpan:
+    def serialize_superscript(self, span: SpanView) -> TextAnnotationSpan:
         return TextAnnotationSpan(**textspan(span), labels=["superscript"])
 
     @register("beleg-text")
-    def serialize_example(self, span: pd.Series) -> TextAnnotationSpan:
+    def serialize_example(self, span: SpanView) -> TextAnnotationSpan:
         return TextAnnotationSpan(**textspan(span), labels=["italic"])
 
     @register("verweis")
     def serialize_reference(
-        self, span: pd.Series
+        self, span: SpanView
     ) -> Union[CrossRefAnnotationSpan, LinkAnnotationSpan]:
         if (external := span.get("ziel-extern")) is not None:
             return LinkAnnotationSpan(**basedata(span, "link"), target=external)
@@ -108,28 +112,26 @@ class BdoBaseTransformer(StandoffTransformer):
 
     @register("kompositum")
     def serialize_compound(
-        self, span: pd.Series
+        self, span: SpanView
     ) -> Union[CrossRefAnnotationSpan, LinkAnnotationSpan]:
         """Kompositum-nodes share the structure of verweis-nodes"""
         return self.serialize_reference(span)
 
 
 class BdoLiteratureTransformer(StandoffTransformer):
-    def set_bibliography_details(self, submap: CharacterMap) -> None:
-        self._bibliography = submap.reset_index()
-
-    def get_bibliography_details(self) -> CharacterMap | None:
-        return getattr(self, "_bibliography", None)
+    def get_bibliography_details(self, bib_id: str) -> CharacterMap | None:
+        return getattr(self, "_bibliography", {}).get(bib_id)
 
     @preprocess(order=1)
     def insert_literature_prefixes(self, cmap: CharacterMap) -> CharacterMap:
         for span_id in cmap.spans("literatur-quelle"):
-            start, _ = cmap.get_span_range(span_id)
-            attributes = cmap.span_attributes[span_id]
+            source_type = cmap.span_attributes[span_id].get("quelle-art")
 
-            cmap = cmap.insert(start, attributes.get("quelle-art", "") + " ")
+            if source_type is not None:
+                start, _ = cmap.get_span_range(span_id)
+                cmap = cmap.insert(start, source_type + " ")
 
-        return cmap.reset_index()
+        return cmap
 
     @preprocess(order=3)
     def add_bib_id_column(self, cmap: CharacterMap) -> CharacterMap:
@@ -143,24 +145,27 @@ class BdoLiteratureTransformer(StandoffTransformer):
 
     @preprocess(order=4)
     def extract_embedded_bibliography(self, cmap: CharacterMap) -> CharacterMap:
-        for span_id in cmap.spans("details"):
-            self.set_bibliography_details(cmap.pop_span(span_id))
+        self._bibliography = {}
 
-        return cmap.reset_index()
+        for span_id in cmap.spans("details"):
+            bib_id = cmap.span_attributes[span_id].get("bib_id")
+            self._bibliography[bib_id] = cmap.pop_span(span_id)
+
+        return cmap
 
     @register("literatur-quelle")
-    def serialize_bibref(self, span) -> Union[BibRefAnnotationSpan, None]:
-        details = self.get_bibliography_details()
-
-        if details is None:
-            return None
-
-        details_transformer = BdoBaseTransformer.from_cmap(details)
+    def serialize_bibref(self, span: SpanView) -> BibRefAnnotationSpan:
+        details = self.get_bibliography_details(span.span_id)
+        full_reference = (
+            None
+            if details is None
+            else AnnotatedTextData(**BdoBaseTransformer.from_cmap(details).serialize())
+        )
 
         return BibRefAnnotationSpan(
             **basedata(span, "bibref"),
-            bibId=span.fillna("").get("literatur", ""),
-            fullReference=AnnotatedTextData(**details_transformer.serialize()),
+            bibId=span.get("literatur", ""),
+            fullReference=full_reference,
         )
 
 

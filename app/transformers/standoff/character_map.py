@@ -1,68 +1,94 @@
-import numpy as np
-import pandas as pd
+"""Standoff representation of mixed content: a plain text plus [start, end) spans.
 
+Every edit (insert, replace, delete) updates the text and shifts the span offsets
+accordingly, so spans always stay aligned with the text.
+"""
 
-def mark_span_edges(col):
-    "Mark starts and ends of annotation spans"
-    is_annotated = ~col.isna()
-    is_span_start = col != col.shift()
-    is_span_end = col != col.shift(-1)
-
-    return is_annotated & (is_span_start | is_span_end)
-
-
-internal_columns = ["start", "end", "depth", "tag", "text"]
+from dataclasses import dataclass
+from itertools import accumulate
+from typing import Any
 
 
 class SpanNotFoundError(Exception):
     pass
 
 
+@dataclass(slots=True)
+class Span:
+    span_id: str
+    tag: str
+    depth: int
+    start: int
+    end: int
+
+
+@dataclass(frozen=True, slots=True)
+class SpanView:
+    """Read-only snapshot of a span, as passed to transformer handlers."""
+
+    span_id: str
+    tag: str
+    depth: int
+    start: int
+    end: int
+    text: str
+    attributes: dict[str, Any]
+
+    def get(self, key: str, default: Any = None) -> Any:
+        return self.attributes.get(key, default)
+
+    def __getitem__(self, key: str) -> Any:
+        return self.attributes[key]
+
+    def __contains__(self, key: str) -> bool:
+        return key in self.attributes
+
+
 class CharacterMap:
-    def __init__(self, charmap: pd.DataFrame, span_attributes=None):
-        if "char" not in charmap.columns:
-            raise ValueError("Missing 'char' column")
-        self.df = charmap
+    def __init__(
+        self,
+        text: str,
+        spans: list[Span],
+        span_attributes: dict[str, dict[str, Any]] | None = None,
+    ):
+        self._text = text
+        self._spans = spans
         self.span_attributes = {} if span_attributes is None else span_attributes
 
-    @classmethod
-    def from_spans(cls, span_frame):
-        # remove 0-length spans
-        span_frame = span_frame[span_frame.start < span_frame.end]
-
-        root_text = span_frame.loc[span_frame.depth.eq(0), "text"].squeeze()
-        df = pd.DataFrame({"char": list(root_text)})
-
-        for _, row in span_frame.iterrows():
-            df.loc[row.start : row.end - 1, f"depth_{row.depth}"] = row.span_id
-
-        # set attributes
-        attributes = span_frame.set_index("span_id").drop(internal_columns, axis=1)
-        attributes = attributes.apply(
-            lambda row: row.dropna().to_dict(), axis=1
-        ).to_dict()
-        attributes = {k: {} if pd.isna(v) else v for k, v in attributes.items()}
-
-        return cls(df, span_attributes=attributes)
-
     @property
-    def text(self):
-        return "".join(self.df.char)
+    def text(self) -> str:
+        return self._text
 
-    def normalize_ws(self):
-        """Merge consecutive whitespace into single spaces"""
-        if self.df.empty:
-            return self.reset_index()
-        df = self.df.assign(char=self.df.char.str.replace(r"\s", " ", regex=True))
-        is_ws = df.char == " "
-        self.df = df[~(is_ws & is_ws.shift())]
+    def _find(self, span_id: str) -> Span | None:
+        return next((s for s in self._spans if s.span_id == span_id), None)
 
-        return self.reset_index()
+    def _remap(self, text: str, position_map: list[int]) -> None:
+        """Replace the text, move span offsets via old->new positions, drop empty spans."""
+        for span in self._spans:
+            span.start = position_map[span.start]
+            span.end = position_map[span.end]
+        self._spans = [s for s in self._spans if s.start < s.end]
+        self._text = text
 
-    def minify(self):
+    def _keep(self, keep: list[bool]) -> None:
+        text = "".join(c for c, k in zip(self._text, keep, strict=True) if k)
+        self._remap(text, [0, *accumulate(keep)])
+
+    def normalize_ws(self) -> "CharacterMap":
+        """Replace whitespace by spaces and merge consecutive spaces."""
+        self._text = "".join(" " if c.isspace() else c for c in self._text)
+        self._keep(
+            [
+                not (c == " " and i > 0 and self._text[i - 1] == " ")
+                for i, c in enumerate(self._text)
+            ]
+        )
+        return self
+
+    def minify(self) -> "CharacterMap":
         """
-        Move leading and trailing whitespace within spans into parent spans and normalize
-        whitespace. E.g., transforms
+        Normalize whitespace and move leading and trailing whitespace within spans into
+        parent spans. E.g., transforms
 
         `<outer>  <inner> foo </inner>  <inner>  bar  </inner>  </outer>`
 
@@ -70,265 +96,192 @@ class CharacterMap:
 
         `<outer><inner>foo</inner> <inner>bar</inner></outer>`.
         """
-        df = self.normalize_ws().df
-        is_ws = df.char == " "
+        self.normalize_ws()
+        text = self._text
 
-        columns = df.filter(like="depth").columns
+        for span in self._spans:
+            if text[span.start] == " ":
+                span.start += 1
+            if span.start < span.end and text[span.end - 1] == " ":
+                span.end -= 1
+        self._spans = [s for s in self._spans if s.start < s.end]
 
-        stripped_spans = df[columns].transform(
-            lambda col: col.where(~(is_ws & mark_span_edges(col)))
+        coverage = [0] * (len(text) + 1)
+        for span in self._spans:
+            coverage[span.start] += 1
+            coverage[span.end] -= 1
+        covered = list(accumulate(coverage))
+
+        self._keep([c != " " or covered[i] > 0 for i, c in enumerate(text)])
+        return self
+
+    def insert(
+        self, index: int, text: str, host_span: str | None = None
+    ) -> "CharacterMap":
+        """
+        Insert text at index. The text becomes part of the root and of all spans that
+        strictly contain the index. If host_span starts or ends at the index, the host
+        and its ancestors sharing that boundary are extended to include the text.
+        """
+        n = len(text)
+        if n == 0:
+            return self
+
+        host = None
+        if host_span is not None:
+            host = self._find(host_span)
+            if host is None:
+                raise SpanNotFoundError(f"Span {host_span!r} not found")
+            if host.depth == 0:
+                host = None
+
+        extend_left = host is not None and host.end == index
+        extend_right = host is not None and not extend_left and host.start == index
+
+        for span in self._spans:
+            if span.depth == 0 or span.start < index < span.end:
+                span.end += n
+            elif span.end <= index:
+                if extend_left and span.end == index and span.depth <= host.depth:
+                    span.end += n
+            elif extend_right and span.start == index and span.depth <= host.depth:
+                span.end += n
+            else:
+                span.start += n
+                span.end += n
+
+        self._text = self._text[:index] + text + self._text[index:]
+        return self
+
+    def set_text(self, span_id: str, text: str) -> "CharacterMap":
+        """Replace the text of a span. Its subspans are discarded."""
+        target = self._find(span_id)
+        if len(text) == 0 or target is None:
+            return self
+
+        a, b = target.start, target.end
+        delta = len(text) - (b - a)
+
+        for span in self._spans:
+            if span.end <= a:
+                continue
+            if span.start >= b:
+                span.start += delta
+                span.end += delta
+            elif span is target or (span.start <= a and span.end >= b):
+                if span is target or span.depth < target.depth:
+                    span.end += delta
+                else:
+                    span.end = span.start
+            elif span.start < a:
+                span.end = a
+            elif span.end > b:
+                span.start = a + len(text)
+                span.end += delta
+            else:
+                span.end = span.start
+
+        self._spans = [s for s in self._spans if s.start < s.end]
+        self._text = self._text[:a] + text + self._text[b:]
+        return self
+
+    def pop_span(self, span_id: str) -> "CharacterMap":
+        """Cut out the characters of a span and return them as a new map."""
+        attributes = dict(self.span_attributes)
+        target = self._find(span_id)
+        if target is None:
+            return CharacterMap("", [], attributes)
+
+        a, b = target.start, target.end
+        submap = CharacterMap(
+            self._text[a:b],
+            [
+                Span(s.span_id, s.tag, s.depth, max(s.start, a) - a, min(s.end, b) - a)
+                for s in self._spans
+                if s.start < b and s.end > a
+            ],
+            attributes,
         )
 
-        df[columns] = stripped_spans
-
-        is_empty_span = is_ws & df[columns].isna().all(axis=1)
-
-        self.df = df[~is_empty_span]
-
-        return self.reset_index()
-
-    def pop_span(self, span_id):
-        is_target_span = self.df.eq(span_id).any(axis=1)
-        span = self.df[is_target_span]
-        self.df = self.df[~is_target_span]
-
-        return CharacterMap(span, span_attributes=dict(self.span_attributes.items()))
-
-    def reset_index(self):
-        self.df = self.df.reset_index(drop=True)
-        return self
-
-    def _fill_interrupted_spans(self, df):
-        """Recover spans interrupted by inserted text"""
-
-        # Ensure the root span covers the entire text
-        root_span = df.depth_0.dropna().iloc[0]
-        df = df.assign(depth_0=df.depth_0.fillna(root_span))
-
-        # Fill interrupted spans, i.e., sequences of NaN surrounded by the same span id
-        ffill = df.ffill()
-        bfill = df.bfill()
-
-        return df.where(df.notna(), ffill.where(ffill == bfill))
-
-    def _fill_host_spans(self, df, host_span, insertion_start, text):
-        """Recover spans adjacent to inserted text"""
-        if host_span is None:
-            return df
-
-        df = df.copy()
-        is_host = df.eq(host_span)
-
-        if not is_host.stack().any():
-            return
-
-        columns = slice("depth_0", is_host.any().idxmax())
-        host_start, *_, host_end = df[is_host.any(axis=1)].index
-        insertion_end = insertion_start + len(text)
-
-        if host_end + 1 == insertion_start:
-            df.update(df.loc[insertion_start - 1 : insertion_end - 1, columns].ffill())
-
-        elif host_start == insertion_end:
-            df.update(df.loc[insertion_start:insertion_end, columns].bfill())
-
-        return df
-
-    def set_text(self, span_id, text):
-        """
-        Replace the text of a span by text. If any subspans exist, they are discarded.
-        """
-        if len(text) == 0:
-            return self
-
-        df = self.df.filter(like="depth").reset_index(drop=True)
-
-        m = df.eq(span_id).any(axis=1)
-
-        if not m.any():
-            return self
-
-        old_span = df[m]
-
-        new_span = pd.DataFrame(
-            {"char": list(text), **old_span.iloc[0].dropna().to_dict()}
+        n = b - a
+        self._remap(
+            self._text[:a] + self._text[b:],
+            [p if p <= a else max(a, p - n) for p in range(len(self._text) + 1)],
         )
-        self.df = pd.concat(
-            [
-                self.df.iloc[: old_span.index[0]],
-                new_span,
-                self.df.iloc[old_span.index[-1] + 1 :],
-            ]
-        ).reset_index(drop=True)
 
-        return self
+        return submap
 
-    def insert(self, index, text, host_span=None):
-        """
-        Insert text at index into root text. Optionally include the inserted text into the specified
-        host span.
-        """
-
-        if len(text) == 0:
-            return self
-
-        df = pd.concat(
-            [
-                self.df.iloc[:index],
-                pd.DataFrame({"char": list(text)}),
-                self.df.iloc[index:],
-            ]
-        ).reset_index(drop=True)
-
-        df = self._fill_interrupted_spans(df)
-        df = self._fill_host_spans(df, host_span, index, text)
-        self.df = df
-
-        return self
-
-    def get_span_range(self, span_id):
-        is_span_id = self.df.eq(span_id).any(axis=1)
-
-        if not is_span_id.any():
+    def get_span_range(self, span_id: str) -> tuple[int, int]:
+        span = self._find(span_id)
+        if span is None:
             raise SpanNotFoundError(f"Span {span_id!r} not found")
+        return span.start, span.end
 
-        range_ = self.df[is_span_id].index
-        start, end = range_[0], range_[-1]
+    def spans(self, tag: str | None = None) -> list[str]:
+        """Span ids in text order, optionally filtered by tag."""
+        ordered = sorted(self._spans, key=lambda s: (s.start, s.depth))
+        return [s.span_id for s in ordered if tag is None or s.tag == tag]
 
-        return start, end + 1
+    def get_subspans(self, span_id: str, tag: str | None = None) -> list[str]:
+        """Ids of spans nested in span_id, in text order, optionally filtered by tag."""
+        target = self._find(span_id)
+        if target is None:
+            return []
+        return [
+            s.span_id
+            for s in sorted(self._spans, key=lambda s: (s.start, s.depth))
+            if s is not target
+            and s.depth >= target.depth
+            and s.start < target.end
+            and s.end > target.start
+            and (tag is None or s.tag == tag)
+        ]
 
-    def spans(self, tag: str | None = None):
-        unique = pd.Series(self.df.filter(like="depth_").stack().unique())
-
-        if len(unique) == 0 or tag is None:
-            return unique
-
-        return unique[unique.str.rsplit("_", n=1).str[0].eq(tag)]
-
-    def add_span(self, tag, start, end, attributes=None):
-        # determine next available id
-        in_use = self.spans(tag).str.rsplit("_", n=1).str[-1].astype(int).values
-        i = 1
-
-        while i in in_use:
-            i += 1
-
-        span_id = f"{tag}_{i}"
-
+    def add_span(
+        self,
+        tag: str,
+        start: int,
+        end: int,
+        attributes: dict[str, Any] | None = None,
+    ) -> "CharacterMap":
+        """Add a span on the shallowest layer that is free within [start, end)."""
+        in_use = {int(s.span_id.rsplit("_", 1)[1]) for s in self._spans if s.tag == tag}
+        index = next(i for i in range(1, len(in_use) + 2) if i not in in_use)
+        span_id = f"{tag}_{index}"
         self.span_attributes[span_id] = {} if attributes is None else attributes
 
-        target_range = self.df.iloc[start:end]
-
-        # find target depth
-        free_layers = target_range.isna().all()
-
-        if free_layers.any():
-            target_layer = free_layers.idxmax()
-        else:
-            d = (
-                self.df.filter(like="depth")
-                .columns.str.split("_", n=1)
-                .str[-1]
-                .astype(int)
-                .max()
-                + 1
-            )
-            target_layer = f"depth_{d}"
-
-        self.df.loc[target_range.index, target_layer] = span_id
+        occupied = {s.depth for s in self._spans if s.start < end and s.end > start}
+        depth = next(d for d in range(len(occupied) + 1) if d not in occupied)
+        self._spans.append(Span(span_id, tag, depth, start, end))
 
         return self
 
-    def __str__(self):
-        return str(self.df)
-
-    def __repr__(self):
-        return repr(str(self))
-
-    def _repr_html_(self):
-        """Return HTML representation for Jupyter notebooks"""
-        return self.df._repr_html_()
-
-    def to_spans(self) -> pd.DataFrame:
-        df = self.df
-        text = self.text
-
-        if len(df) == 0:
-            return pd.DataFrame(columns=internal_columns)
-
-        # stack annotation layers
-        depth_columns = df.filter(like="depth").columns
-        stacked = pd.concat(
-            [df[col] for col in depth_columns], keys=depth_columns
-        ).rename("span_id")
-        stacked = stacked.rename_axis(["depth", "index"]).reset_index()
-
-        # extract start and end indexes
-        spans = stacked.groupby("span_id")["index"].agg(start="min", end="max")
-        spans["end"] += 1
-
-        spans["tag"] = spans.index.str.rsplit("_", n=1).str[0]
-        spans["depth"] = (
-            stacked.drop_duplicates(subset="span_id")
-            .set_index("span_id")
-            .depth.str.removeprefix("depth_")
-            .astype(int)
-        )
-
-        spans["text"] = [
-            text[s:e] for s, e in zip(spans["start"], spans["end"], strict=True)
-        ]
-
-        # rearrange columns
-        spans = spans[internal_columns]
-
-        # populate attribute columns
-        if (attributes := pd.Series(self.span_attributes)).notna().any():
-            # align attributes by id
-            spans["attributes"] = attributes
-
-            # expand attributes into columns
-            spans = spans.join(
-                pd.DataFrame(spans.pop("attributes").to_list(), index=spans.index)
-            )
-
-        # sort into canonical order
-        spans = spans.sort_values(["depth", "start"]).reset_index()
-
-        return spans
-
-    def rename_tag(self, tag, value):
-        depth_columns = self.df.filter(like="depth").columns
-
-        split_tags = self.df[depth_columns].map(
-            lambda cell: cell.split("_"), na_action="ignore"
-        )
-        tags = split_tags.map(lambda cell: cell[0], na_action="ignore")
-        subscripts = split_tags.map(lambda cell: cell[1], na_action="ignore")
-        tags = tags.replace(tag, value)
-
-        new_tags = tags.astype(object) + "_" + subscripts.astype(object)
-        self.df.loc[:, depth_columns] = new_tags
-
-        def rename(old_tag):
-            old_tag, index = old_tag.rsplit("_", maxsplit=1)
-            return f"{value if old_tag == tag else old_tag}_{index}"
-
-        self.span_attributes = {rename(k): v for k, v in self.span_attributes.items()}
-
+    def rename_tag(self, tag: str, value: str) -> "CharacterMap":
+        for span in self._spans:
+            if span.tag != tag:
+                continue
+            old_id = span.span_id
+            span.tag = value
+            span.span_id = f"{value}_{old_id.rsplit('_', 1)[1]}"
+            if old_id in self.span_attributes:
+                self.span_attributes[span.span_id] = self.span_attributes.pop(old_id)
         return self
 
-    def get_subspans(self, span_id):
-        df = self.df.filter(like="depth")
-
-        is_superspan = df.eq(span_id)
-        start_column = [*df.columns[is_superspan.any()], None][0]
-
-        if start_column is None:
-            return []
-
+    def to_spans(self) -> list[SpanView]:
+        """All spans in canonical order (depth, start)."""
+        ordered = sorted(self._spans, key=lambda s: (s.depth, s.start, s.span_id))
         return [
-            tag
-            for tag in df.loc[is_superspan.any(axis=1), start_column:].stack().unique()
-            if tag != span_id
+            SpanView(
+                span_id=s.span_id,
+                tag=s.tag,
+                depth=s.depth,
+                start=s.start,
+                end=s.end,
+                text=self._text[s.start : s.end],
+                attributes=self.span_attributes.get(s.span_id, {}),
+            )
+            for s in ordered
         ]
+
+    def __repr__(self) -> str:
+        return f"CharacterMap({self._text!r}, {self._spans!r})"

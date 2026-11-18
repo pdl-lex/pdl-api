@@ -4,10 +4,11 @@ import csv
 from pathlib import Path
 from urllib.parse import quote
 
-from pydash import omit, unique_id
+from pydash import omit
 
 from app.transformers.base_xml_transformer import (
     BaseXmlTransformer,
+    assign_missing_sense_ids,
     extract_text,
     flatten_senses,
     xpath,
@@ -25,6 +26,8 @@ ADDITIONAL_INFO_FIELDS = {
     "Antonyme": './/Verweis[@Typ="Antonym"]',
     "Mehrwortausdrücke": './/Verweis[@Typ="MWA"]',
 }
+
+XML_ID = "{http://www.w3.org/XML/1998/namespace}id"
 
 gender_map_path = Path(__file__).parent / "gender_mapping.csv"
 with open(gender_map_path, newline="") as csvfile:
@@ -139,7 +142,7 @@ def transform_sense(node):
         text = f"[{dia_text}] {text}".strip()
 
     number = (node.attrib.get("n") or "").rstrip(".") or None
-    id_ = node.attrib.get("xml:id", unique_id("sense_"))
+    id_ = node.attrib.get(XML_ID)
 
     return {
         "def": {"text": text, "annotations": []},  # annotations are not handled yet
@@ -284,6 +287,7 @@ class DwdsXmlTransformer(BaseXmlTransformer):
     def postprocess(self, data, _element):
         """Enrich the transformed entry with flat senses, corpus examples, gender mapping, and additional metadata."""
         data["xml:lang"] = "DE"
+        assign_missing_sense_ids(data.get("sense", []), data.get("sourceId"))
         flat_senses = flatten_senses(data.get("sense", []))
         data["flatSenses"] = flat_senses
         data["cit"] = self._extract_corpus_examples()

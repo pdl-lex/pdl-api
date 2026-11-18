@@ -94,15 +94,9 @@ e.g.,
 
 results in `"lorem•••ipsum"` instead of the intended `"lorem•ipsum"`.
 
-In contrast, a character map allows us to cleanly normalize the text globally by removing all
-whitespace rows preceded by a whitespace row. If stored as a pandas dataframe, this becomes:
-
-```python
-def normalize_whitespace(charmap):
-    # select space characters where the last row is also a space
-    m = (charmap["char"] == " ") & (charmap["char"].shift() == " ")
-    return charmap[~m]
-```
+In contrast, a standoff representation separates the text from the markup, so whitespace can be
+normalized globally on the plain text, regardless of tag boundaries, and yields the intended
+`"lorem•ipsum"`.
 
 A second property of standoff representations is that by decoupling the annotation structure from
 the primary data they allow serialization in structurally flat, tabular, or graph-based formats
