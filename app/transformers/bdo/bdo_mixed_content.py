@@ -119,19 +119,17 @@ class BdoBaseTransformer(StandoffTransformer):
 
 
 class BdoLiteratureTransformer(StandoffTransformer):
-    def set_bibliography_details(self, submap: CharacterMap) -> None:
-        self._bibliography = submap
-
-    def get_bibliography_details(self) -> CharacterMap | None:
-        return getattr(self, "_bibliography", None)
+    def get_bibliography_details(self, bib_id: str) -> CharacterMap | None:
+        return getattr(self, "_bibliography", {}).get(bib_id)
 
     @preprocess(order=1)
     def insert_literature_prefixes(self, cmap: CharacterMap) -> CharacterMap:
         for span_id in cmap.spans("literatur-quelle"):
-            start, _ = cmap.get_span_range(span_id)
-            attributes = cmap.span_attributes[span_id]
+            source_type = cmap.span_attributes[span_id].get("quelle-art")
 
-            cmap = cmap.insert(start, attributes.get("quelle-art", "") + " ")
+            if source_type is not None:
+                start, _ = cmap.get_span_range(span_id)
+                cmap = cmap.insert(start, source_type + " ")
 
         return cmap
 
@@ -147,24 +145,27 @@ class BdoLiteratureTransformer(StandoffTransformer):
 
     @preprocess(order=4)
     def extract_embedded_bibliography(self, cmap: CharacterMap) -> CharacterMap:
+        self._bibliography = {}
+
         for span_id in cmap.spans("details"):
-            self.set_bibliography_details(cmap.pop_span(span_id))
+            bib_id = cmap.span_attributes[span_id].get("bib_id")
+            self._bibliography[bib_id] = cmap.pop_span(span_id)
 
         return cmap
 
     @register("literatur-quelle")
-    def serialize_bibref(self, span: SpanView) -> Union[BibRefAnnotationSpan, None]:
-        details = self.get_bibliography_details()
-
-        if details is None:
-            return None
-
-        details_transformer = BdoBaseTransformer.from_cmap(details)
+    def serialize_bibref(self, span: SpanView) -> BibRefAnnotationSpan:
+        details = self.get_bibliography_details(span.span_id)
+        full_reference = (
+            None
+            if details is None
+            else AnnotatedTextData(**BdoBaseTransformer.from_cmap(details).serialize())
+        )
 
         return BibRefAnnotationSpan(
             **basedata(span, "bibref"),
             bibId=span.get("literatur", ""),
-            fullReference=AnnotatedTextData(**details_transformer.serialize()),
+            fullReference=full_reference,
         )
 
 
