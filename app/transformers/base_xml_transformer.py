@@ -33,6 +33,17 @@ def flatten_senses(senses: list):
     return flat_senses
 
 
+def assign_missing_sense_ids(
+    senses: list[dict], entry_id: str | None, path: tuple[int, ...] = ()
+) -> None:
+    """Give senses without a source id a stable one: `<entry_id>/sense/<1.2.…>`."""
+    for position, sense in enumerate(senses, start=1):
+        sense_path = (*path, position)
+        if sense.get("sourceId") is None and entry_id is not None:
+            sense["sourceId"] = f"{entry_id}/sense/{'.'.join(map(str, sense_path))}"
+        assign_missing_sense_ids(sense.get("sense", []), entry_id, sense_path)
+
+
 class BaseXmlTransformer:
     def _prepare_tree(self, root):
         """Hook for subclasses to modify the parsed tree before extraction.

@@ -1,10 +1,9 @@
 import csv
 from pathlib import Path
 
-from pydash import unique_id
-
 from app.transformers.base_xml_transformer import (
     BaseXmlTransformer,
+    assign_missing_sense_ids,
     extract_text,
     flatten_senses,
     xpath,
@@ -33,7 +32,7 @@ def transform_sense(node):
     )
 
     number = node.attrib.get("nr")
-    id_ = node.attrib.get("id", unique_id("sense_"))
+    id_ = node.attrib.get("id")
 
     return {
         "def": definition,
@@ -107,6 +106,7 @@ class BdoXmlTransformer(BaseXmlTransformer):
 
     def postprocess(self, data, _element):
         data["xml:lang"] = "DE"
+        assign_missing_sense_ids(data.get("sense", []), data.get("sourceId"))
         data["flatSenses"] = flatten_senses(data.get("sense", []))
         data["nPos"] = POS_MAPPING.get(data.get("pos"))
 
