@@ -43,43 +43,46 @@ def get_target_link(span):
 class BdoBaseTransformer(StandoffTransformer):
     @preprocess(order=1)
     def insert_crossref_prefixes(self, cmap: CharacterMap) -> CharacterMap:
-        spans = cmap.to_spans()
-        references = (s for s in spans if s.tag == "verweis")
+        for reference in cmap.spans("verweis"):
+            attributes = cmap.span_attributes[reference]
 
-        for reference in references:
             # insert the verweis-typ into the base text
-            insertion = REF_TYPE_PREFIXES.get(reference.get("verweis-typ"), "")
-            cmap = cmap.insert(reference.start, insertion)
+            insertion = REF_TYPE_PREFIXES.get(attributes.get("verweis-typ"), "")
+            cmap = cmap.insert(cmap.get_span_range(reference)[0], insertion)
 
-            if reference.get("ziel-typ") == "Bedeutung":
-                # get nested lemma-referenz
-                lemma_refs = [
-                    s
-                    for s in spans
-                    if s.tag == "lemma-referenz"
-                    and s.start >= reference.start
-                    and s.end <= reference.end
-                ]
+            if attributes.get("ziel-typ") == "Bedeutung":
+                lemma_refs = cmap.get_subspans(reference, tag="lemma-referenz")
                 if len(lemma_refs) == 0:
                     continue
 
-                lemma_ref_span = lemma_refs[0]
+                lemma_ref = lemma_refs[0]
+                full_lemma = cmap.span_attributes[lemma_ref].get("vollform")
 
-                if "vollform" not in lemma_ref_span:
+                if full_lemma is None:
                     continue
 
-                # expand full lemma
-                full_lemma = lemma_ref_span["vollform"] + ", "
-                cmap.set_text(lemma_ref_span.span_id, full_lemma)
+                homograph_index = self._extract_homograph_index(cmap, lemma_ref)
+                cmap.set_text(lemma_ref, full_lemma + homograph_index + ", ")
+
+                if homograph_index:
+                    start = cmap.get_span_range(lemma_ref)[0] + len(full_lemma)
+                    cmap.add_span("hoch", start, start + len(homograph_index))
 
                 # insert "Bed. " text
                 cmap = cmap.insert(
-                    cmap.get_span_range(lemma_ref_span.span_id)[1],
-                    "Bed. ",
-                    reference.span_id,
+                    cmap.get_span_range(lemma_ref)[1], "Bed. ", reference
                 )
 
         return cmap
+
+    @staticmethod
+    def _extract_homograph_index(cmap: CharacterMap, lemma_ref: str) -> str:
+        superscripts = cmap.get_subspans(lemma_ref, tag="hoch")
+        if len(superscripts) == 0:
+            return ""
+
+        start, end = cmap.get_span_range(superscripts[0])
+        return cmap.text[start:end].strip()
 
     @register("lemma-form")
     def serialize_mention(self, span: SpanView) -> TextAnnotationSpan:
