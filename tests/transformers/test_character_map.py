@@ -156,3 +156,25 @@ def test_add_span(simple_character_map):
     span = next(s for s in simple_character_map.to_spans() if s.span_id == "foobar_1")
 
     assert [span.start, span.end, span["baz"]] == [start, end, 42]
+
+
+def test_set_text_discards_subspans():
+    spans = [
+        Span("ROOT_1", "ROOT", 0, 0, 12),
+        Span("ref_1", "ref", 1, 2, 10),
+        Span("lemma_1", "lemma", 2, 2, 5),
+        Span("hoch_1", "hoch", 3, 2, 3),
+        Span("hoch_2", "hoch", 3, 4, 5),
+        Span("tail_1", "tail", 1, 10, 12),
+    ]
+    cmap = CharacterMap("a 2x3 Bed.zz", spans, {s.span_id: {} for s in spans})
+
+    cmap.set_text("lemma_1", "Haus, ")
+
+    assert cmap.text == "a Haus,  Bed.zz"
+    assert ranges(cmap) == {
+        "ROOT_1": (0, 15),
+        "ref_1": (2, 13),
+        "lemma_1": (2, 8),
+        "tail_1": (13, 15),
+    }

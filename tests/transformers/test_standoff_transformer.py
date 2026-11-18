@@ -174,3 +174,15 @@ def test_registered_spans_are_returned(basic_annotated_xml):
             "labels": ["NOUN"],
         }
     ]
+
+
+def test_failing_handler_logs_warning(basic_annotated_xml, caplog):
+    class Transformer(StandoffTransformer):
+        @register("nomen")
+        def serialize_noun(self, span):
+            raise ValueError("broken")
+
+    result = Transformer.load_xml(basic_annotated_xml).serialize()
+
+    assert result["annotations"] == []
+    assert "Skipping span nomen_1: ValueError('broken')" in caplog.text
