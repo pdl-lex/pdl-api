@@ -154,10 +154,7 @@ class CharacterMap:
         return self
 
     def set_text(self, span_id: str, text: str) -> "CharacterMap":
-        """
-        Replace the text of a span. Subspans starting at the span's first character
-        cover the new text; all other subspans are discarded.
-        """
+        """Replace the text of a span. Its subspans are discarded."""
         target = self._find(span_id)
         if len(text) == 0 or target is None:
             return self
@@ -171,8 +168,13 @@ class CharacterMap:
             if span.start >= b:
                 span.start += delta
                 span.end += delta
-            elif span.start <= a:
-                span.end = max(span.end, b) + delta
+            elif span is target or (span.start <= a and span.end >= b):
+                if span is target or span.depth < target.depth:
+                    span.end += delta
+                else:
+                    span.end = span.start
+            elif span.start < a:
+                span.end = a
             elif span.end > b:
                 span.start = a + len(text)
                 span.end += delta
@@ -220,17 +222,19 @@ class CharacterMap:
         ordered = sorted(self._spans, key=lambda s: (s.start, s.depth))
         return [s.span_id for s in ordered if tag is None or s.tag == tag]
 
-    def get_subspans(self, span_id: str) -> list[str]:
+    def get_subspans(self, span_id: str, tag: str | None = None) -> list[str]:
+        """Ids of spans nested in span_id, in text order, optionally filtered by tag."""
         target = self._find(span_id)
         if target is None:
             return []
         return [
             s.span_id
-            for s in self._spans
+            for s in sorted(self._spans, key=lambda s: (s.start, s.depth))
             if s is not target
             and s.depth >= target.depth
             and s.start < target.end
             and s.end > target.start
+            and (tag is None or s.tag == tag)
         ]
 
     def add_span(
